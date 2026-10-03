@@ -73,8 +73,10 @@ public final class BazaarDatabase {
             registerDriver("org.sqlite.JDBC");
             hikari.setJdbcUrl("jdbc:sqlite:" + db.getAbsolutePath());
             hikari.setDriverClassName("org.sqlite.JDBC");
-            hikari.setMaximumPoolSize(1);
-            hikari.setConnectionInitSql("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;");
+            hikari.setMaximumPoolSize(SqliteSettings.POOL_SIZE);
+            // Driver properties, not connectionInitSql: sqlite-jdbc prepares only the first statement
+            // of a multi-statement init string, so foreign_keys=ON was being dropped.
+            hikari.setDataSourceProperties(SqliteSettings.properties());
         }
 
         this.dataSource = new HikariDataSource(hikari);
