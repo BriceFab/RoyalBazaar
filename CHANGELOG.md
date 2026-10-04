@@ -1,3 +1,10 @@
+## 2026.40.0 — 2026-10-03
+
+### 🐛 Fixes
+- match sqlite-jdbc to the version plugin.yml ships (`bee6463`)
+- apply foreign_keys as well as journal_mode (`c8839dd`)
+- use the ISO week-year for release versions (`eafc24b`)
+
 ## 2026.39.1 — 2026-09-24
 
 ### 🐛 Fixes
