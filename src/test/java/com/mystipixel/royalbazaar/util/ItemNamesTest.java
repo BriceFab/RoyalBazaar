@@ -26,4 +26,14 @@ class ItemNamesTest {
         assertFalse(names.translatedNameContains("diamond_sword", ItemNames.normalize("ignored")));
         assertEquals("epee en diamant", ItemNames.normalize(" Épée en Diamant "));
     }
+
+    @Test
+    void searchTextIsLiteralNeverAPatternOrWildcard() {
+        ItemNames names = new ItemNames();
+        names.load(List.of(Map.of("item.minecraft.rotten_flesh", "Chair putréfiée")));
+
+        for (String hostile : List.of(".*", "%", "_", "' OR '1'='1", "[a-z]+", "\\")) {
+            assertFalse(names.translatedNameContains("rotten_flesh", ItemNames.normalize(hostile)), hostile);
+        }
+    }
 }
