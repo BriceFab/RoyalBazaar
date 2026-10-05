@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 public final class TextInput {
 
     private static final String FIELD = "input";
-    private static final int MAX_LENGTH = 64;
+    static final int MAX_LENGTH = 64;
     /** How long the buttons keep working; the prompt is dead after this anyway. */
     private static final Duration LIFETIME = Duration.ofMinutes(5);
 
@@ -52,9 +52,7 @@ public final class TextInput {
      * dialog's title (lines made only of '^' are dropped: they pointed at the old sign's input line).
      */
     public void request(Player player, List<String> hints, Consumer<String> callback) {
-        String title = hints.stream()
-                .filter(line -> !line.replaceAll("&[0-9a-fk-or]", "").matches("\\^*"))
-                .collect(Collectors.joining(" "));
+        String title = titleOf(hints);
         AtomicBoolean answered = new AtomicBoolean();
         ClickCallback.Options once = ClickCallback.Options.builder().uses(1).lifetime(LIFETIME).build();
 
@@ -70,8 +68,7 @@ public final class TextInput {
                 .type(DialogType.confirmation(
                         ActionButton.builder(Text.color(confirmLabel.get()))
                                 .action(DialogAction.customClick((response, audience) -> {
-                                    String text = response.getText(FIELD);
-                                    answer(answered, callback, text == null ? "" : text.trim());
+                                    answer(answered, callback, sanitize(response.getText(FIELD)));
                                 }, once))
                                 .build(),
                         ActionButton.builder(Text.color(cancelLabel.get()))
@@ -82,6 +79,28 @@ public final class TextInput {
         // Leave the chest menu first; the dialog replaces it on screen.
         player.closeInventory();
         player.showDialog(dialog);
+    }
+
+    /** The hint lines as one title; lines made only of '^' (the old sign's arrow) are dropped. */
+    static String titleOf(List<String> hints) {
+        return hints.stream()
+                .filter(line -> !line.replaceAll("&[0-9a-fk-or]", "").matches("\\^*"))
+                .collect(Collectors.joining(" "));
+    }
+
+    /**
+     * What the player typed, as callers may use it. The client enforces {@link #MAX_LENGTH}, but a
+     * modified one can send anything, so control characters are dropped and the length is capped here.
+     */
+    static String sanitize(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        StringBuilder out = new StringBuilder();
+        raw.codePoints().filter(c -> !Character.isISOControl(c)).forEach(out::appendCodePoint);
+        String text = out.toString().trim();
+        return text.codePointCount(0, text.length()) <= MAX_LENGTH
+                ? text : text.substring(0, text.offsetByCodePoints(0, MAX_LENGTH)).trim();
     }
 
     private void answer(AtomicBoolean answered, Consumer<String> callback, String text) {
