@@ -8,6 +8,7 @@ import com.mystipixel.royalbazaar.gui.menu.MenuSlot;
 import com.mystipixel.royalbazaar.gui.menu.MenuTemplate;
 import com.mystipixel.royalbazaar.hooks.EcoHook;
 import com.mystipixel.royalbazaar.market.MarketItem;
+import com.mystipixel.royalbazaar.message.MessageManager;
 import com.mystipixel.royalbazaar.market.MarketManager;
 import com.mystipixel.royalbazaar.service.BazaarService;
 import com.mystipixel.royalbazaar.util.ItemNames;
@@ -38,6 +39,7 @@ public final class GuiManager {
     private final BazaarService service;
     private final EcoHook eco;
     private final ItemNames itemNames;
+    private final MessageManager messages;
 
     private final Map<UUID, OpenView> views = new HashMap<>();
 
@@ -49,8 +51,9 @@ public final class GuiManager {
     private final Set<UUID> refreshing = new HashSet<>();
 
     public GuiManager(MenuManager menus, MarketManager market, BazaarService service, EcoHook eco,
-                      ItemNames itemNames) {
+                      MessageManager messages, ItemNames itemNames) {
         this.menus = menus;
+        this.messages = messages;
         this.itemNames = itemNames;
         this.market = market;
         this.service = service;
@@ -92,7 +95,7 @@ public final class GuiManager {
             return;
         }
         // Nothing to show: no categories are configured. Say so rather than opening an empty menu.
-        player.sendMessage(Text.chat("&cThe bazaar has no categories configured."));
+        messages.send(player, "no-categories", "&cThe bazaar has no categories configured.");
     }
 
     /**
@@ -120,7 +123,8 @@ public final class GuiManager {
         view.setPage(Math.max(1, page));
 
         Map<String, String> base = new HashMap<>();
-        base.put("rbazaar_category", "Search: " + query + " (" + hits.size() + ")");
+        base.put("rbazaar_category", messages.format("gui.search-title", "Search: {query} ({count})",
+                Map.of("query", query, "count", String.valueOf(hits.size()))));
         Inventory inv = BazaarMenuHolder.create(tmpl.size(), Text.color(applyMap(tmpl.title(), base)));
         tmpl.applyFiller(inv);
         placeFixedSlots(tmpl, inv, view, base);
@@ -371,7 +375,7 @@ public final class GuiManager {
             Map<String, String> ph = new HashMap<>();
             ph.put("rbazaar_category", cat.displayName());
             ItemStack icon = ItemSpec.parse(cat.icon() + " name:\"" + cat.displayName() + "\"")
-                    .build(eco, ph, List.of("&7Click to browse this category."));
+                    .build(eco, ph, List.of(messages.get("gui.browse-category", "&7Click to browse this category.")));
             inv.setItem(index, icon);
             view.bind(index, List.of(new MenuEffect("open_menu",
                     Map.of("menu", "bazaar_category", "category", cat.id()))), List.of());
@@ -400,7 +404,7 @@ public final class GuiManager {
                 lore.add(applyMap(line, ph));
             }
             if (selected) {
-                lore.add("&aCurrently viewing");
+                lore.add(messages.get("gui.currently-viewing", "&aCurrently viewing"));
             }
             ItemStack icon = ItemSpec.parse(cat.icon() + " name:\"" + cat.displayName() + "\"").build(eco, ph, lore);
             if (selected && rail.glintSelected()) {
