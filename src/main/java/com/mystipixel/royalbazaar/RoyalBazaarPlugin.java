@@ -19,10 +19,12 @@ import com.mystipixel.royalbazaar.market.MarketItem;
 import com.mystipixel.royalbazaar.market.MarketState;
 import com.mystipixel.royalbazaar.market.MarketManager;
 import com.mystipixel.royalbazaar.service.BazaarService;
+import com.mystipixel.royalbazaar.util.ItemNames;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.ServiceRegisterEvent;
+import java.io.File;
 import java.util.Locale;
 
 import org.bstats.bukkit.Metrics;
@@ -59,6 +61,7 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
     private MenuManager menus;
     private GuiManager gui;
     private TextInput textInput;
+    private final ItemNames itemNames = new ItemNames();
 
     private BukkitTask tickTask;
     private BukkitTask flushTask;
@@ -135,7 +138,8 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
 
         this.service = new BazaarService(this, market, database, vault, eco, guard, config);
         this.menus = new MenuManager(this);
-        this.gui = new GuiManager(menus, market, service, eco);
+        itemNames.reload(new File(getDataFolder(), "lang"), getLogger());
+        this.gui = new GuiManager(menus, market, service, eco, itemNames);
 
         this.textInput = new TextInput(this, () -> messages.get("input.confirm", "&aDone"),
                 () -> messages.get("input.cancel", "&cCancel"));
@@ -366,6 +370,7 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
             }
         }
         menus.reload();
+        itemNames.reload(new File(getDataFolder(), "lang"), getLogger());
         scheduleTasks();
         refreshWeekStats();
     }
