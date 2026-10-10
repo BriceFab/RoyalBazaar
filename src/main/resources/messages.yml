@@ -10,6 +10,7 @@ no-permission: "&cNo permission."
 reloaded: "&aRoyalBazaar reloaded."
 price-usage: "&cUsage: /bazaar price <item>"
 unknown-item: "&cUnknown item: {item}"
+price-unavailable: "N/A"
 price-line: "&e{item}&7: buy &a${buy} &7sell &e${sell} &7(mid {mid})"
 
 prompt-amount: "&eType an amount in chat &7(or 'cancel')&e."
@@ -24,6 +25,8 @@ trade:
   failed: "&c{reason}"
   # Why a trade was refused, shown through {reason} above.
   reasons:
+    buy-disabled: "You cannot buy this item."
+    sell-disabled: "You cannot sell this item."
     generic: "Trade failed."
     unknown-item: "Unknown item."
     invalid-amount: "Invalid amount."
