@@ -1,3 +1,8 @@
+## 2026.41.1 - 2026-10-11
+
+### Fixes
+- price crafted items at or below their inputs (`4d65791`)
+
 ## 2026.41.0 - 2026-10-10
 
 ### Features
