@@ -1,3 +1,20 @@
+## 2026.41.0 - 2026-10-10
+
+### Features
+- support per-item buy-only and sell-only trading (`c4b2d09`)
+- match translated item names, ignoring case and accents (`8a109fa`)
+
+### Fixes
+- move the remaining player-facing text into messages.yml (`b12779b`)
+- name EcoShop conflicts and allow unlisting items the guard can't protect (`2469692`)
+
+### Refactors
+- align the text dialog with the shared TextInput (`1fde60f`)
+- replace the sign input with a native text dialog (`6ab0385`)
+
+### Documentation
+- add AGENTS.md with the suite's development standards (`faa5a2b`)
+
 ## 2026.40.0 — 2026-10-03
 
 ### 🐛 Fixes
