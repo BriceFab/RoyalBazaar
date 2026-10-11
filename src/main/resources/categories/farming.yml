@@ -16,6 +16,7 @@ defaults:
   reversion_rate: 0.02  # fraction pulled back toward base each tick
   floor_pct: 0.4        # price never below 40% of base
   ceiling_pct: 3.0      # price never above 300% of base
+  trade_mode: both      # both, buy_only (players can only buy) or sell_only (only sell); items can override it
 
 groups:
   wheat_seeds:

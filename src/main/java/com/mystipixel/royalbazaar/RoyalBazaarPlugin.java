@@ -131,7 +131,7 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
         }
         fullyEnabled = true;
 
-        this.service = new BazaarService(this, market, database, vault, eco, guard, config);
+        this.service = new BazaarService(this, market, database, vault, eco, guard, config, messages);
         this.menus = new MenuManager(this);
         itemNames.reload(new File(getDataFolder(), "lang"), getLogger());
         this.gui = new GuiManager(menus, market, service, eco, itemNames);
@@ -151,7 +151,7 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
         scheduleTasks();
 
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            this.placeholderExpansion = new BazaarPlaceholderExpansion(market, vault, getPluginMeta().getVersion());
+            this.placeholderExpansion = new BazaarPlaceholderExpansion(market, vault, getPluginMeta().getVersion(), service);
             placeholderExpansion.register();
             getLogger().info("Registered PlaceholderAPI expansion.");
         }

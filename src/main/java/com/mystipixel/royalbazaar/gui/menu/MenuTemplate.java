@@ -197,16 +197,24 @@ public final class MenuTemplate {
         if (index < 0) {
             return null;
         }
-        List<String> lore = new ArrayList<>();
-        Object loreObj = raw.get("lore");
-        if (loreObj instanceof List<?> list) {
-            for (Object o : list) {
-                lore.add(String.valueOf(o));
-            }
-        }
-        return new MenuSlot(index, ItemSpec.parse(String.valueOf(itemObj)), lore,
+        List<String> lore = stringList(raw.get("lore"));
+        Object disabledItem = raw.get("disabled-item");
+        return new MenuSlot(index, ItemSpec.parse(String.valueOf(itemObj)), lore == null ? List.of() : lore,
                 MenuEffect.parseList(castMapList(raw.get("left-click"))),
-                MenuEffect.parseList(castMapList(raw.get("right-click"))));
+                MenuEffect.parseList(castMapList(raw.get("right-click"))),
+                disabledItem == null ? null : ItemSpec.parse(String.valueOf(disabledItem)),
+                stringList(raw.get("disabled-lore")));
+    }
+
+    private static List<String> stringList(Object value) {
+        if (!(value instanceof List<?> list)) {
+            return null;
+        }
+        List<String> out = new ArrayList<>();
+        for (Object o : list) {
+            out.add(String.valueOf(o));
+        }
+        return out;
     }
 
     private static Arrow parseArrow(ConfigurationSection sec, int size) {

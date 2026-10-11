@@ -38,6 +38,20 @@ public final class EffectDispatcher {
         if (effects == null) {
             return;
         }
+        // checked against the live config before anything runs, so a menu or button drawn before a
+        // reload can't open a prompt or play a success sound for a direction that's now off
+        for (MenuEffect effect : effects) {
+            TradeSide side = effect.tradeSide();
+            if (side == null) {
+                continue;
+            }
+            TradeResult refused = service.tradeModeRefusal(effect.tradeItem(itemOf(player)), side);
+            if (refused != null) {
+                sendFeedback(player, refused);
+                gui.refresh(player);
+                return;
+            }
+        }
         for (MenuEffect effect : effects) {
             dispatch(player, effect);
         }

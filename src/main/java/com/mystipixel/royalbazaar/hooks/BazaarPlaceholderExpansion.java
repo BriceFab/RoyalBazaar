@@ -3,6 +3,8 @@ package com.mystipixel.royalbazaar.hooks;
 import com.mystipixel.royalbazaar.market.MarketItem;
 import com.mystipixel.royalbazaar.market.MarketManager;
 import com.mystipixel.royalbazaar.market.PricingEngine;
+import com.mystipixel.royalbazaar.market.TradeSide;
+import com.mystipixel.royalbazaar.service.BazaarService;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
@@ -16,11 +18,13 @@ public final class BazaarPlaceholderExpansion extends PlaceholderExpansion {
     private final MarketManager market;
     private final VaultHook vault;
     private final String version;
+    private final BazaarService service;
 
-    public BazaarPlaceholderExpansion(MarketManager market, VaultHook vault, String version) {
+    public BazaarPlaceholderExpansion(MarketManager market, VaultHook vault, String version, BazaarService service) {
         this.market = market;
         this.vault = vault;
         this.version = version;
+        this.service = service;
     }
 
     @Override
@@ -56,8 +60,10 @@ public final class BazaarPlaceholderExpansion extends PlaceholderExpansion {
             return "";
         }
         return switch (type) {
-            case "buy" -> vault.format(PricingEngine.buyPrice(item));
-            case "sell" -> vault.format(PricingEngine.sellPrice(item));
+            case "buy" -> item.tradeMode().allows(TradeSide.BUY)
+                    ? vault.format(PricingEngine.buyPrice(item)) : service.unavailablePrice();
+            case "sell" -> item.tradeMode().allows(TradeSide.SELL)
+                    ? vault.format(PricingEngine.sellPrice(item)) : service.unavailablePrice();
             case "mid" -> vault.format(item.mid());
             // Plain-text percentages (no colour codes): scoreboards and holograms style themselves.
             case "change24h" -> item.midYesterday() <= 0 ? "0.0%"

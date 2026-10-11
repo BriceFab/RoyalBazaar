@@ -15,6 +15,7 @@ defaults:
   reversion_rate: 0.02
   floor_pct: 0.4
   ceiling_pct: 3.0
+  trade_mode: both      # both, buy_only (players can only buy) or sell_only (only sell); items can override it
 
 groups:
   bone:

@@ -9,6 +9,7 @@ import com.mystipixel.royalbazaar.gui.menu.MenuTemplate;
 import com.mystipixel.royalbazaar.hooks.EcoHook;
 import com.mystipixel.royalbazaar.market.MarketItem;
 import com.mystipixel.royalbazaar.market.MarketManager;
+import com.mystipixel.royalbazaar.market.TradeSide;
 import com.mystipixel.royalbazaar.service.BazaarService;
 import com.mystipixel.royalbazaar.util.ItemNames;
 import com.mystipixel.royalbazaar.util.Text;
@@ -182,6 +183,10 @@ public final class GuiManager {
     public void openBuy(Player player, String itemId) {
         MarketItem item = itemId == null ? null : market.get(itemId);
         if (item == null) {
+            return;
+        }
+        if (!item.tradeMode().allows(TradeSide.BUY)) {
+            openProduct(player, itemId);   // e.g. refreshing a buy menu after a reload made the item sell-only
             return;
         }
         MenuTemplate tmpl = menus.get("bazaar_buy");
@@ -374,9 +379,38 @@ public final class GuiManager {
             if (slot.index() < 0 || slot.index() >= inv.getSize()) {
                 continue;
             }
-            inv.setItem(slot.index(), slot.item().build(eco, ph, slot.lore()));
-            view.bind(slot.index(), resolveEffects(slot.leftClick(), ph), resolveEffects(slot.rightClick(), ph));
+            List<MenuEffect> left = resolveEffects(slot.leftClick(), ph);
+            List<MenuEffect> right = resolveEffects(slot.rightClick(), ph);
+            boolean disabled = tradeTurnedOff(left, right, view.itemId());
+            ItemSpec spec = disabled && slot.disabledItem() != null ? slot.disabledItem() : slot.item();
+            List<String> lore = disabled && slot.disabledLore() != null ? slot.disabledLore() : slot.lore();
+            inv.setItem(slot.index(), spec.build(eco, ph, lore));
+            // still bound: a click on a turned-off button is refused with a message by the dispatcher
+            view.bind(slot.index(), left, right);
         }
+    }
+
+    // true when the slot trades and every trade on it is in a direction its item has turned off
+    boolean tradeTurnedOff(List<MenuEffect> left, List<MenuEffect> right, String openItem) {
+        boolean trades = false;
+        for (List<MenuEffect> effects : List.of(nullToEmpty(left), nullToEmpty(right))) {
+            for (MenuEffect effect : effects) {
+                TradeSide side = effect.tradeSide();
+                if (side == null) {
+                    continue;
+                }
+                MarketItem item = market.get(effect.tradeItem(openItem));
+                if (item == null || item.tradeMode().allows(side)) {
+                    return false;
+                }
+                trades = true;
+            }
+        }
+        return trades;
+    }
+
+    private static List<MenuEffect> nullToEmpty(List<MenuEffect> effects) {
+        return effects == null ? List.of() : effects;
     }
 
     private void placeArrows(MenuTemplate tmpl, Inventory inv, OpenView view) {

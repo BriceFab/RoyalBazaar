@@ -9,8 +9,10 @@ import com.mystipixel.royalbazaar.hooks.VaultHook;
 import com.mystipixel.royalbazaar.market.MarketItem;
 import com.mystipixel.royalbazaar.market.MarketManager;
 import com.mystipixel.royalbazaar.market.PricingEngine;
+import com.mystipixel.royalbazaar.market.TradeMode;
 import com.mystipixel.royalbazaar.market.TradeResult;
 import com.mystipixel.royalbazaar.market.TradeSide;
+import com.mystipixel.royalbazaar.message.MessageManager;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -34,9 +36,10 @@ public final class BazaarService {
     private final EcoHook eco;
     private final EconGuardHook guard;
     private final PluginConfig config;
+    private final MessageManager messages;
 
     public BazaarService(JavaPlugin plugin, MarketManager market, BazaarDatabase db, VaultHook vault,
-                         EcoHook eco, EconGuardHook guard, PluginConfig config) {
+                         EcoHook eco, EconGuardHook guard, PluginConfig config, MessageManager messages) {
         this.plugin = plugin;
         this.market = market;
         this.db = db;
@@ -44,16 +47,46 @@ public final class BazaarService {
         this.eco = eco;
         this.guard = guard;
         this.config = config;
+        this.messages = messages;
     }
 
     public PluginConfig config() {
         return config;
     }
 
+    /**
+     * The refusal for trading {@code itemId} in a direction its {@code trade_mode} turns off, or null
+     * when that direction is open or the item isn't listed. {@link #buy} and {@link #sell} check this
+     * themselves; menus call it to refuse before opening a prompt.
+     */
+    public TradeResult tradeModeRefusal(String itemId, TradeSide side) {
+        MarketItem item = itemId == null ? null : market.get(itemId);
+        return item == null ? null : tradeModeRefusal(item, side);
+    }
+
+    private TradeResult tradeModeRefusal(MarketItem item, TradeSide side) {
+        if (item.tradeMode().allows(side)) {
+            return null;
+        }
+        String reason = side == TradeSide.BUY
+                ? messages.get("trade.reasons.buy-disabled", "This item can't be bought here, only sold.")
+                : messages.get("trade.reasons.sell-disabled", "This item can't be sold here, only bought.");
+        return TradeResult.fail(TradeResult.Status.DISABLED, side, item.id(), reason);
+    }
+
+    /** Shown in place of a price for a direction the item can't be traded in. */
+    public String unavailablePrice() {
+        return messages.get("price-unavailable", "-");
+    }
+
     public TradeResult buy(Player player, String itemId, long amount) {
         MarketItem item = market.get(itemId);
         if (item == null) {
             return TradeResult.fail(TradeResult.Status.UNKNOWN_ITEM, TradeSide.BUY, itemId, "Unknown item.");
+        }
+        TradeResult refused = tradeModeRefusal(item, TradeSide.BUY);
+        if (refused != null) {
+            return refused;
         }
         if (amount <= 0) {
             return TradeResult.fail(TradeResult.Status.ERROR, TradeSide.BUY, itemId, "Invalid amount.");
@@ -120,14 +153,20 @@ public final class BazaarService {
 
     /**
      * Sell everything in the inventory that {@code scope} covers, each through {@link #sell}. Blocked
-     * or frozen items are counted and skipped rather than aborting the run.
+     * or frozen items are counted and skipped rather than aborting the run; buy-only items are skipped
+     * without counting.
      */
     public SellAllResult sellAll(Player player, Collection<MarketItem> scope) {
         int distinct = 0;
         long units = 0;
         double proceeds = 0;
         int blocked = 0;
-        for (MarketItem item : scope) {
+        for (MarketItem listed : scope) {
+            // looked up again: the caller's collection can predate a reload that changed the mode
+            MarketItem item = market.get(listed.id());
+            if (item == null || !item.tradeMode().allows(TradeSide.SELL)) {
+                continue;
+            }
             if (eco.countHeld(player, item.id()) <= 0) {
                 continue;
             }
@@ -148,6 +187,10 @@ public final class BazaarService {
         MarketItem item = market.get(itemId);
         if (item == null) {
             return TradeResult.fail(TradeResult.Status.UNKNOWN_ITEM, TradeSide.SELL, itemId, "Unknown item.");
+        }
+        TradeResult refused = tradeModeRefusal(item, TradeSide.SELL);
+        if (refused != null) {
+            return refused;
         }
         if (item.frozen()) {
             return TradeResult.fail(TradeResult.Status.DISABLED, TradeSide.SELL, itemId,
@@ -193,7 +236,7 @@ public final class BazaarService {
      */
     public long fillAmount(Player player, String itemId) {
         MarketItem item = market.get(itemId);
-        if (item == null) {
+        if (item == null || !item.tradeMode().allows(TradeSide.BUY)) {
             return 0;
         }
         ItemStack prototype = eco.resolve(itemId, 1);
@@ -298,13 +341,17 @@ public final class BazaarService {
         Map<String, String> p = new HashMap<>();
         p.put("rbazaar_item", item.id());
         p.put("rbazaar_item_display", displayNameFor(item));
-        p.put("rbazaar_buy_price", vault.formatPrice(PricingEngine.buyPrice(item)));
-        p.put("rbazaar_sell_price", vault.formatPrice(PricingEngine.sellPrice(item)));
+        boolean buyable = item.tradeMode().allows(TradeSide.BUY);
+        boolean sellable = item.tradeMode().allows(TradeSide.SELL);
+        String unavailable = unavailablePrice();
+        p.put("rbazaar_buy_price", buyable ? vault.formatPrice(PricingEngine.buyPrice(item)) : unavailable);
+        p.put("rbazaar_sell_price", sellable ? vault.formatPrice(PricingEngine.sellPrice(item)) : unavailable);
         p.put("rbazaar_spread_pct", String.format("%.1f", item.spread() * 100));
-        p.put("rbazaar_buy_cost_1", vault.formatPrice(PricingEngine.buyCost(item, 1)));
-        p.put("rbazaar_buy_cost_64", vault.formatPrice(PricingEngine.buyCost(item, 64)));
-        p.put("rbazaar_sell_value_1", vault.formatPrice(PricingEngine.sellProceeds(item, 1)));
-        p.put("rbazaar_sell_value_64", vault.formatPrice(PricingEngine.sellProceeds(item, 64)));
+        p.put("rbazaar_buy_cost_1", buyable ? vault.formatPrice(PricingEngine.buyCost(item, 1)) : unavailable);
+        p.put("rbazaar_buy_cost_64", buyable ? vault.formatPrice(PricingEngine.buyCost(item, 64)) : unavailable);
+        p.put("rbazaar_sell_value_1", sellable ? vault.formatPrice(PricingEngine.sellProceeds(item, 1)) : unavailable);
+        p.put("rbazaar_sell_value_64", sellable ? vault.formatPrice(PricingEngine.sellProceeds(item, 64)) : unavailable);
+        p.put("rbazaar_trade_mode", tradeModeLabel(item.tradeMode()));
         p.put("rbazaar_volume_24h", String.valueOf(item.volume().bought24h() + item.volume().sold24h()));
         p.put("rbazaar_change_24h", changePct(item));
         p.put("rbazaar_trend", trendArrow(item));
@@ -315,7 +362,8 @@ public final class BazaarService {
         if (viewer != null) {
             int held = eco.countHeld(viewer, item.id());
             p.put("rbazaar_held_amount", String.valueOf(held));
-            p.put("rbazaar_sell_value_all", vault.formatPrice(PricingEngine.sellProceeds(item, Math.max(1, held))));
+            p.put("rbazaar_sell_value_all", sellable
+                    ? vault.formatPrice(PricingEngine.sellProceeds(item, Math.max(1, held))) : unavailable);
         }
 
         // breadcrumb placeholders for product and buy menu titles
@@ -353,15 +401,18 @@ public final class BazaarService {
         double weightedNow = 0;
         double weightedThen = 0;
         for (MarketItem item : items) {
-            double buy = PricingEngine.buyPrice(item);
-            min = Math.min(min, buy);
-            max = Math.max(max, buy);
+            if (item.tradeMode().allows(TradeSide.BUY)) {
+                double buy = PricingEngine.buyPrice(item);
+                min = Math.min(min, buy);
+                max = Math.max(max, buy);
+            }
             volume += item.volume().bought24h() + item.volume().sold24h();
             weightedNow += item.mid();
             weightedThen += item.midYesterday() > 0 ? item.midYesterday() : item.mid();
         }
-        p.put("rbazaar_group_min_buy", vault.formatPrice(min));
-        p.put("rbazaar_group_max_buy", vault.formatPrice(max));
+        boolean anyBuyable = min != Double.MAX_VALUE;
+        p.put("rbazaar_group_min_buy", anyBuyable ? vault.formatPrice(min) : unavailablePrice());
+        p.put("rbazaar_group_max_buy", anyBuyable ? vault.formatPrice(max) : unavailablePrice());
         p.put("rbazaar_group_volume_24h", String.valueOf(volume));
 
         // from summed mids, so one cheap item can't swing the arrow
@@ -370,6 +421,14 @@ public final class BazaarService {
         double eps = 0.1;
         p.put("rbazaar_group_trend", pct > eps ? "&a▲" : pct < -eps ? "&c▼" : "&7=");
         return p;
+    }
+
+    private String tradeModeLabel(TradeMode mode) {
+        return switch (mode) {
+            case BOTH -> messages.get("trade-mode.both", "&aBuy and sell");
+            case BUY_ONLY -> messages.get("trade-mode.buy-only", "&eBuy only");
+            case SELL_ONLY -> messages.get("trade-mode.sell-only", "&eSell only");
+        };
     }
 
     // config display: override, else the item's own name, else a prettified id
