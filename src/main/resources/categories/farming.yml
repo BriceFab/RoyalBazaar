@@ -4,7 +4,8 @@
 # Shipped defaults are VANILLA ONLY, so the bazaar works on a fresh server with no other plugins.
 # Prices are anchored to: wheat 3, coal 5, iron_ingot 12, gold_ingot 20, redstone 6, lapis 6,
 # emerald 60, diamond 120, ancient_debris 700, netherite_ingot 3000.
-# Rule of thumb: a crafted item is priced ABOVE the sum of its inputs, so crafting never prints money.
+# A crafted item never pays more here than its inputs cost to buy here, so crafting never prints money.
+# Check with `python3 tools/verify_bazaar.py crafting` after changing a price.
 
 name: "&aFarming"
 icon: "minecraft:golden_hoe"
@@ -16,6 +17,7 @@ defaults:
   reversion_rate: 0.02  # fraction pulled back toward base each tick
   floor_pct: 0.4        # price never below 40% of base
   ceiling_pct: 3.0      # price never above 300% of base
+  trade_mode: both      # both, buy_only (players can only buy) or sell_only (only sell); items can override it
 
 groups:
   wheat_seeds:
@@ -92,13 +94,13 @@ groups:
     order: 18
 
 items:
-  # --- Wheat & Seeds ---
+  # Wheat & Seeds
   wheat:
     item: "minecraft:wheat"
     group: wheat_seeds
     base_price: 3.0
     floor_pct: 0.25
-    elasticity: 20000    # regen-zone crop — responds within a farming session
+    elasticity: 20000    # regen-zone crop, responds within a farming session
   wheat_seeds:
     item: "minecraft:wheat_seeds"
     group: wheat_seeds
@@ -109,14 +111,16 @@ items:
     item: "minecraft:hay_block"
     group: wheat_seeds
     base_price: 27.0      # 9x wheat
+    floor_pct: 0.25
     elasticity: 20000
   bread:
     item: "minecraft:bread"
     group: wheat_seeds
-    base_price: 10.0      # 3 wheat = 9
+    base_price: 9.4       # 3 wheat = 9
+    floor_pct: 0.25
     elasticity: 20000
 
-  # --- Carrot ---
+  # Carrot
   carrot:
     item: "minecraft:carrot"
     group: carrot
@@ -126,10 +130,10 @@ items:
   golden_carrot:
     item: "minecraft:golden_carrot"
     group: carrot
-    base_price: 22.0      # 8 gold nuggets (17.8) + carrot
+    base_price: 20.5      # 8 gold nuggets (17.8) + carrot
     elasticity: 20000
 
-  # --- Potato ---
+  # Potato
   potato:
     item: "minecraft:potato"
     group: potato
@@ -142,11 +146,11 @@ items:
     base_price: 4.0
     elasticity: 20000
 
-  # --- Beetroot ---
+  # Beetroot
   beetroot:
     item: "minecraft:beetroot"
     group: beetroot
-    base_price: 3.0
+    base_price: 3.1
     elasticity: 20000
     floor_pct: 0.25
   beetroot_seeds:
@@ -156,7 +160,7 @@ items:
     elasticity: 20000
     floor_pct: 0.25
 
-  # --- Pumpkin & Melon ---
+  # Pumpkin & Melon
   pumpkin:
     item: "minecraft:pumpkin"
     group: pumpkin_melon
@@ -166,13 +170,14 @@ items:
   pumpkin_seeds:
     item: "minecraft:pumpkin_seeds"
     group: pumpkin_melon
-    base_price: 2.0
+    base_price: 1.55
     elasticity: 20000
     floor_pct: 0.25
   pumpkin_pie:
     item: "minecraft:pumpkin_pie"
     group: pumpkin_melon
     base_price: 13.0      # pumpkin + sugar + egg
+    floor_pct: 0.25
     elasticity: 20000
   melon:
     item: "minecraft:melon"
@@ -195,10 +200,10 @@ items:
   glistering_melon_slice:
     item: "minecraft:glistering_melon_slice"
     group: pumpkin_melon
-    base_price: 21.0      # 8 gold nuggets + slice
+    base_price: 19.9      # 8 gold nuggets + slice
     elasticity: 20000
 
-  # --- Mushrooms ---
+  # Mushrooms
   brown_mushroom:
     item: "minecraft:brown_mushroom"
     group: mushrooms
@@ -217,7 +222,7 @@ items:
     base_price: 13.0      # 2 mushrooms + bowl
     elasticity: 20000
 
-  # --- Cocoa & Cactus ---
+  # Cocoa & Cactus
   cocoa_beans:
     item: "minecraft:cocoa_beans"
     group: cocoa_cactus
@@ -227,7 +232,8 @@ items:
   cookie:
     item: "minecraft:cookie"
     group: cocoa_cactus
-    base_price: 1.5       # 2 wheat + cocoa yields 8
+    base_price: 1.3       # 2 wheat + cocoa yields 8
+    floor_pct: 0.25
     elasticity: 20000
   cactus:
     item: "minecraft:cactus"
@@ -236,7 +242,7 @@ items:
     elasticity: 20000
     floor_pct: 0.25
 
-  # --- Sugar Cane & Paper ---
+  # Sugar Cane & Paper
   sugar_cane:
     item: "minecraft:sugar_cane"
     group: sugar_cane
@@ -246,18 +252,20 @@ items:
   sugar:
     item: "minecraft:sugar"
     group: sugar_cane
-    base_price: 3.0       # below cane — 1 cane yields 1 sugar
+    base_price: 2.45      # below cane: 1 cane yields 1 sugar
     elasticity: 20000
   paper:
     item: "minecraft:paper"
     group: sugar_cane
     base_price: 3.0       # 3 cane (12) yields 3 paper
+    floor_pct: 0.25
   book:
     item: "minecraft:book"
     group: sugar_cane
-    base_price: 20.0      # 3 paper + leather
+    base_price: 19.8      # 3 paper + leather
+    floor_pct: 0.25
 
-  # --- Fruit & Berries ---
+  # Fruit & Berries
   apple:
     item: "minecraft:apple"
     group: fruit
@@ -265,11 +273,11 @@ items:
   golden_apple:
     item: "minecraft:golden_apple"
     group: fruit
-    base_price: 175.0     # 8 gold ingots (160) + apple
+    base_price: 172.0     # 8 gold ingots (160) + apple
   enchanted_golden_apple:
     item: "minecraft:enchanted_golden_apple"
     group: fruit
-    base_price: 2500.0    # loot only — uncraftable
+    base_price: 2500.0    # loot only, uncraftable
     ceiling_pct: 5.0
     elasticity: 4000
   sweet_berries:
@@ -285,7 +293,7 @@ items:
     elasticity: 20000
     floor_pct: 0.25
 
-  # --- Leather & Beef ---
+  # Leather & Beef
   leather:
     item: "minecraft:leather"
     group: cow
@@ -299,7 +307,7 @@ items:
     group: cow
     base_price: 7.0
 
-  # --- Pork ---
+  # Pork
   porkchop:
     item: "minecraft:porkchop"
     group: pig
@@ -309,7 +317,7 @@ items:
     group: pig
     base_price: 7.0
 
-  # --- Chicken & Feather ---
+  # Chicken & Feather
   chicken:
     item: "minecraft:chicken"
     group: chicken
@@ -327,7 +335,7 @@ items:
     group: chicken
     base_price: 4.0
 
-  # --- Mutton & Wool ---
+  # Mutton & Wool
   mutton:
     item: "minecraft:mutton"
     group: sheep
@@ -339,9 +347,9 @@ items:
   white_wool:
     item: "minecraft:white_wool"
     group: sheep
-    base_price: 8.0       # 4 string (16) also makes one — crafting stays lossy
+    base_price: 8.0       # 4 string (16) also makes one, so crafting stays lossy
 
-  # --- Rabbit ---
+  # Rabbit
   rabbit:
     item: "minecraft:rabbit"
     group: rabbit
@@ -363,7 +371,7 @@ items:
     group: rabbit
     base_price: 45.0
 
-  # --- Nether Wart ---
+  # Nether Wart
   nether_wart:
     item: "minecraft:nether_wart"
     group: nether_wart
@@ -374,9 +382,10 @@ items:
     item: "minecraft:nether_wart_block"
     group: nether_wart
     base_price: 72.0      # 9x nether wart
+    floor_pct: 0.25
     elasticity: 20000
 
-  # --- Bees & Honey ---
+  # Bees & Honey
   honeycomb:
     item: "minecraft:honeycomb"
     group: bees
@@ -388,9 +397,9 @@ items:
   honey_block:
     item: "minecraft:honey_block"
     group: bees
-    base_price: 42.0      # 4 honey bottles
+    base_price: 29.9      # 4 honey bottles
 
-  # --- Flowers ---
+  # Flowers
   dandelion:
     item: "minecraft:dandelion"
     group: flowers
@@ -409,7 +418,7 @@ items:
     base_price: 60.0
     ceiling_pct: 4.0
 
-  # --- Dyes ---
+  # Dyes
   # Single-flower dyes sit BELOW the flower they come from, so milling flowers never prints money.
   bone_meal:
     item: "minecraft:bone_meal"
@@ -426,11 +435,11 @@ items:
   magenta_dye:
     item: "minecraft:magenta_dye"
     group: dyes
-    base_price: 2.0
+    base_price: 1.95
   light_blue_dye:
     item: "minecraft:light_blue_dye"
     group: dyes
-    base_price: 2.0
+    base_price: 1.8
   yellow_dye:
     item: "minecraft:yellow_dye"
     group: dyes
@@ -442,15 +451,15 @@ items:
   pink_dye:
     item: "minecraft:pink_dye"
     group: dyes
-    base_price: 2.0
+    base_price: 1.8
   gray_dye:
     item: "minecraft:gray_dye"
     group: dyes
-    base_price: 2.0
+    base_price: 1.8
   light_gray_dye:
     item: "minecraft:light_gray_dye"
     group: dyes
-    base_price: 2.0
+    base_price: 1.7
   cyan_dye:
     item: "minecraft:cyan_dye"
     group: dyes

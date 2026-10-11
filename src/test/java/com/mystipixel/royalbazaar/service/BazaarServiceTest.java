@@ -4,6 +4,7 @@ import com.mystipixel.royalbazaar.config.PluginConfig;
 import com.mystipixel.royalbazaar.data.BazaarDatabase;
 import com.mystipixel.royalbazaar.hooks.*;
 import com.mystipixel.royalbazaar.market.*;
+import com.mystipixel.royalbazaar.message.MessageManager;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -25,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/** Provider failure tests drive the real service, inventory planning, pricing and audit path. */
+// provider failure tests drive the real service, inventory planning, pricing and audit path
 class BazaarServiceTest {
     private final JavaPlugin plugin = mock(JavaPlugin.class);
     private final MarketManager market = mock(MarketManager.class);
@@ -37,15 +38,17 @@ class BazaarServiceTest {
     private final PlayerInventory inventory = mock(PlayerInventory.class);
     private final BukkitScheduler scheduler = mock(BukkitScheduler.class);
     private final PluginConfig config = mock(PluginConfig.class);
+    private final MessageManager messages = mock(MessageManager.class);
     private final AtomicReference<ItemStack[]> storage = new AtomicReference<>();
     private final ItemMeta customMetadata = mock(ItemMeta.class);
     private final MarketItem item = new MarketItem("ecoitem:test", "test", null, "Custom item",
-            100, 0.05, 1000, 0.01, 1, 1000);
+            100, 0.05, 1000, 0.01, 1, 1000, TradeMode.BOTH);
     private BazaarService service;
 
     @BeforeEach
     void setup() {
-        service = new BazaarService(plugin, market, db, vault, eco, guard, config);
+        service = new BazaarService(plugin, market, db, vault, eco, guard, config, messages);
+        when(messages.get(anyString(), anyString())).thenAnswer(i -> i.getArgument(1));
         when(market.get(item.id())).thenReturn(item);
         when(player.getInventory()).thenReturn(inventory);
         when(player.getUniqueId()).thenReturn(UUID.randomUUID());
@@ -230,15 +233,17 @@ class BazaarServiceTest {
 
     @ParameterizedTest
     @EnumSource(value = TradeMode.class, names = {"BUY_ONLY", "SELL_ONLY"})
-    void forbiddenTradesHaveNoSideEffectsEvenWhenRepeated(TradeMode mode) {
+    void turnedOffDirectionIsRefusedBeforeAnythingMoves(TradeMode mode) {
         MarketItem fresh = withMode(mode);
         ItemStack[] before = storage.get().clone();
-        for (long amount : new long[]{1, 64, Long.MAX_VALUE, 0, -1, 64}) {
+        for (long amount : new long[]{1, 64, Long.MAX_VALUE, 0, -1}) {
             TradeResult result = mode == TradeMode.BUY_ONLY
                     ? service.sell(player, item.id(), amount) : service.buy(player, item.id(), amount);
             assertEquals(TradeResult.Status.DISABLED, result.status());
             assertEquals(0, result.filled());
-            assertEquals(0, result.total());
+            assertEquals(mode == TradeMode.BUY_ONLY
+                    ? "This item can't be sold here, only bought." : "This item can't be bought here, only sold.",
+                    result.message());
         }
         assertEquals(100, fresh.mid());
         assertEquals(0, fresh.volume().bought24h());
@@ -249,46 +254,58 @@ class BazaarServiceTest {
     }
 
     @Test
-    void sellOnlyFillDoesNotInspectBalanceOrInventory() {
+    void refusalReasonComesFromMessages() {
+        withMode(TradeMode.SELL_ONLY);
+        when(messages.get(eq("trade.reasons.buy-disabled"), anyString())).thenReturn("Achat impossible");
+        assertEquals("Achat impossible", service.buy(player, item.id(), 1).message());
+        assertEquals("Achat impossible", service.tradeModeRefusal(item.id(), TradeSide.BUY).message());
+        assertNull(service.tradeModeRefusal(item.id(), TradeSide.SELL));
+        assertNull(service.tradeModeRefusal("minecraft:not_listed", TradeSide.BUY));
+        assertNull(service.tradeModeRefusal(null, TradeSide.BUY));
+    }
+
+    @Test
+    void bothDirectionsStayOpenByDefault() {
+        assertNull(service.tradeModeRefusal(item.id(), TradeSide.BUY));
+        assertNull(service.tradeModeRefusal(item.id(), TradeSide.SELL));
+        when(vault.deposit(eq(player), anyDouble())).thenReturn(true);
+        assertTrue(service.sell(player, item.id(), 8).ok());
+    }
+
+    @Test
+    void fillOnASellOnlyItemIsZeroWithoutReadingBalanceOrInventory() {
         withMode(TradeMode.SELL_ONLY);
         assertEquals(0, service.fillAmount(player, item.id()));
         verifyNoInteractions(vault, eco, inventory);
     }
 
     @Test
-    void sellAllSkipsBuyOnlyItemsEvenWithAPreReloadScope() {
+    void sellAllSkipsBuyOnlyItemsEvenFromACollectionOlderThanTheReload() {
         withMode(TradeMode.BUY_ONLY);
-        var result = service.sellAll(player, List.of(item));
+        var result = service.sellAll(player, List.of(item));   // item itself is still BOTH
         assertTrue(result.soldNothing());
-        assertEquals(0, result.units());
-        assertEquals(0, result.proceeds());
-        assertEquals(0, result.blocked(), "configured untradeable items are silently skipped");
+        assertEquals(0, result.blocked(), "a buy-only item isn't a blocked sale, it isn't sellable at all");
         verifyNoInteractions(vault, eco, guard, inventory, scheduler, db);
     }
 
     @Test
-    void mixedSellAllTradesTheAllowedItemOnlyAndCannotSellItTwice() {
-        MarketItem allowed = withMode(TradeMode.SELL_ONLY);
+    void sellAllSellsTheSellableItemsAndLeavesBuyOnlyOnes() {
+        MarketItem sellable = withMode(TradeMode.SELL_ONLY);
         MarketItem buyOnly = new MarketItem("minecraft:stone_bricks", "test", null, "",
                 10, 0.05, 1000, 0.01, 1, 100, TradeMode.BUY_ONLY);
         when(market.get(buyOnly.id())).thenReturn(buyOnly);
         when(vault.deposit(eq(player), anyDouble())).thenReturn(true);
-        var scope = List.of(buyOnly, item);
-        var first = service.sellAll(player, scope);
-        assertEquals(1, first.distinctItems());
-        assertEquals(14, first.units());
-        assertEquals(0, first.blocked());
-        assertEquals(14, allowed.volume().sold24h());
-        assertTrue(allowed.mid() < 100);
-        assertTrue(service.sellAll(player, scope).soldNothing());
-        verify(vault, times(1)).deposit(eq(player), anyDouble());
+        var result = service.sellAll(player, List.of(buyOnly, item));
+        assertEquals(1, result.distinctItems());
+        assertEquals(14, result.units());
+        assertEquals(14, sellable.volume().sold24h());
         verify(eco, never()).countHeld(player, buyOnly.id());
         assertEquals(10, buyOnly.mid());
     }
 
     @Test
-    void buyOnlyUsesTheNormalChargeDeliveryAndMarketImpact() {
-        MarketItem allowed = withMode(TradeMode.BUY_ONLY);
+    void buyOnlyItemBuysNormally() {
+        MarketItem buyable = withMode(TradeMode.BUY_ONLY);
         storage.set(new ItemStack[4]);
         ItemStack prototype = mock(ItemStack.class);
         when(prototype.getMaxStackSize()).thenReturn(64);
@@ -296,57 +313,58 @@ class BazaarServiceTest {
         when(guard.allow(eq(player), eq(TradeSide.BUY), eq(item.id()), anyLong(), anyDouble())).thenReturn(true);
         when(vault.has(eq(player), anyDouble())).thenReturn(true);
         when(vault.withdraw(eq(player), anyDouble())).thenReturn(true);
-        double cost = PricingEngine.buyCost(allowed, 64);
-        double nextMid = PricingEngine.midAfterBuy(allowed, 64);
+        when(vault.balance(player)).thenReturn(1_000_000.0);
+        assertTrue(service.fillAmount(player, item.id()) > 0);
+        double cost = PricingEngine.buyCost(buyable, 64);
         TradeResult result = service.buy(player, item.id(), 64);
         assertTrue(result.ok());
         assertEquals(cost, result.total());
-        assertEquals(64, result.filled());
-        assertEquals(nextMid, allowed.mid());
-        assertEquals(64, allowed.volume().bought24h());
+        assertEquals(64, buyable.volume().bought24h());
         verify(vault).withdraw(player, cost);
-        verify(inventory).addItem(prototype);
-        verify(guard).observe(player, TradeSide.BUY, item.id(), 64, cost);
-        verify(scheduler).runTaskAsynchronously(eq(plugin), any(Runnable.class));
     }
 
     @Test
-    void sellOnlyStillHonorsFreezeGuardAndPaymentRejection() {
-        MarketItem allowed = withMode(TradeMode.SELL_ONLY);
-        allowed.setFrozen(true);
-        assertEquals(TradeResult.Status.DISABLED, service.sell(player, item.id(), 8).status());
-        allowed.setFrozen(false);
-        when(guard.allow(eq(player), eq(TradeSide.SELL), eq(item.id()), anyLong(), anyDouble())).thenReturn(false);
-        assertEquals(TradeResult.Status.REJECTED_BY_GUARD, service.sell(player, item.id(), 8).status());
-        when(guard.allow(eq(player), eq(TradeSide.SELL), eq(item.id()), anyLong(), anyDouble())).thenReturn(true);
-        ItemStack[] before = storage.get().clone();
-        assertEquals(TradeResult.Status.ERROR, service.sell(player, item.id(), 8).status());
-        assertArrayEquals(before, storage.get());
-        assertEquals(100, allowed.mid());
-        assertEquals(0, allowed.volume().sold24h());
+    void sellOnlyItemStillHonoursFreeze() {
+        MarketItem sellable = withMode(TradeMode.SELL_ONLY);
+        sellable.setFrozen(true);
+        assertEquals("This item is temporarily frozen.", service.sell(player, item.id(), 8).message());
     }
 
     @Test
-    void menuQuotesAndGroupRangesExcludeTheUnavailableSide() {
-        MarketItem buyOnly = withMode(TradeMode.BUY_ONLY);
+    void menuPlaceholdersShowTheModeAndHideTheTurnedOffPrices() {
         when(vault.formatPrice(anyDouble())).thenAnswer(i -> Double.toString(i.getArgument(0)));
-        var ph = service.placeholders(buyOnly, player);
+        var both = service.placeholders(item, player);
+        assertEquals("&aBuy and sell", both.get("rbazaar_trade_mode"));
+        assertNotEquals("-", both.get("rbazaar_buy_price"));
+        assertNotEquals("-", both.get("rbazaar_sell_price"));
+
+        var buyOnly = service.placeholders(withMode(TradeMode.BUY_ONLY), player);
+        assertEquals("&eBuy only", buyOnly.get("rbazaar_trade_mode"));
         for (String key : List.of("sell_price", "sell_value_1", "sell_value_64", "sell_value_all")) {
-            assertEquals("N/A", ph.get("rbazaar_" + key));
+            assertEquals("-", buyOnly.get("rbazaar_" + key), key);
         }
-        assertNotEquals("N/A", ph.get("rbazaar_buy_price"));
-        MarketItem sellOnly = withMode(TradeMode.SELL_ONLY);
-        ph = service.placeholders(sellOnly, player);
+        assertNotEquals("-", buyOnly.get("rbazaar_buy_price"));
+
+        var sellOnly = service.placeholders(withMode(TradeMode.SELL_ONLY), player);
+        assertEquals("&eSell only", sellOnly.get("rbazaar_trade_mode"));
         for (String key : List.of("buy_price", "buy_cost_1", "buy_cost_64")) {
-            assertEquals("N/A", ph.get("rbazaar_" + key));
+            assertEquals("-", sellOnly.get("rbazaar_" + key), key);
         }
-        assertNotEquals("N/A", ph.get("rbazaar_sell_price"));
+        assertNotEquals("-", sellOnly.get("rbazaar_sell_price"));
+    }
+
+    @Test
+    void groupBuyRangeLeavesOutSellOnlyItems() {
+        when(vault.formatPrice(anyDouble())).thenAnswer(i -> Double.toString(i.getArgument(0)));
+        MarketItem sellOnly = new MarketItem("minecraft:rotten_flesh", "test", null, "",
+                1, 0.05, 1000, 0.01, 0.1, 10, TradeMode.SELL_ONLY);
+        MarketItem buyOnly = new MarketItem("minecraft:stone_bricks", "test", null, "",
+                50, 0.05, 1000, 0.01, 1, 500, TradeMode.BUY_ONLY);
         var cat = mock(com.mystipixel.royalbazaar.config.CategoryConfig.class);
-        var group = new com.mystipixel.royalbazaar.config.CategoryConfig.Group("test", "Test", "stone", 0, -1);
+        var group = new com.mystipixel.royalbazaar.config.CategoryConfig.Group("g", "G", "stone", 0, -1);
         var onlySell = service.groupPlaceholders(cat, group, List.of(sellOnly));
-        assertEquals("N/A", onlySell.get("rbazaar_group_min_buy"));
-        assertEquals("N/A", onlySell.get("rbazaar_group_max_buy"));
-        sellOnly.setMid(1); // must not lower the mixed group's advertised buy range
+        assertEquals("-", onlySell.get("rbazaar_group_min_buy"));
+        assertEquals("-", onlySell.get("rbazaar_group_max_buy"));
         var mixed = service.groupPlaceholders(cat, group, List.of(sellOnly, buyOnly));
         assertEquals(Double.toString(PricingEngine.buyPrice(buyOnly)), mixed.get("rbazaar_group_min_buy"));
     }

@@ -9,8 +9,10 @@ import com.mystipixel.royalbazaar.hooks.VaultHook;
 import com.mystipixel.royalbazaar.market.MarketItem;
 import com.mystipixel.royalbazaar.market.MarketManager;
 import com.mystipixel.royalbazaar.market.PricingEngine;
+import com.mystipixel.royalbazaar.market.TradeMode;
 import com.mystipixel.royalbazaar.market.TradeResult;
 import com.mystipixel.royalbazaar.market.TradeSide;
+import com.mystipixel.royalbazaar.message.MessageManager;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -21,14 +23,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The buy/sell transaction flow. Everything here runs on the main thread, so the price mutation,
- * balance move and inventory change do not interleave with other scheduled tasks. This is not a
- * transaction across Vault and player persistence: explicit rejected sale payments restore the
- * reserved inventory, while provider exceptions/crashes have an unknown outcome. The DB audit
- * write is dispatched async.
- *
- * <p>Order of operations mirrors the design doc: resolve → quote → EconGuard veto → funds/items
- * check → reserve sell items → move money → deliver buy items → apply market impact → record.
+ * The buy/sell flow. Main thread only. Order: resolve, quote, EconGuard veto, funds/items check,
+ * reserve sell items, move money, deliver buy items, apply market impact, record. Not atomic across
+ * Vault: a rejected sale payment restores the reserved items, but a provider crash has an unknown outcome.
  */
 public final class BazaarService {
 
@@ -39,9 +36,10 @@ public final class BazaarService {
     private final EcoHook eco;
     private final EconGuardHook guard;
     private final PluginConfig config;
+    private final MessageManager messages;
 
     public BazaarService(JavaPlugin plugin, MarketManager market, BazaarDatabase db, VaultHook vault,
-                         EcoHook eco, EconGuardHook guard, PluginConfig config) {
+                         EcoHook eco, EconGuardHook guard, PluginConfig config, MessageManager messages) {
         this.plugin = plugin;
         this.market = market;
         this.db = db;
@@ -49,81 +47,80 @@ public final class BazaarService {
         this.eco = eco;
         this.guard = guard;
         this.config = config;
+        this.messages = messages;
     }
-
-    /**
-     * Refuse unavailable directions before prompting or touching any economy/inventory state.
-     * Null means this direction is configured; buy/sell still validate the full transaction.
-     */
-    public TradeResult tradeRestriction(String itemId, TradeSide side) {
-        MarketItem item = market.get(itemId);
-        if (item == null) {
-            return TradeResult.fail(TradeResult.Status.UNKNOWN_ITEM, side, itemId,
-                    message("trade.reasons.unknown-item", "Unknown item."));
-        }
-        if (!item.tradeMode().allows(side)) {
-            String reason = side == TradeSide.BUY
-                    ? message("trade.reasons.buy-disabled", "You cannot buy this item.")
-                    : message("trade.reasons.sell-disabled", "You cannot sell this item.");
-            return TradeResult.fail(TradeResult.Status.DISABLED, side, itemId, reason);
-        }
-        return null;
-    }
-
-    public String unavailablePrice() {
-        return message("price-unavailable", "N/A");
-    }
-
-    private String message(String key, String fallback) {
-        return plugin instanceof com.mystipixel.royalbazaar.RoyalBazaarPlugin rb && rb.messages() != null
-                ? rb.messages().get(key, fallback) : fallback;
-    }
-
-    // ------------------------------------------------------------------ buy
-
 
     public PluginConfig config() {
         return config;
     }
 
-    public TradeResult buy(Player player, String itemId, long amount) {
-        TradeResult restriction = tradeRestriction(itemId, TradeSide.BUY);
-        if (restriction != null) {
-            return restriction;
+    /**
+     * The refusal for trading {@code itemId} in a direction its {@code trade_mode} turns off, or null
+     * when that direction is open or the item isn't listed. {@link #buy} and {@link #sell} check this
+     * themselves; menus call it to refuse before opening a prompt.
+     */
+    public TradeResult tradeModeRefusal(String itemId, TradeSide side) {
+        MarketItem item = itemId == null ? null : market.get(itemId);
+        return item == null ? null : tradeModeRefusal(item, side);
+    }
+
+    private TradeResult tradeModeRefusal(MarketItem item, TradeSide side) {
+        if (item.tradeMode().allows(side)) {
+            return null;
         }
+        String reason = side == TradeSide.BUY
+                ? messages.get("trade.reasons.buy-disabled", "This item can't be bought here, only sold.")
+                : messages.get("trade.reasons.sell-disabled", "This item can't be sold here, only bought.");
+        return TradeResult.fail(TradeResult.Status.DISABLED, side, item.id(), reason);
+    }
+
+    /** Shown in place of a price for a direction the item can't be traded in. */
+    public String unavailablePrice() {
+        return messages.get("price-unavailable", "-");
+    }
+
+    public TradeResult buy(Player player, String itemId, long amount) {
         MarketItem item = market.get(itemId);
+        if (item == null) {
+            return TradeResult.fail(TradeResult.Status.UNKNOWN_ITEM, TradeSide.BUY, itemId,
+                    messages.get("trade.reasons.unknown-item", "Unknown item."));
+        }
+        TradeResult refused = tradeModeRefusal(item, TradeSide.BUY);
+        if (refused != null) {
+            return refused;
+        }
         if (amount <= 0) {
-            return TradeResult.fail(TradeResult.Status.ERROR, TradeSide.BUY, itemId, reason("invalid-amount", "Invalid amount."));
+            return TradeResult.fail(TradeResult.Status.ERROR, TradeSide.BUY, itemId,
+                    messages.get("trade.reasons.invalid-amount", "Invalid amount."));
         }
         if (item.frozen()) {
             return TradeResult.fail(TradeResult.Status.DISABLED, TradeSide.BUY, itemId,
-                    reason("frozen", "This item is temporarily frozen."));
+                    messages.get("trade.reasons.frozen", "This item is temporarily frozen."));
         }
         long maxOrder = config.maxOrder();
         if (maxOrder > 0 && amount > maxOrder) {
             return TradeResult.fail(TradeResult.Status.ERROR, TradeSide.BUY, itemId,
-                    reason("max-order", "You can buy at most {max} at once.").replace("{max}", String.valueOf(maxOrder)));
+                    messages.format("trade.reasons.max-order", "You can buy at most {max} at once.",
+                            Map.of("max", String.valueOf(maxOrder))));
         }
-        // Items are handed over through int-sized stacks, so an order beyond int range would be paid
-        // for in full but truncated in the (int) cast below. Clamp before pricing so the cost and the
-        // delivery always describe the same quantity.
+        // clamp before pricing so cost and the (int) delivery below describe the same quantity
         amount = Math.min(amount, Integer.MAX_VALUE);
-        // An id that no longer resolves (eco item removed, material typo) can't be delivered.
         ItemStack prototype = eco.resolve(itemId, 1);
         if (prototype == null) {
             return TradeResult.fail(TradeResult.Status.DISABLED, TradeSide.BUY, itemId,
-                    reason("unavailable", "This item is currently unavailable."));
+                    messages.get("trade.reasons.unavailable", "This item is currently unavailable."));
         }
 
         double cost = PricingEngine.buyCost(item, amount);
         if (!guard.allow(player, TradeSide.BUY, itemId, amount, cost)) {
-            return TradeResult.fail(TradeResult.Status.REJECTED_BY_GUARD, TradeSide.BUY, itemId, reason("blocked", "Trade blocked."));
+            return TradeResult.fail(TradeResult.Status.REJECTED_BY_GUARD, TradeSide.BUY, itemId,
+                    messages.get("trade.reasons.blocked", "Trade blocked."));
         }
         if (!vault.has(player, cost)) {
-            return TradeResult.fail(TradeResult.Status.INSUFFICIENT_FUNDS, TradeSide.BUY, itemId, reason("not-enough-money", "Not enough money."));
+            return TradeResult.fail(TradeResult.Status.INSUFFICIENT_FUNDS, TradeSide.BUY, itemId,
+                    messages.get("trade.reasons.not-enough-money", "Not enough money."));
         }
 
-        // How many can actually fit? Policy decides what happens to the remainder.
         int fits = spaceFor(player, itemId, prototype.getMaxStackSize(), (int) amount);
         long fill = amount;
         if (fits < amount) {
@@ -132,17 +129,19 @@ public final class BazaarService {
                 case "drop" -> { /* give all; overflow dropped below */ }
                 default -> {
                     return TradeResult.fail(TradeResult.Status.INVENTORY_FULL, TradeSide.BUY, itemId,
-                            reason("not-enough-space", "Not enough inventory space."));
+                            messages.get("trade.reasons.not-enough-space", "Not enough inventory space."));
                 }
             }
         }
         if (fill <= 0) {
-            return TradeResult.fail(TradeResult.Status.INVENTORY_FULL, TradeSide.BUY, itemId, reason("inventory-full", "Inventory full."));
+            return TradeResult.fail(TradeResult.Status.INVENTORY_FULL, TradeSide.BUY, itemId,
+                    messages.get("trade.reasons.inventory-full", "Inventory full."));
         }
 
         double finalCost = fill == amount ? cost : PricingEngine.buyCost(item, fill);
         if (!vault.withdraw(player, finalCost)) {
-            return TradeResult.fail(TradeResult.Status.INSUFFICIENT_FUNDS, TradeSide.BUY, itemId, reason("payment-failed", "Payment failed."));
+            return TradeResult.fail(TradeResult.Status.INSUFFICIENT_FUNDS, TradeSide.BUY, itemId,
+                    messages.get("trade.reasons.payment-failed", "Payment failed."));
         }
 
         giveItems(player, itemId, prototype.getMaxStackSize(), (int) fill);
@@ -152,8 +151,6 @@ public final class BazaarService {
         return TradeResult.ok(TradeSide.BUY, itemId, fill, finalCost);
     }
 
-    // ------------------------------------------------------------------ sell
-
     /** What a {@link #sellAll} pass did, for the summary message. */
     public record SellAllResult(int distinctItems, long units, double proceeds, int blocked) {
         public boolean soldNothing() {
@@ -162,19 +159,18 @@ public final class BazaarService {
     }
 
     /**
-     * Sell everything in the player's inventory that {@code scope} covers, skipping anything the bazaar
-     * doesn't trade. Each item goes through the normal {@link #sell} path, so price impact, the audit
-     * record and any EconGuard veto apply exactly as they would selling by hand — a blocked item is
-     * counted and skipped rather than aborting the whole run.
+     * Sell everything in the inventory that {@code scope} covers, each through {@link #sell}. Blocked
+     * or frozen items are counted and skipped rather than aborting the run; buy-only items are skipped
+     * without counting.
      */
     public SellAllResult sellAll(Player player, Collection<MarketItem> scope) {
         int distinct = 0;
         long units = 0;
         double proceeds = 0;
         int blocked = 0;
-        for (MarketItem entry : scope) {
-            // A caller may still hold the pre-reload collection. Always use the current policy.
-            MarketItem item = market.get(entry.id());
+        for (MarketItem listed : scope) {
+            // looked up again: the caller's collection can predate a reload that changed the mode
+            MarketItem item = market.get(listed.id());
             if (item == null || !item.tradeMode().allows(TradeSide.SELL)) {
                 continue;
             }
@@ -188,50 +184,57 @@ public final class BazaarService {
                 proceeds += result.total();
             } else if (result.status() == TradeResult.Status.REJECTED_BY_GUARD
                     || result.status() == TradeResult.Status.DISABLED) {
-                blocked++;   // vetoed by EconGuard, or frozen by an admin — skipped, not sold
+                blocked++;   // vetoed by EconGuard or frozen by an admin
             }
         }
         return new SellAllResult(distinct, units, proceeds, blocked);
     }
 
     public TradeResult sell(Player player, String itemId, long amount) {
-        TradeResult restriction = tradeRestriction(itemId, TradeSide.SELL);
-        if (restriction != null) {
-            return restriction;
-        }
         MarketItem item = market.get(itemId);
+        if (item == null) {
+            return TradeResult.fail(TradeResult.Status.UNKNOWN_ITEM, TradeSide.SELL, itemId,
+                    messages.get("trade.reasons.unknown-item", "Unknown item."));
+        }
+        TradeResult refused = tradeModeRefusal(item, TradeSide.SELL);
+        if (refused != null) {
+            return refused;
+        }
         if (item.frozen()) {
             return TradeResult.fail(TradeResult.Status.DISABLED, TradeSide.SELL, itemId,
-                    reason("frozen", "This item is temporarily frozen."));
+                    messages.get("trade.reasons.frozen", "This item is temporarily frozen."));
         }
         if (amount <= 0) {
-            return TradeResult.fail(TradeResult.Status.ERROR, TradeSide.SELL, itemId, reason("invalid-amount", "Invalid amount."));
+            return TradeResult.fail(TradeResult.Status.ERROR, TradeSide.SELL, itemId,
+                    messages.get("trade.reasons.invalid-amount", "Invalid amount."));
         }
         int held = eco.countHeld(player, itemId);
         if (held <= 0) {
-            return TradeResult.fail(TradeResult.Status.INSUFFICIENT_ITEMS, TradeSide.SELL, itemId, reason("none-to-sell", "You have none to sell."));
+            return TradeResult.fail(TradeResult.Status.INSUFFICIENT_ITEMS, TradeSide.SELL, itemId,
+                    messages.get("trade.reasons.none-to-sell", "You have none to sell."));
         }
         long fill = Math.min(amount, held); // amount == Long.MAX_VALUE for "sell all"
         double proceeds = PricingEngine.sellProceeds(item, fill);
 
         if (!guard.allow(player, TradeSide.SELL, itemId, fill, proceeds)) {
-            return TradeResult.fail(TradeResult.Status.REJECTED_BY_GUARD, TradeSide.SELL, itemId, reason("blocked", "Trade blocked."));
+            return TradeResult.fail(TradeResult.Status.REJECTED_BY_GUARD, TradeSide.SELL, itemId,
+                    messages.get("trade.reasons.blocked", "Trade blocked."));
         }
 
-        // Plan on detached stacks: a shallow array copy would still mutate the originals, losing
-        // quantities/metadata when a rejected payment is rolled back. Do not resolve replacement
-        // items from their ID: a custom stack may have unique metadata which must survive rejection.
+        // plan on cloned stacks and restore the originals on rejection; never rebuild them from the id,
+        // a custom stack may carry unique metadata
         ItemStack[] before = player.getInventory().getStorageContents();
         ItemStack[] reserved = reserveItems(before, itemId, (int) fill);
         if (reserved == null) {
             return TradeResult.fail(TradeResult.Status.INSUFFICIENT_ITEMS, TradeSide.SELL, itemId,
-                    reason("inventory-changed", "Your inventory changed. Please try again."));
+                    messages.get("trade.reasons.inventory-changed", "Your inventory changed. Please try again."));
         }
         player.getInventory().setStorageContents(reserved);
         if (!vault.deposit(player, proceeds)) {
             player.getInventory().setStorageContents(before);
             return TradeResult.fail(TradeResult.Status.ERROR, TradeSide.SELL, itemId,
-                    reason("payment-failed-returned", "Payment failed. Your items have been returned."));
+                    messages.get("trade.reasons.payment-failed-returned",
+                            "Payment failed. Your items have been returned."));
         }
         item.setMid(PricingEngine.midAfterSell(item, fill));
         item.volume().recordSell(fill);
@@ -239,19 +242,13 @@ public final class BazaarService {
         return TradeResult.ok(TradeSide.SELL, itemId, fill, proceeds);
     }
 
-    // ------------------------------------------------------------------ inventory helpers
-
     /**
-     * How many of an item a "fill my inventory" purchase should buy: as many as physically fit, capped by
-     * what the player can actually pay for.
-     *
-     * <p>The cap needs a search rather than division because the price climbs as the quantity rises —
-     * buying 500 costs more per unit than buying 5 — so the affordable quantity isn't balance/unit_price.
-     * Returns 0 when nothing fits or nothing is affordable, and the caller reports why.
+     * Quantity for a "fill my inventory" buy: as many as fit, capped by what the player can afford
+     * (binary search, since unit price rises with quantity). 0 when nothing fits or is affordable.
      */
     public long fillAmount(Player player, String itemId) {
         MarketItem item = market.get(itemId);
-        if (item == null || !item.tradeMode().allows(TradeSide.BUY) || item.frozen()) {
+        if (item == null || !item.tradeMode().allows(TradeSide.BUY)) {
             return 0;
         }
         ItemStack prototype = eco.resolve(itemId, 1);
@@ -280,7 +277,6 @@ public final class BazaarService {
         return low;
     }
 
-    /** Free capacity for this item across empty + partially-filled matching stacks. */
     private int spaceFor(Player player, String itemId, int max, int wanted) {
         int space = 0;
         for (ItemStack stack : player.getInventory().getStorageContents()) {
@@ -309,7 +305,7 @@ public final class BazaarService {
         }
     }
 
-    /** Reserve the exact quantity without changing any live stack; null means the quote is stale. */
+    // works on clones, never live stacks; null means the quote is stale
     private ItemStack[] reserveItems(ItemStack[] original, String itemId, int amount) {
         int remaining = amount;
         ItemStack[] contents = new ItemStack[original.length];
@@ -331,8 +327,6 @@ public final class BazaarService {
         return remaining == 0 ? contents : null;
     }
 
-    // ------------------------------------------------------------------ audit
-
     private void record(Player player, String itemId, TradeSide side, long qty, double unitMid, double total) {
         guard.observe(player, side, itemId, qty, total);
         long ts = System.currentTimeMillis();
@@ -340,12 +334,7 @@ public final class BazaarService {
                 () -> db.logTransaction(player.getUniqueId(), itemId, side, qty, unitMid, total, ts));
     }
 
-    // ------------------------------------------------------------------ quote helpers (menus / commands)
-
-    /**
-     * The display name of the group an item belongs to. Falls back to the category name for items that
-     * aren't in a group, so a breadcrumb built from it never renders as an empty gap.
-     */
+    // falls back to the category name so a breadcrumb never renders an empty gap
     private static String groupNameOf(CategoryConfig category, String groupId) {
         if (category == null) {
             return "";
@@ -364,35 +353,33 @@ public final class BazaarService {
         Map<String, String> p = new HashMap<>();
         p.put("rbazaar_item", item.id());
         p.put("rbazaar_item_display", displayNameFor(item));
-        p.put("rbazaar_buy_price", item.tradeMode().allows(TradeSide.BUY)
-                ? vault.formatPrice(PricingEngine.buyPrice(item)) : unavailablePrice());
-        p.put("rbazaar_sell_price", item.tradeMode().allows(TradeSide.SELL)
-                ? vault.formatPrice(PricingEngine.sellPrice(item)) : unavailablePrice());
+        boolean buyable = item.tradeMode().allows(TradeSide.BUY);
+        boolean sellable = item.tradeMode().allows(TradeSide.SELL);
+        String unavailable = unavailablePrice();
+        p.put("rbazaar_buy_price", buyable ? vault.formatPrice(PricingEngine.buyPrice(item)) : unavailable);
+        p.put("rbazaar_sell_price", sellable ? vault.formatPrice(PricingEngine.sellPrice(item)) : unavailable);
         p.put("rbazaar_spread_pct", String.format("%.1f", item.spread() * 100));
-        p.put("rbazaar_buy_cost_1", item.tradeMode().allows(TradeSide.BUY)
-                ? vault.formatPrice(PricingEngine.buyCost(item, 1)) : unavailablePrice());
-        p.put("rbazaar_buy_cost_64", item.tradeMode().allows(TradeSide.BUY)
-                ? vault.formatPrice(PricingEngine.buyCost(item, 64)) : unavailablePrice());
-        p.put("rbazaar_sell_value_1", item.tradeMode().allows(TradeSide.SELL)
-                ? vault.formatPrice(PricingEngine.sellProceeds(item, 1)) : unavailablePrice());
-        p.put("rbazaar_sell_value_64", item.tradeMode().allows(TradeSide.SELL)
-                ? vault.formatPrice(PricingEngine.sellProceeds(item, 64)) : unavailablePrice());
+        p.put("rbazaar_buy_cost_1", buyable ? vault.formatPrice(PricingEngine.buyCost(item, 1)) : unavailable);
+        p.put("rbazaar_buy_cost_64", buyable ? vault.formatPrice(PricingEngine.buyCost(item, 64)) : unavailable);
+        p.put("rbazaar_sell_value_1", sellable ? vault.formatPrice(PricingEngine.sellProceeds(item, 1)) : unavailable);
+        p.put("rbazaar_sell_value_64", sellable ? vault.formatPrice(PricingEngine.sellProceeds(item, 64)) : unavailable);
+        p.put("rbazaar_trade_mode", tradeModeLabel(item.tradeMode()));
         p.put("rbazaar_volume_24h", String.valueOf(item.volume().bought24h() + item.volume().sold24h()));
         p.put("rbazaar_change_24h", changePct(item));
         p.put("rbazaar_trend", trendArrow(item));
         p.put("rbazaar_change_7d", pctSince(item.mid(), item.midWeekAgo()));
         p.put("rbazaar_trend_7d", trendSince(item.mid(), item.midWeekAgo()));
-        p.put("rbazaar_low_7d", item.weekLow() > 0 ? vault.formatPrice(item.weekLow()) : "—");
-        p.put("rbazaar_high_7d", item.weekHigh() > 0 ? vault.formatPrice(item.weekHigh()) : "—");
+        String noWeekRange = messages.get("format.no-week-range", "-");
+        p.put("rbazaar_low_7d", item.weekLow() > 0 ? vault.formatPrice(item.weekLow()) : noWeekRange);
+        p.put("rbazaar_high_7d", item.weekHigh() > 0 ? vault.formatPrice(item.weekHigh()) : noWeekRange);
         if (viewer != null) {
             int held = eco.countHeld(viewer, item.id());
             p.put("rbazaar_held_amount", String.valueOf(held));
-            p.put("rbazaar_sell_value_all", item.tradeMode().allows(TradeSide.SELL)
-                ? vault.formatPrice(PricingEngine.sellProceeds(item, Math.max(1, held))) : unavailablePrice());
+            p.put("rbazaar_sell_value_all", sellable
+                    ? vault.formatPrice(PricingEngine.sellProceeds(item, Math.max(1, held))) : unavailable);
         }
 
-        // Where this item sits, so a product or buy menu can show a breadcrumb in its title. Without
-        // these the placeholders had nothing to resolve against and were printed literally.
+        // breadcrumb placeholders for product and buy menu titles
         CategoryConfig category = market.category(item.categoryId());
         p.put("rbazaar_category_id", item.categoryId() == null ? "" : item.categoryId());
         p.put("rbazaar_category", category == null ? "" : category.displayName());
@@ -401,19 +388,12 @@ public final class BazaarService {
         return p;
     }
 
-    /**
-     * Live summary for a group icon on the category grid: how many products it holds, the cheapest
-     * buy price in it, its combined 24h volume and an aggregate trend. Computed at render time from
-     * the group's items, so the icon reflects the market rather than a config snapshot.
-     *
-     * <p>{@code items} may be empty (a declared group nobody put items in) — the summary degrades to
-     * zeroes rather than throwing, so a half-finished config still opens.
-     */
+    /** Live summary for a group icon. {@code items} may be empty, which yields zeroes. */
     public Map<String, String> groupPlaceholders(CategoryConfig cat, CategoryConfig.Group group,
                                                  List<MarketItem> items) {
         Map<String, String> p = new HashMap<>();
         p.put("rbazaar_category", cat.displayName());
-        p.put("rbazaar_category_id", cat.id());   // raw id — open_menu args need this, not the display name
+        p.put("rbazaar_category_id", cat.id());   // raw id: open_menu args need this, not the display name
         p.put("rbazaar_group", group.id());
         p.put("rbazaar_group_name", group.name());
         p.put("rbazaar_group_icon", group.icon());
@@ -423,8 +403,8 @@ public final class BazaarService {
             p.put("rbazaar_group_min_buy", vault.formatPrice(0));
             p.put("rbazaar_group_max_buy", vault.formatPrice(0));
             p.put("rbazaar_group_volume_24h", "0");
-            p.put("rbazaar_group_trend", "&7-");
-            p.put("rbazaar_group_change_24h", "0.0%");
+            p.put("rbazaar_group_trend", messages.get("format.trend.group-empty", "&7-"));
+            p.put("rbazaar_group_change_24h", messages.get("format.change.no-history", "0.0%"));
             return p;
         }
 
@@ -443,25 +423,29 @@ public final class BazaarService {
             weightedNow += item.mid();
             weightedThen += item.midYesterday() > 0 ? item.midYesterday() : item.mid();
         }
-        p.put("rbazaar_group_min_buy", min == Double.MAX_VALUE ? unavailablePrice() : vault.formatPrice(min));
-        p.put("rbazaar_group_max_buy", min == Double.MAX_VALUE ? unavailablePrice() : vault.formatPrice(max));
+        boolean anyBuyable = min != Double.MAX_VALUE;
+        p.put("rbazaar_group_min_buy", anyBuyable ? vault.formatPrice(min) : unavailablePrice());
+        p.put("rbazaar_group_max_buy", anyBuyable ? vault.formatPrice(max) : unavailablePrice());
         p.put("rbazaar_group_volume_24h", String.valueOf(volume));
 
-        // Aggregate the group's move from the summed mids, so one cheap item can't swing the arrow.
+        // from summed mids, so one cheap item can't swing the arrow
         double pct = weightedThen <= 0 ? 0 : (weightedNow - weightedThen) / weightedThen * 100.0;
-        p.put("rbazaar_group_change_24h", String.format("%s%.1f%%", pct >= 0 ? "&a+" : "&c", pct));
+        p.put("rbazaar_group_change_24h", changeText(pct));
         double eps = 0.1;
-        p.put("rbazaar_group_trend", pct > eps ? "&a▲" : pct < -eps ? "&c▼" : "&7=");
+        p.put("rbazaar_group_trend", pct > eps ? trendUp() : pct < -eps ? trendDown()
+                : messages.get("format.trend.group-flat", "&7="));
         return p;
     }
 
-    /** A trade failure reason from {@code messages.yml} ({@code trade.reasons.<key>}), else English. */
-    private String reason(String key, String fallback) {
-        return plugin instanceof com.mystipixel.royalbazaar.RoyalBazaarPlugin rb && rb.messages() != null
-                ? rb.messages().get("trade.reasons." + key, fallback) : fallback;
+    private String tradeModeLabel(TradeMode mode) {
+        return switch (mode) {
+            case BOTH -> messages.get("trade-mode.both", "&aBuy and sell");
+            case BUY_ONLY -> messages.get("trade-mode.buy-only", "&eBuy only");
+            case SELL_ONLY -> messages.get("trade-mode.sell-only", "&eSell only");
+        };
     }
 
-    /** Config {@code display:} override, else the resolved item's own name, else a prettified id. */
+    // config display: override, else the item's own name, else a prettified id
     private String displayNameFor(MarketItem item) {
         if (item.displayName() != null && !item.displayName().isBlank()) {
             return item.displayName();
@@ -488,44 +472,61 @@ public final class BazaarService {
 
     private String changePct(MarketItem item) {
         if (item.midYesterday() <= 0) {
-            return "0.0%";
+            return messages.get("format.change.no-history", "0.0%");
         }
-        double pct = (item.mid() - item.midYesterday()) / item.midYesterday() * 100.0;
-        return String.format("%s%.1f%%", pct >= 0 ? "&a+" : "&c", pct);
+        return changeText((item.mid() - item.midYesterday()) / item.midYesterday() * 100.0);
     }
 
-    /** Percentage move from {@code then} to {@code now}, or a dash while no baseline exists yet. */
     private String pctSince(double now, double then) {
         if (then <= 0) {
-            return "&7—";
+            return messages.get("format.change.no-history-7d", "&7-");
         }
-        double pct = (now - then) / then * 100.0;
-        return String.format("%s%.1f%%", pct >= 0 ? "&a+" : "&c", pct);
+        return changeText((now - then) / then * 100.0);
     }
 
+    private String changeText(double pct) {
+        String percent = String.format("%.1f", pct);
+        return pct >= 0
+                ? messages.format("format.change.up", "&a+{percent}%", Map.of("percent", percent))
+                : messages.format("format.change.down", "&c{percent}%", Map.of("percent", percent));
+    }
+
+    // no baseline yet reads as flat
     private String trendSince(double now, double then) {
         if (then <= 0) {
-            return "&7▬";
+            return trendFlat();
         }
         double eps = then * 0.001;
         if (now - then > eps) {
-            return "&a▲";
+            return trendUp();
         }
         if (now - then < -eps) {
-            return "&c▼";
+            return trendDown();
         }
-        return "&7▬";
+        return trendFlat();
     }
 
     private String trendArrow(MarketItem item) {
         double d = item.mid() - item.emaShort();
         double eps = item.emaShort() * 0.001;
         if (d > eps) {
-            return "&a▲";
+            return trendUp();
         }
         if (d < -eps) {
-            return "&c▼";
+            return trendDown();
         }
-        return "&7▬";
+        return trendFlat();
+    }
+
+    private String trendUp() {
+        return messages.get("format.trend.up", "&a▲");
+    }
+
+    private String trendDown() {
+        return messages.get("format.trend.down", "&c▼");
+    }
+
+    private String trendFlat() {
+        return messages.get("format.trend.flat", "&7▬");
     }
 }

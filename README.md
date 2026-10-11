@@ -169,53 +169,42 @@ items:
 Adding an item is one block. Removing it is deleting the block. The `defaults:` block is what stops
 300 items from repeating the same five tuning lines.
 
-### One-way items
+### Buy-only and sell-only items
 
-Set `trade_mode` **per item**, from the player's perspective: `both` (default),
-`buy_only`, or `sell_only`. Values are case-insensitive. Omitted settings keep existing
-markets two-way; an invalid value skips the listing with a warning instead of enabling trades.
-For example (prices and caps are illustrative, not changes to the bundled catalog):
+`trade_mode` sets which way players can trade an item, from the player's side: `both` (the default),
+`buy_only` or `sell_only`. Put it on an item, or in `defaults:` for the whole category:
 
 ```yaml
 items:
   rotten_flesh:
     item: "minecraft:rotten_flesh"
     base_price: 0.5
-    trade_mode: sell_only
-    floor_pct: 0.2
-    ceiling_pct: 1.0
+    trade_mode: sell_only     # players can sell it here, never buy it
   stone_bricks:
     item: "minecraft:stone_bricks"
     base_price: 2.0
-    trade_mode: buy_only
-    floor_pct: 1.0
-    ceiling_pct: 1.5
+    trade_mode: buy_only      # players can buy it here, never sell it
 ```
 
-Disabled directions are refused by the trade service before money, items, price, volume or
-transaction records change. Sell-all skips buy-only listings, and fill-inventory returns zero
-for sell-only listings. Trade buttons and quantity prompts for unavailable directions are hidden
-or refused, including clicks from menus opened before `/bazaar reload`. Price commands, menu
-quotes and PlaceholderAPI show the configurable `price-unavailable` text (`N/A`) for that side;
-group buy ranges exclude sell-only items. Existing custom menus work without new conditions.
+An item without `trade_mode` trades both ways, so existing category files behave as before. An
+unrecognised value skips the item with a console warning instead of opening both directions.
 
-The pricing formula, spread and reversion are unchanged. Selling into a sell-only market lowers
-its mid; buying from a buy-only market raises it. Reversion still brings the mid toward base.
-Sell-only items are money sources; buy-only items are money sinks. Set prices, elasticity and
-reversion according to production rates and review recipes and other shops: a direction setting
-cannot prevent every cross-item conversion loop. **Floor/ceiling bound the post-trade mid, not
-the marginal prices inside an order**; large orders can cost more per unit than the ceiling quote
-or pay less than the floor quote. The existing `trading.max-order` limits purchases.
+The trade service refuses the turned-off direction before any money, items, price or history change,
+so every route is covered: the menu buttons, the custom-amount dialogs, fill-inventory, `/bazaar
+sellall` and the Sell All button (which skip buy-only items), and clicks on menus or dialogs opened
+before a `/bazaar reload` that changed the mode. The player gets `trade.reasons.buy-disabled` or
+`trade.reasons.sell-disabled` from `messages.yml`. Prices for the turned-off side show
+`price-unavailable` in menus, `/bazaar price` and PlaceholderAPI, and the product page shows the mode
+(`%rbazaar_trade_mode%`) and draws the turned-off button with its `disabled-item` / `disabled-lore`.
 
-The EcoShop arbitrage guard constrains only executable routes: a buy-enabled listing's floor
-prevents buying here and reselling to the NPC; a sell-enabled listing's ceiling prevents buying
-at the NPC and selling here. `both` applies both constraints. If the relevant constraints leave
-no valid range, the listing is skipped; protection is never silently dropped. Explicit
-`npc_floor`, `npc_ceiling` and `base_price: auto` anchors keep their existing meaning.
+There are no standing orders to worry about when a mode changes: the server is the counterparty and
+every trade fills at once. `/bazaar reload` applies a new mode to the next click and keeps the item's
+price, volume and freeze.
 
-`/bazaar reload` applies mode changes immediately and preserves live prices (re-clamped to new
-bounds), volume, freezes and pending writes. Modes live in category config, so no database
-migration is needed. New messages have fallbacks for existing `messages.yml` files.
+Selling into a sell-only item still lowers its price and reversion still pulls it back up, so a
+sell-only item is a steady money source; a buy-only item is a money sink. With the EcoShop guard on,
+only the routes players can actually take are bracketed: a buy-only item keeps the floor that stops
+"buy here, sell to EcoShop", a sell-only item keeps the ceiling that stops "buy from EcoShop, sell here".
 
 ### The spread is your inflation sink
 
@@ -268,6 +257,10 @@ EcoShop's bracket even without `npc_floor`/`npc_ceiling`, spread included: the b
 never falls below what the NPC pays, and its sell price never rises above what the NPC charges.
 Outside that range a player could buy from one shop and sell to the other at a profit. EcoShop
 prices in anything other than coins are ignored.
+
+If EcoShop's prices leave an item no such range inside its floor and ceiling, the console warns with
+the item and the conflicting prices. `trading.npc-arbitrage-conflict: keep` (the default) still lists
+it with its configured floor and ceiling, unguarded; `skip` leaves it out of the bazaar until fixed.
 
 > **Tuning note:** anchoring `base_price` to EcoShop's *buy* value puts the item at the **top** of its
 > range, so the mid can then barely rise. If you want movement both ways, anchor the base nearer
@@ -351,6 +344,10 @@ button behaves correctly however the player arrived.
 `%rbazaar_sell_value_64%` `%rbazaar_sell_value_all%` `%rbazaar_held_amount%` `%rbazaar_trend%`
 `%rbazaar_change_24h%` `%rbazaar_volume_24h%` `%rbazaar_spread_pct%`
 `%rbazaar_category%` `%rbazaar_category_id%` `%rbazaar_group%` `%rbazaar_group_name%`
+`%rbazaar_trade_mode%`
+
+A fixed slot can also set `disabled-item:` and `disabled-lore:`. They replace the slot's item and lore
+when every buy or sell action on it is turned off by the item's `trade_mode`.
 
 ### Searching in other languages
 

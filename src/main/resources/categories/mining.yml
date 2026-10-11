@@ -3,7 +3,7 @@
 #
 # Shipped defaults are VANILLA ONLY, so the bazaar works on a fresh server with no other plugins.
 # Storage blocks are exactly 9x their component; nuggets are 1/9 of their ingot.
-# Crafted redstone gear is priced ABOVE the sum of its inputs, so no recipe prints money.
+# Crafted redstone gear is priced at or below the cost of its inputs, so no recipe prints money.
 
 name: "&bMining"
 icon: "minecraft:iron_pickaxe"
@@ -15,6 +15,7 @@ defaults:
   reversion_rate: 0.02
   floor_pct: 0.4
   ceiling_pct: 3.0
+  trade_mode: both      # both, buy_only (players can only buy) or sell_only (only sell); items can override it
 
 groups:
   stone:
@@ -107,12 +108,12 @@ groups:
     order: 22
 
 items:
-  # --- Stone & Cobblestone ---
+  # Stone & Cobblestone
   cobblestone:
     item: "minecraft:cobblestone"
     group: stone
     base_price: 2.0
-    elasticity: 150000    # staple — very stable
+    elasticity: 150000    # staple, very stable
   stone:
     item: "minecraft:stone"
     group: stone
@@ -124,7 +125,7 @@ items:
   stone_bricks:
     item: "minecraft:stone_bricks"
     group: stone
-    base_price: 3.0
+    base_price: 2.5
   granite:
     item: "minecraft:granite"
     group: stone
@@ -150,7 +151,7 @@ items:
     group: obsidian
     base_price: 80.0
 
-  # --- Deepslate ---
+  # Deepslate
   cobbled_deepslate:
     item: "minecraft:cobbled_deepslate"
     group: deepslate
@@ -162,7 +163,7 @@ items:
   deepslate_bricks:
     item: "minecraft:deepslate_bricks"
     group: deepslate
-    base_price: 4.0
+    base_price: 2.5
   sculk:
     item: "minecraft:sculk"
     group: deepslate
@@ -176,7 +177,7 @@ items:
     group: deepslate
     base_price: 90.0
 
-  # --- Coal ---
+  # Coal
   coal:
     item: "minecraft:coal"
     group: coal
@@ -194,7 +195,7 @@ items:
     group: coal
     base_price: 9.0       # silk touch only
 
-  # --- Copper ---
+  # Copper
   raw_copper:
     item: "minecraft:raw_copper"
     group: copper
@@ -214,9 +215,9 @@ items:
   lightning_rod:
     item: "minecraft:lightning_rod"
     group: copper
-    base_price: 17.0      # 3 copper ingots
+    base_price: 15.7      # 3 copper ingots
 
-  # --- Iron ---
+  # Iron
   raw_iron:
     item: "minecraft:raw_iron"
     group: iron
@@ -245,7 +246,7 @@ items:
   iron_bars:
     item: "minecraft:iron_bars"
     group: iron
-    base_price: 5.0       # 6 ingots (72) yields 16
+    base_price: 4.7       # 6 ingots (72) yields 16
   chain:
     item: "minecraft:chain"
     group: iron
@@ -253,13 +254,13 @@ items:
   bucket:
     item: "minecraft:bucket"
     group: iron
-    base_price: 40.0      # 3 ingots
+    base_price: 37.6      # 3 ingots
   anvil:
     item: "minecraft:anvil"
     group: iron
-    base_price: 400.0     # 31 ingots (372)
+    base_price: 389.0     # 31 ingots (372)
 
-  # --- Gold ---
+  # Gold
   raw_gold:
     item: "minecraft:raw_gold"
     group: gold
@@ -285,7 +286,7 @@ items:
     group: gold
     base_price: 20.0
 
-  # --- Redstone ---
+  # Redstone
   redstone:
     item: "minecraft:redstone"
     group: redstone
@@ -301,13 +302,13 @@ items:
   glowstone_dust:
     item: "minecraft:glowstone_dust"
     group: glowstone
-    base_price: 6.0
+    base_price: 6.35
   glowstone:
     item: "minecraft:glowstone"
     group: glowstone
     base_price: 26.0      # 4 dust
 
-  # --- Lapis Lazuli ---
+  # Lapis Lazuli
   lapis_lazuli:
     item: "minecraft:lapis_lazuli"
     group: lapis
@@ -321,11 +322,11 @@ items:
     group: lapis
     base_price: 14.0
 
-  # --- Nether Quartz ---
+  # Nether Quartz
   quartz:
     item: "minecraft:quartz"
     group: quartz
-    base_price: 8.0
+    base_price: 8.15
   quartz_block:
     item: "minecraft:quartz_block"
     group: quartz
@@ -335,7 +336,7 @@ items:
     group: quartz
     base_price: 15.0
 
-  # --- Emerald ---
+  # Emerald
   emerald:
     item: "minecraft:emerald"
     group: emerald
@@ -349,12 +350,12 @@ items:
     group: emerald
     base_price: 100.0
 
-  # --- Diamond ---
+  # Diamond
   diamond:
     item: "minecraft:diamond"
     group: diamond
     base_price: 120.0
-    elasticity: 20000     # thinner market — moves faster
+    elasticity: 20000     # thinner market, moves faster
   diamond_block:
     item: "minecraft:diamond_block"
     group: diamond
@@ -365,7 +366,7 @@ items:
     base_price: 200.0
     ceiling_pct: 4.0
 
-  # --- Dirt, Sand & Gravel ---
+  # Dirt, Sand & Gravel
   dirt:
     item: "minecraft:dirt"
     group: earth
@@ -394,7 +395,7 @@ items:
   sandstone:
     item: "minecraft:sandstone"
     group: earth
-    base_price: 9.0       # 4 sand
+    base_price: 8.35      # 4 sand
   gravel:
     item: "minecraft:gravel"
     group: earth
@@ -410,11 +411,11 @@ items:
   clay:
     item: "minecraft:clay"
     group: earth
-    base_price: 13.0      # 4 clay balls
+    base_price: 12.5      # 4 clay balls
   brick:
     item: "minecraft:brick"
     group: earth
-    base_price: 4.0       # smelted clay ball
+    base_price: 4.1       # smelted clay ball
   bricks:
     item: "minecraft:bricks"
     group: earth
@@ -452,7 +453,7 @@ items:
     group: earth
     base_price: 4.0
 
-  # --- Glass ---
+  # Glass
   glass:
     item: "minecraft:glass"
     group: glass
@@ -466,61 +467,62 @@ items:
     group: glass
     base_price: 30.0      # glass + 4 amethyst shards
 
-  # --- Redstone Components ---
+  # Redstone Components
   redstone_torch:
     item: "minecraft:redstone_torch"
     group: redstone_gear
-    base_price: 8.0       # stick + redstone
+    base_price: 6.8       # stick + redstone
   repeater:
     item: "minecraft:repeater"
     group: redstone_gear
-    base_price: 32.0      # 2 torches + redstone + 3 stone
+    base_price: 28.3      # 2 torches + redstone + 3 stone
   comparator:
     item: "minecraft:comparator"
     group: redstone_gear
-    base_price: 42.0      # 3 torches + quartz + 3 stone
+    base_price: 37.7      # 3 torches + quartz + 3 stone
   piston:
     item: "minecraft:piston"
     group: redstone_gear
-    base_price: 35.0      # 3 planks + 4 cobble + iron + redstone
+    base_price: 30.3      # 3 planks + 4 cobble + iron + redstone
   sticky_piston:
     item: "minecraft:sticky_piston"
     group: redstone_gear
-    base_price: 55.0      # piston + slime ball
+    base_price: 47.5      # piston + slime ball
   observer:
     item: "minecraft:observer"
     group: redstone_gear
-    base_price: 36.0      # 6 cobble + 2 redstone + quartz
+    base_price: 33.6      # 6 cobble + 2 redstone + quartz
   hopper:
     item: "minecraft:hopper"
     group: redstone_gear
-    base_price: 90.0      # 5 iron + chest
+    base_price: 71.3      # 5 iron + chest
   target:
     item: "minecraft:target"
     group: redstone_gear
-    base_price: 55.0      # 4 redstone + hay block
+    base_price: 53.4      # 4 redstone + hay block
+    floor_pct: 0.25
   redstone_lamp:
     item: "minecraft:redstone_lamp"
     group: redstone_gear
-    base_price: 54.0      # 4 redstone + glowstone
+    base_price: 52.3      # 4 redstone + glowstone
   tnt:
     item: "minecraft:tnt"
     group: redstone_gear
-    base_price: 62.0      # 5 gunpowder + 4 sand
+    base_price: 60.7      # 5 gunpowder + 4 sand
   rail:
     item: "minecraft:rail"
     group: redstone_gear
-    base_price: 6.0       # 6 iron + stick yields 16
+    base_price: 4.7       # 6 iron + stick yields 16
   powered_rail:
     item: "minecraft:powered_rail"
     group: redstone_gear
-    base_price: 23.0      # 6 gold + stick + redstone yields 6
-  # --- End Stone ---
+    base_price: 22.0      # 6 gold + stick + redstone yields 6
+  # End Stone
   end_stone:
     item: "minecraft:end_stone"
     group: end_stone
     base_price: 3.0
-  # --- Ice ---
+  # Ice
   ice:
     item: "minecraft:ice"
     group: ice
@@ -529,7 +531,7 @@ items:
     item: "minecraft:packed_ice"
     group: ice
     base_price: 27.0
-  # --- Snow ---
+  # Snow
   snowball:
     item: "minecraft:snowball"
     group: snow

@@ -8,12 +8,10 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 
-/**
- * Loads user-facing text from {@code messages.yml} (every key has an inline fallback, so the file is
- * optional) and renders it through Adventure. Reloadable via {@code /bazaar reload}.
- */
+/** Loads {@code messages.yml}. Every key has an inline fallback, so the file is optional. */
 public final class MessageManager {
 
     private final JavaPlugin plugin;
@@ -43,9 +41,12 @@ public final class MessageManager {
         return messages.getString(key, fallback);
     }
 
-    /** A multi-line text (YAML list), e.g. the hint lines of a sign prompt. */
-    public java.util.List<String> lines(String key, java.util.List<String> fallback) {
-        return messages.isList(key) ? messages.getStringList(key) : fallback;
+    // a list key; a plain string there counts as a one-line list
+    public List<String> lines(String key, List<String> fallback) {
+        if (messages.isList(key)) {
+            return messages.getStringList(key);
+        }
+        return messages.isString(key) ? List.of(messages.getString(key)) : fallback;
     }
 
     public String format(String key, String fallback, Map<String, String> placeholders) {

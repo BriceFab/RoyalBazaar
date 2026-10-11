@@ -4,33 +4,27 @@ import com.mystipixel.royalbazaar.market.MarketItem;
 import com.mystipixel.royalbazaar.market.MarketManager;
 import com.mystipixel.royalbazaar.market.PricingEngine;
 import com.mystipixel.royalbazaar.market.TradeSide;
-import com.mystipixel.royalbazaar.message.MessageManager;
+import com.mystipixel.royalbazaar.service.BazaarService;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * PlaceholderAPI expansion so live prices are usable anywhere (holograms, scoreboards, other menus).
- * Format: {@code %royalbazaar_buy_<itemId>%}, {@code %royalbazaar_sell_<itemId>%},
- * {@code %royalbazaar_mid_<itemId>%}. Item ids keep their namespace, e.g.
- * {@code %royalbazaar_buy_ecoitem:enchanted_cobblestone%}.
+ * PlaceholderAPI expansion: {@code %royalbazaar_<buy|sell|mid|change24h|change7d>_<itemId>%}.
+ * Item ids keep their namespace, e.g. {@code %royalbazaar_buy_ecoitem:enchanted_cobblestone%}.
  */
 public final class BazaarPlaceholderExpansion extends PlaceholderExpansion {
 
     private final MarketManager market;
     private final VaultHook vault;
     private final String version;
-    private final MessageManager messages;
+    private final BazaarService service;
 
-    public BazaarPlaceholderExpansion(MarketManager market, VaultHook vault, String version) {
-        this(market, vault, version, null);
-    }
-
-    public BazaarPlaceholderExpansion(MarketManager market, VaultHook vault, String version, MessageManager messages) {
-        this.messages = messages;
+    public BazaarPlaceholderExpansion(MarketManager market, VaultHook vault, String version, BazaarService service) {
         this.market = market;
         this.vault = vault;
         this.version = version;
+        this.service = service;
     }
 
     @Override
@@ -53,10 +47,6 @@ public final class BazaarPlaceholderExpansion extends PlaceholderExpansion {
         return true;
     }
 
-    private String unavailablePrice() {
-        return messages == null ? "N/A" : messages.get("price-unavailable", "N/A");
-    }
-
     @Override
     public String onRequest(OfflinePlayer player, @NotNull String params) {
         int sep = params.indexOf('_');
@@ -71,9 +61,9 @@ public final class BazaarPlaceholderExpansion extends PlaceholderExpansion {
         }
         return switch (type) {
             case "buy" -> item.tradeMode().allows(TradeSide.BUY)
-                    ? vault.format(PricingEngine.buyPrice(item)) : unavailablePrice();
+                    ? vault.format(PricingEngine.buyPrice(item)) : service.unavailablePrice();
             case "sell" -> item.tradeMode().allows(TradeSide.SELL)
-                    ? vault.format(PricingEngine.sellPrice(item)) : unavailablePrice();
+                    ? vault.format(PricingEngine.sellPrice(item)) : service.unavailablePrice();
             case "mid" -> vault.format(item.mid());
             // Plain-text percentages (no colour codes): scoreboards and holograms style themselves.
             case "change24h" -> item.midYesterday() <= 0 ? "0.0%"

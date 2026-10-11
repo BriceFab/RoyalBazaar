@@ -8,9 +8,9 @@ import com.mystipixel.royalbazaar.gui.menu.MenuSlot;
 import com.mystipixel.royalbazaar.gui.menu.MenuTemplate;
 import com.mystipixel.royalbazaar.hooks.EcoHook;
 import com.mystipixel.royalbazaar.market.MarketItem;
-import com.mystipixel.royalbazaar.message.MessageManager;
 import com.mystipixel.royalbazaar.market.MarketManager;
 import com.mystipixel.royalbazaar.market.TradeSide;
+import com.mystipixel.royalbazaar.message.MessageManager;
 import com.mystipixel.royalbazaar.service.BazaarService;
 import com.mystipixel.royalbazaar.util.ItemNames;
 import com.mystipixel.royalbazaar.util.Text;
@@ -22,6 +22,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -29,9 +30,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Opens and renders the three bazaar menus and tracks each viewer's {@link OpenView}. Rendering:
- * paint the mask filler, place fixed {@code slots} (binding their click effects), then — for the
- * category menu — page the category's items into the mask's {@code 0} slots using the content template.
+ * Opens and renders the bazaar menus and tracks each viewer's {@link OpenView}. Rendering paints the
+ * mask filler, places fixed {@code slots}, then pages entries into the mask's {@code 0} slots.
  */
 public final class GuiManager {
 
@@ -44,18 +44,14 @@ public final class GuiManager {
 
     private final Map<UUID, OpenView> views = new HashMap<>();
 
-    /**
-     * Players currently being re-rendered by {@link #refresh(Player)}. A refresh reuses the open path,
-     * but a re-render is not an opening — without this, every trade replays the menu's open sound on
-     * top of the button's own click sound.
-     */
+    // players being re-rendered by refresh(), so it doesn't replay the menu's open sound
     private final Set<UUID> refreshing = new HashSet<>();
 
     public GuiManager(MenuManager menus, MarketManager market, BazaarService service, EcoHook eco,
-                      MessageManager messages, ItemNames itemNames) {
+                      ItemNames itemNames, MessageManager messages) {
         this.menus = menus;
-        this.messages = messages;
         this.itemNames = itemNames;
+        this.messages = messages;
         this.market = market;
         this.service = service;
         this.eco = eco;
@@ -69,41 +65,23 @@ public final class GuiManager {
         views.remove(player.getUniqueId());
     }
 
-    // ------------------------------------------------------------------ open
-
-
-    /**
-     * The category grid. A category that declares {@code groups:} pages its group icons here (each
-     * opening the group menu); a flat one pages its products directly, as before. Un-grouped items in
-     * a grouped category still appear alongside the group icons, so nothing can go missing.
-     */
-    /**
-     * What {@code /bazaar} opens: the configured default category, falling back to the first configured
-     * one when none is set or the id no longer matches a category (renamed, removed), rather than
-     * opening nothing at all.
-     */
+    /** Opens the configured default category, or the first one if it's unset or no longer exists. */
     public void openDefault(Player player) {
         String preferred = service.config().defaultCategory();
         if (preferred != null && market.category(preferred) != null) {
             openCategory(player, preferred, 1);
             return;
         }
-        // No default configured (or it names a category that no longer exists): open the first one.
-        // The category rail is the navigation, so landing anywhere in it puts every category one
-        // click away.
         for (CategoryConfig cat : market.categories()) {
             openCategory(player, cat.id(), 1);
             return;
         }
-        // Nothing to show: no categories are configured. Say so rather than opening an empty menu.
         messages.send(player, "no-categories", "&cThe bazaar has no categories configured.");
     }
 
     /**
-     * Results for a search, rendered with the category template so paging, icons and buy/sell clicks all
-     * behave exactly as they do inside a category. Matches on the item's configured display name and its
-     * id, so both "enchanted cobblestone" and "cobble" find something, and on its name in any language
-     * file loaded into {@link ItemNames}. Case and accents are ignored.
+     * Search results, rendered with the category template. Matches display name, id and translated
+     * names from {@link ItemNames}, ignoring case and accents.
      */
     public void openSearch(Player player, String query, int page) {
         String needle = ItemNames.normalize(query);
@@ -124,8 +102,12 @@ public final class GuiManager {
         view.setPage(Math.max(1, page));
 
         Map<String, String> base = new HashMap<>();
-        base.put("rbazaar_category", messages.format("gui.search-title", "Search: {query} ({count})",
-                Map.of("query", query, "count", String.valueOf(hits.size()))));
+        // count first, so a query that contains "{count}" is shown as typed
+        Map<String, String> searchValues = new LinkedHashMap<>();
+        searchValues.put("count", String.valueOf(hits.size()));
+        searchValues.put("query", query);
+        base.put("rbazaar_category",
+                messages.format("gui.search-title", "Search: {query} ({count})", searchValues));
         Inventory inv = BazaarMenuHolder.create(tmpl.size(), Text.color(applyMap(tmpl.title(), base)));
         tmpl.applyFiller(inv);
         placeFixedSlots(tmpl, inv, view, base);
@@ -165,7 +147,6 @@ public final class GuiManager {
         views.put(player.getUniqueId(), view);
     }
 
-    /** Play a menu's configured open sound, if it defines one and this is a real open. */
     private void playOpen(Player player, MenuTemplate tmpl) {
         MenuTemplate.SoundSpec spec = tmpl == null ? null : tmpl.sound("open");
         if (spec == null || refreshing.contains(player.getUniqueId())) {
@@ -174,11 +155,10 @@ public final class GuiManager {
         try {
             player.playSound(player.getLocation(), spec.name(), spec.volume(), spec.pitch());
         } catch (Throwable ignored) {
-            // bad sound key — never let it stop a menu opening
+            // bad sound key: never let it stop a menu opening
         }
     }
 
-    /** One group's products: category → group → here. */
     public void openGroup(Player player, String categoryId, String groupId, int page) {
         CategoryConfig cat = market.category(categoryId);
         if (cat == null) {
@@ -188,7 +168,7 @@ public final class GuiManager {
                 .filter(g -> g.id().equals(groupId))
                 .findFirst().orElse(null);
         if (group == null) {
-            openCategory(player, categoryId, 1); // stale/typo'd group — don't strand the player
+            openCategory(player, categoryId, 1); // stale or mistyped group, don't strand the player
             return;
         }
         MenuTemplate tmpl = menus.get("bazaar_group");
@@ -208,24 +188,19 @@ public final class GuiManager {
         views.put(player.getUniqueId(), view);
     }
 
-    /**
-     * The instant-buy menu for one item: fixed quantities, "fill my inventory", and a custom amount.
-     *
-     * <p>Split out from the product page so that page can stay a summary — the item, its live stats, and
-     * one button per direction — instead of a wall of quantity buttons.
-     */
+    /** Instant-buy menu for one item: fixed quantities, "fill my inventory" and a custom amount. */
     public void openBuy(Player player, String itemId) {
         MarketItem item = itemId == null ? null : market.get(itemId);
         if (item == null) {
             return;
         }
         if (!item.tradeMode().allows(TradeSide.BUY)) {
-            openProduct(player, itemId);
+            openProduct(player, itemId);   // e.g. refreshing a buy menu after a reload made the item sell-only
             return;
         }
         MenuTemplate tmpl = menus.get("bazaar_buy");
         if (tmpl == null) {
-            openProduct(player, itemId);   // menu file missing — don't strand the player
+            openProduct(player, itemId);   // menu file missing, don't strand the player
             return;
         }
         OpenView view = new OpenView("bazaar_buy", item.categoryId(), itemId);
@@ -259,15 +234,13 @@ public final class GuiManager {
     }
 
     /**
-     * The market overview: the day's biggest risers, biggest fallers and most-traded items, one row
-     * of each. Computed from live in-memory state at open time, so it costs no queries. The template's
-     * content slots are split into three equal runs in mask order — top run risers, middle fallers,
-     * bottom volume — so the layout is still entirely the config's to shape.
+     * Market overview from in-memory state. The content slots are split into three equal runs in mask
+     * order: risers, fallers, most traded.
      */
     public void openTrends(Player player) {
         MenuTemplate tmpl = menus.get("bazaar_trends");
         if (tmpl == null) {
-            openDefault(player);                 // menu file missing — don't strand the player
+            openDefault(player);                 // menu file missing, don't strand the player
             return;
         }
         OpenView view = new OpenView("bazaar_trends", null, null);
@@ -301,7 +274,7 @@ public final class GuiManager {
         }
     }
 
-    /** Items that actually moved today, biggest move first. Flat items leave their slots empty. */
+    // biggest move first; flat items are left out
     private List<MarketItem> byDayChange(boolean falling) {
         List<MarketItem> out = new ArrayList<>();
         for (MarketItem item : market.all()) {
@@ -333,7 +306,7 @@ public final class GuiManager {
         return item.midYesterday() <= 0 ? 0.0 : (item.mid() - item.midYesterday()) / item.midYesterday();
     }
 
-    /** Re-render whatever the player currently has open (after a trade moves prices). */
+    /** Re-render whatever the player has open, e.g. after a trade moves prices. */
     public void refresh(Player player) {
         OpenView v = views.get(player.getUniqueId());
         if (v == null) {
@@ -352,38 +325,6 @@ public final class GuiManager {
             }
         } finally {
             refreshing.remove(player.getUniqueId());
-        }
-    }
-
-    // ------------------------------------------------------------------ rendering helpers
-
-    /**
-     * Draw one icon per category down the rail, marking the one being viewed. Drawn after the mask so it
-     * sits on top of the filler, which means a menu gains a rail purely by declaring {@code category-rail}
-     * in its YAML — no mask changes needed.
-     *
-     * <p>A category beyond the last rail slot is not reachable from the rail, so keep the rail at least
-     * as long as the category list, or point a button at the ones that overflow.
-     */
-    /**
-     * Place every configured category at the {@code slot} its own file declares.
-     *
-     * <p>Driving this from the category files means adding a category is enough to make it appear —
-     * placement lives next to the category's own settings rather than in a separate menu file.
-     */
-    private void placeCategoryIcons(Inventory inv, OpenView view) {
-        for (CategoryConfig cat : market.categories()) {
-            int index = cat.slot();
-            if (!inBounds(index, inv)) {
-                continue;
-            }
-            Map<String, String> ph = new HashMap<>();
-            ph.put("rbazaar_category", cat.displayName());
-            ItemStack icon = ItemSpec.parse(cat.icon() + " name:\"" + cat.displayName() + "\"")
-                    .build(eco, ph, List.of(messages.get("gui.browse-category", "&7Click to browse this category.")));
-            inv.setItem(index, icon);
-            view.bind(index, List.of(new MenuEffect("open_menu",
-                    Map.of("menu", "bazaar_category", "category", cat.id()))), List.of());
         }
     }
 
@@ -420,8 +361,6 @@ public final class GuiManager {
                 }
             }
             inv.setItem(index, icon);
-            // Clicking a rail icon opens that category. Reuses the generic open_menu effect rather than
-            // inventing a rail-specific one, so the behaviour matches a category button anywhere else.
             view.bind(index, List.of(new MenuEffect("open_menu",
                     Map.of("menu", "bazaar_category", "category", cat.id()))), List.of());
         }
@@ -434,18 +373,40 @@ public final class GuiManager {
             }
             List<MenuEffect> left = resolveEffects(slot.leftClick(), ph);
             List<MenuEffect> right = resolveEffects(slot.rightClick(), ph);
-            if (left.isEmpty() && right.isEmpty()
-                    && (!slot.leftClick().isEmpty() || !slot.rightClick().isEmpty())) {
-                continue; // leave the filler in place when this button has no available action
-            }
-            inv.setItem(slot.index(), slot.item().build(eco, ph, slot.lore()));
+            boolean disabled = tradeTurnedOff(left, right, view.itemId());
+            ItemSpec spec = disabled && slot.disabledItem() != null ? slot.disabledItem() : slot.item();
+            List<String> lore = disabled && slot.disabledLore() != null ? slot.disabledLore() : slot.lore();
+            inv.setItem(slot.index(), spec.build(eco, ph, lore));
+            // still bound: a click on a turned-off button is refused with a message by the dispatcher
             view.bind(slot.index(), left, right);
         }
     }
 
+    // true when the slot trades and every trade on it is in a direction its item has turned off
+    boolean tradeTurnedOff(List<MenuEffect> left, List<MenuEffect> right, String openItem) {
+        boolean trades = false;
+        for (List<MenuEffect> effects : List.of(nullToEmpty(left), nullToEmpty(right))) {
+            for (MenuEffect effect : effects) {
+                TradeSide side = effect.tradeSide();
+                if (side == null) {
+                    continue;
+                }
+                MarketItem item = market.get(effect.tradeItem(openItem));
+                if (item == null || item.tradeMode().allows(side)) {
+                    return false;
+                }
+                trades = true;
+            }
+        }
+        return trades;
+    }
+
+    private static List<MenuEffect> nullToEmpty(List<MenuEffect> effects) {
+        return effects == null ? List.of() : effects;
+    }
+
     private void placeArrows(MenuTemplate tmpl, Inventory inv, OpenView view) {
-        // Backwards is owned here (shown only past page 1); forwards is owned by paginateItems,
-        // which knows whether a next page actually exists.
+        // forwards is placed by paginate, which knows whether a next page exists
         MenuTemplate.Arrow back = tmpl.backwards();
         if (back != null && back.enabled() && view.page() > 1 && inBounds(back.index(), inv)) {
             inv.setItem(back.index(), back.item().build(eco, Map.of(), List.of()));
@@ -468,16 +429,13 @@ public final class GuiManager {
         });
     }
 
-    /**
-     * The group grid: one icon per declared group, each carrying a live summary, followed by any
-     * items the config left un-grouped so they can't silently disappear from the category.
-     */
+    // group icons, then any un-grouped items so they can't disappear from the category
     private void paginateGroups(MenuTemplate tmpl, Inventory inv, OpenView view, Player player,
                                 CategoryConfig cat) {
         MenuTemplate.Content groupContent = tmpl.groupContent();
         MenuTemplate.Content content = tmpl.content();
         if (groupContent == null || tmpl.contentSlots().isEmpty()) {
-            // No group-content template authored — fall back to a flat listing rather than an empty menu.
+            // no group-content template: fall back to a flat listing
             paginateItems(tmpl, inv, view, player, market.itemsIn(cat.id()));
             return;
         }
@@ -503,18 +461,8 @@ public final class GuiManager {
         });
     }
 
-    /**
-     * Shared paging: walk the content slots for the current page, hand each (entryIndex, slot) to the
-     * renderer, and expose the forwards arrow only when a next page actually exists.
-     */
-    /**
-     * Lay entries into the content region, honouring any that pin themselves to a fixed slot.
-     *
-     * <p>{@code pinnedSlotOf} gives an entry's configured slot, or -1 to let it flow. Pinned entries are
-     * drawn on the first page at exactly their slot and the flowing entries fill what's left, so an admin
-     * can anchor a few items and let the rest arrange themselves. Later pages have the whole grid free,
-     * since the pinned entries have already been shown.
-     */
+    // pinned entries (pinnedSlotOf != -1) go on page 1 at their slot, flowing ones fill the rest;
+    // later pages have the whole grid. Shows the forwards arrow only when a next page exists.
     private void paginate(MenuTemplate tmpl, Inventory inv, OpenView view, int total,
                           java.util.function.IntUnaryOperator pinnedSlotOf, SlotRenderer renderer) {
         List<Integer> slots = tmpl.contentSlots();
@@ -572,28 +520,16 @@ public final class GuiManager {
         void render(int entryIndex, int slot);
     }
 
-    /**
-     * Resolve {@code %placeholder%} tokens inside effect args against the render placeholder map,
-     * so effects on both fixed slots (product buy/sell buttons) and generated grid items get the
-     * concrete item id (and any other placeholder) baked in before they're bound to a slot.
-     */
-    List<MenuEffect> resolveEffects(List<MenuEffect> effects, Map<String, String> ph) {
+    // bake %placeholders% into effect args before binding, so buttons carry the concrete item id
+    private List<MenuEffect> resolveEffects(List<MenuEffect> effects, Map<String, String> ph) {
         if (effects == null || effects.isEmpty()) {
-            return List.of();
+            return effects;
         }
         List<MenuEffect> out = new java.util.ArrayList<>(effects.size());
         for (MenuEffect e : effects) {
             Map<String, Object> args = new HashMap<>(e.args());
             args.replaceAll((k, v) -> resolveValue(v, ph));
-            MenuEffect resolved = new MenuEffect(e.id(), args);
-            TradeSide side = resolved.tradeSide();
-            if (side != null) {
-                MarketItem target = market.get(resolved.argString("item", ph.get("rbazaar_item")));
-                if (target == null || !target.tradeMode().allows(side)) {
-                    return List.of(); // remove the whole click, including its success sound
-                }
-            }
-            out.add(resolved);
+            out.add(new MenuEffect(e.id(), args));
         }
         return out;
     }

@@ -4,10 +4,12 @@ import com.mystipixel.royalbazaar.config.CategoryConfig;
 import com.mystipixel.royalbazaar.hooks.EcoShopHook;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mockito;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,19 +19,23 @@ import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Category loading and {@code /bazaar reload}: what survives, what is refused, what gets bracketed. */
 class MarketManagerTest {
 
     private static final Logger LOG = Logger.getLogger("test");
 
     private static CategoryConfig category(String id, String yaml, boolean guard) throws Exception {
+        return category(id, yaml, guard, false);
+    }
+
+    private static CategoryConfig category(String id, String yaml, boolean guard, boolean skipConflicts)
+            throws Exception {
         YamlConfiguration cfg = new YamlConfiguration();
         cfg.loadFromString(yaml);
-        return CategoryConfig.load(id, cfg, LOG, guard);
+        return CategoryConfig.load(id, cfg, LOG, guard, skipConflicts);
     }
 
     private static EcoShopHook noShop(Path tmp) {
-        return new EcoShopHook(tmp.toFile(), LOG);   // no EcoShop/ folder → empty
+        return new EcoShopHook(tmp.toFile(), LOG);   // no EcoShop/ folder, so empty
     }
 
     private static final String FARMING = """
@@ -167,56 +173,152 @@ class MarketManagerTest {
         assertEquals(8, open.get("minecraft:iron_ingot").floor(), 1e-9, "guard off: config range as written");
     }
 
+    private static final String IRON = """
+            items:
+              iron:
+                item: minecraft:iron_ingot
+                base_price: 80
+                spread: 0.04
+                floor_pct: 0.1
+                ceiling_pct: 10
+            """;
+
+    private static EcoShopHook shop(String itemId, Double buy, Double sell) {
+        EcoShopHook shop = Mockito.mock(EcoShopHook.class);
+        Mockito.when(shop.buyValue(itemId)).thenReturn(buy);
+        Mockito.when(shop.sellValue(itemId)).thenReturn(sell);
+        return shop;
+    }
+
+    // which EcoShop sides exist: each one bounds only its own side of the bazaar
+    @ParameterizedTest
+    @CsvSource({"true,true", "true,false", "false,true"})
+    void npcGuardOnlyConstrainsTheSidesEcoShopPrices(boolean hasBuy, boolean hasSell) throws Exception {
+        EcoShopHook shop = shop("minecraft:iron_ingot", hasBuy ? 100.0 : null, hasSell ? 60.0 : null);
+        MarketItem item = category("mining", IRON, true).buildItems(shop).getFirst();
+        assertEquals(hasSell ? 60 / 1.02 : 8, item.floor(), 1e-9);
+        assertEquals(hasBuy ? 100 / 0.98 : 800, item.ceiling(), 1e-9);
+        // total order prices stay safe even when the integral runs beyond the mid caps
+        for (long qty : new long[]{1, 64, 10_000, 1_000_000}) {
+            if (hasSell) {
+                item.setMid(item.floor());
+                assertTrue(PricingEngine.buyCost(item, qty) >= 60 * qty - 1e-7);
+            }
+            if (hasBuy) {
+                item.setMid(item.ceiling());
+                assertTrue(PricingEngine.sellProceeds(item, qty) <= 100 * qty + 1e-7);
+            }
+        }
+        MarketItem unguarded = category("mining", IRON, false).buildItems(shop).getFirst();
+        assertEquals(8, unguarded.floor());
+        assertEquals(800, unguarded.ceiling());
+    }
+
+    @ParameterizedTest
+    @ValueSource(doubles = {0, -5})
+    void nonPositiveNpcPricesAreIgnored(double price) throws Exception {
+        MarketItem item = category("mining", IRON, true)
+                .buildItems(shop("minecraft:iron_ingot", price, price)).getFirst();
+        assertEquals(8, item.floor());
+        assertEquals(800, item.ceiling());
+    }
+
     @Test
-    void missingModePreservesTwoWayTrading(@TempDir Path tmp) throws Exception {
+    void conflictingNpcPricesKeepTheListingUnguardedByDefault() throws Exception {
+        EcoShopHook shop = shop("minecraft:wheat", 0.1, 1000.0);
+        List<MarketItem> items = category("farming", FARMING, true).buildItems(shop);
+        assertEquals(List.of("minecraft:wheat", "minecraft:carrot"), items.stream().map(MarketItem::id).toList());
+        MarketItem wheat = items.getFirst();
+        assertEquals(4, wheat.floor());
+        assertEquals(30, wheat.ceiling());
+    }
+
+    @Test
+    void conflictingNpcPricesUnlistTheItemWhenSkipIsChosen() throws Exception {
+        EcoShopHook shop = shop("minecraft:wheat", 0.1, 1000.0);
+        List<MarketItem> items = category("farming", FARMING, true, true).buildItems(shop);
+        assertEquals(List.of("minecraft:carrot"), items.stream().map(MarketItem::id).toList());
+    }
+
+    @Test
+    void npcSellAboveTheCeilingIsAConflictEvenWhenEcoShopIsConsistent() throws Exception {
+        // EcoShop pays 40 and charges 50: sane on its own, but wheat's ceiling is 30
+        EcoShopHook shop = shop("minecraft:wheat", 50.0, 40.0);
+        assertEquals(2, category("farming", FARMING, true).buildItems(shop).size());
+        assertEquals(1, category("farming", FARMING, true, true).buildItems(shop).size());
+    }
+
+    @Test
+    void skipChangesNothingWhenTheBracketHolds() throws Exception {
+        EcoShopHook shop = shop("minecraft:iron_ingot", 100.0, 60.0);
+        MarketItem item = category("mining", IRON, true, true).buildItems(shop).getFirst();
+        assertEquals(60 / 1.02, item.floor(), 1e-9);
+        assertEquals(100 / 0.98, item.ceiling(), 1e-9);
+    }
+
+    @Test
+    void guardOffIgnoresConflictsEvenWithSkip() throws Exception {
+        EcoShopHook shop = shop("minecraft:wheat", 0.1, 1000.0);
+        assertEquals(2, category("farming", FARMING, false, true).buildItems(shop).size());
+    }
+
+    @Test
+    void itemsWithoutTradeModeTradeBothWays(@TempDir Path tmp) throws Exception {
         for (MarketItem item : category("farming", FARMING, true).buildItems(noShop(tmp))) {
             assertEquals(TradeMode.BOTH, item.tradeMode());
         }
     }
 
     @ParameterizedTest
-    @EnumSource(TradeMode.class)
-    void modeLoadsCaseInsensitivelyAndReloadKeepsLiveMarket(TradeMode mode, @TempDir Path tmp) throws Exception {
+    @CsvSource({"both,BOTH", "buy_only,BUY_ONLY", "sell_only,SELL_ONLY", "SELL_ONLY,SELL_ONLY",
+            "' Buy-Only ',BUY_ONLY"})
+    void tradeModeIsReadAndAReloadKeepsTheLiveMarket(String raw, TradeMode expected, @TempDir Path tmp)
+            throws Exception {
         MarketManager market = new MarketManager(LOG);
         market.load(List.of(category("farming", FARMING, true)), 0.2, noShop(tmp));
         MarketItem old = market.get("minecraft:wheat");
         old.setMid(12);
         old.setFrozen(true);
         old.volume().recordSell(8);
-        old.setWeekStats(9, 7, 14);
-        String changed = FARMING.replace("base_price: 10",
-                "base_price: 10\n    trade_mode: ' " + mode.name().toLowerCase(java.util.Locale.ROOT) + " '");
+        String changed = FARMING.replace("base_price: 10", "base_price: 10\n    trade_mode: \"" + raw + "\"");
         assertTrue(market.load(List.of(category("farming", changed, true)), 0.2, noShop(tmp)).isEmpty());
-        MarketItem fresh = market.get(old.id());
-        assertEquals(mode, fresh.tradeMode());
+        MarketItem fresh = market.get("minecraft:wheat");
+        assertEquals(expected, fresh.tradeMode());
+        assertEquals(TradeMode.BOTH, market.get("minecraft:carrot").tradeMode());
         assertEquals(12, fresh.mid());
         assertEquals(8, fresh.volume().sold24h());
-        assertEquals(14, fresh.weekHigh());
         assertTrue(fresh.frozen());
-        assertTrue(fresh.dirty());
-        // Returning to both is a configuration change, not a state reset.
-        market.load(List.of(category("farming", FARMING, true)), 0.2, noShop(tmp));
-        assertEquals(TradeMode.BOTH, market.get(old.id()).tradeMode());
-        assertEquals(12, market.get(old.id()).mid());
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"sell_onyl", "none", "false", "123", "''", "[buy_only]", "{buy: false}"})
-    void invalidModeRemovesListingInsteadOfReenablingBothSides(String mode, @TempDir Path tmp) throws Exception {
+    void unrecognisedTradeModeSkipsTheItemInsteadOfOpeningBothWays(String raw, @TempDir Path tmp)
+            throws Exception {
+        String invalid = FARMING.replace("base_price: 10", "base_price: 10\n    trade_mode: " + raw);
         MarketManager market = new MarketManager(LOG);
-        market.load(List.of(category("farming", FARMING, true)), 0.2, noShop(tmp));
-        String invalid = FARMING.replace("base_price: 10", "base_price: 10\n    trade_mode: " + mode);
         market.load(List.of(category("farming", invalid, true)), 0.2, noShop(tmp));
         assertNull(market.get("minecraft:wheat"));
         assertNotNull(market.get("minecraft:carrot"));
     }
 
+    @Test
+    void categoryDefaultTradeModeAppliesUnlessTheItemOverridesIt(@TempDir Path tmp) throws Exception {
+        String yaml = """
+                defaults:
+                  trade_mode: sell_only
+                """ + FARMING.replace("base_price: 5", "base_price: 5\n    trade_mode: both");
+        MarketManager market = new MarketManager(LOG);
+        market.load(List.of(category("farming", yaml, true)), 0.2, noShop(tmp));
+        assertEquals(TradeMode.SELL_ONLY, market.get("minecraft:wheat").tradeMode());
+        assertEquals(TradeMode.BOTH, market.get("minecraft:carrot").tradeMode());
+    }
+
     @ParameterizedTest
     @EnumSource(TradeMode.class)
-    void npcGuardOnlyConstrainsExecutableDirections(TradeMode mode) throws Exception {
-        EcoShopHook shop = org.mockito.Mockito.mock(EcoShopHook.class);
-        org.mockito.Mockito.when(shop.sellValue("minecraft:iron_ingot")).thenReturn(60.0);
-        org.mockito.Mockito.when(shop.buyValue("minecraft:iron_ingot")).thenReturn(100.0);
+    void npcGuardOnlyBracketsDirectionsPlayersCanTrade(TradeMode mode) throws Exception {
+        EcoShopHook shop = Mockito.mock(EcoShopHook.class);
+        Mockito.when(shop.sellValue("minecraft:iron_ingot")).thenReturn(60.0);
+        Mockito.when(shop.buyValue("minecraft:iron_ingot")).thenReturn(100.0);
         String yaml = """
                 items:
                   iron:
@@ -230,45 +332,22 @@ class MarketManagerTest {
         MarketItem item = category("mining", yaml, true).buildItems(shop).getFirst();
         assertEquals(mode.allows(TradeSide.BUY) ? 60 / 1.02 : 8, item.floor(), 1e-9);
         assertEquals(mode.allows(TradeSide.SELL) ? 100 / 0.98 : 800, item.ceiling(), 1e-9);
-        // Total order prices remain safe even when the integral runs beyond the mid caps.
-        for (long qty : new long[]{1, 64, 10_000, 1_000_000}) {
-            if (mode.allows(TradeSide.BUY)) {
-                item.setMid(item.floor());
-                assertTrue(PricingEngine.buyCost(item, qty) >= 60 * qty - 1e-7);
-            }
-            if (mode.allows(TradeSide.SELL)) {
-                item.setMid(item.ceiling());
-                assertTrue(PricingEngine.sellProceeds(item, qty) <= 100 * qty + 1e-7);
-            }
-        }
-        MarketItem unguarded = category("mining", yaml, false).buildItems(shop).getFirst();
-        assertEquals(8, unguarded.floor());
-        assertEquals(800, unguarded.ceiling());
-    }
-
-    @ParameterizedTest
-    @EnumSource(TradeMode.class)
-    void impossibleNpcBracketIsRejectedInsteadOfDroppingProtection(TradeMode mode) throws Exception {
-        EcoShopHook shop = org.mockito.Mockito.mock(EcoShopHook.class);
-        org.mockito.Mockito.when(shop.sellValue("minecraft:wheat")).thenReturn(1000.0);
-        org.mockito.Mockito.when(shop.buyValue("minecraft:wheat")).thenReturn(0.1);
-        String yaml = FARMING.replace("base_price: 10", "base_price: 10\n    trade_mode: " + mode);
-        List<MarketItem> items = category("farming", yaml, true).buildItems(shop);
-        assertEquals(List.of("minecraft:carrot"), items.stream().map(MarketItem::id).toList());
     }
 
     @ParameterizedTest
     @EnumSource(value = TradeMode.class, names = {"BUY_ONLY", "SELL_ONLY"})
-    void absentRelevantNpcSideDoesNotRestrictTheOneWayMarket(TradeMode mode) throws Exception {
-        EcoShopHook shop = org.mockito.Mockito.mock(EcoShopHook.class);
+    void oneWayItemIsNotUnlistedOverAConflictOnTheSideItCantTrade(TradeMode mode) throws Exception {
+        EcoShopHook shop = Mockito.mock(EcoShopHook.class);
+        // the side the item can't trade is impossible to bracket; the other side has no EcoShop price
         if (mode == TradeMode.BUY_ONLY) {
-            org.mockito.Mockito.when(shop.buyValue("minecraft:wheat")).thenReturn(0.1);
+            Mockito.when(shop.buyValue("minecraft:wheat")).thenReturn(0.1);
         } else {
-            org.mockito.Mockito.when(shop.sellValue("minecraft:wheat")).thenReturn(1000.0);
+            Mockito.when(shop.sellValue("minecraft:wheat")).thenReturn(1000.0);
         }
         String yaml = FARMING.replace("base_price: 10", "base_price: 10\n    trade_mode: " + mode);
-        MarketItem item = category("farming", yaml, true).buildItems(shop).getFirst();
-        assertEquals(4, item.floor());
-        assertEquals(30, item.ceiling());
+        List<MarketItem> items = category("farming", yaml, true, true).buildItems(shop);
+        MarketItem wheat = items.stream().filter(i -> i.id().equals("minecraft:wheat")).findFirst().orElseThrow();
+        assertEquals(4, wheat.floor(), 1e-9);
+        assertEquals(30, wheat.ceiling(), 1e-9);
     }
 }

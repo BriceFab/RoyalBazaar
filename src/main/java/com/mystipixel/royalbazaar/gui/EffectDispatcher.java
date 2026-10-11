@@ -10,17 +10,14 @@ import com.mystipixel.royalbazaar.service.BazaarService;
 import com.mystipixel.royalbazaar.util.Text;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryType;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
-/**
- * Runs the effect list bound to a clicked slot. Covers the EcoMenus-style effects the bazaar menus
- * use ({@code open_menu}, {@code close_inventory}, {@code play_sound}, {@code send_message}) plus the
- * RoyalBazaar effects ({@code rbazaar_open_product}, {@code rbazaar_buy}, {@code rbazaar_sell},
- * {@code rbazaar_buy_prompt}, page nav). Unknown ids are ignored so authors can't crash a menu.
- */
+/** Runs the effect list bound to a clicked slot. Unknown effect ids are ignored so a typo can't break a menu. */
 public final class EffectDispatcher {
 
     private final GuiManager gui;
@@ -43,16 +40,21 @@ public final class EffectDispatcher {
         if (effects == null) {
             return;
         }
+        // checked against the live config before anything runs, so a menu or button drawn before a
+        // reload can't open a prompt or play a success sound for a direction that's now off
         for (MenuEffect effect : effects) {
             TradeSide side = effect.tradeSide();
-            if (side != null) {
-                TradeResult restriction = service.tradeRestriction(effect.argString("item", itemOf(player)), side);
-                if (restriction != null) {
-                    sendFeedback(player, restriction);
-                    gui.refresh(player);
-                    return; // a menu rendered before reload must not open a now-disabled prompt
-                }
+            if (side == null) {
+                continue;
             }
+            TradeResult refused = service.tradeModeRefusal(effect.tradeItem(itemOf(player)), side);
+            if (refused != null) {
+                sendFeedback(player, refused);
+                gui.refresh(player);
+                return;
+            }
+        }
+        for (MenuEffect effect : effects) {
             dispatch(player, effect);
         }
     }
@@ -80,7 +82,7 @@ public final class EffectDispatcher {
             case "rbazaar_next_page" -> turnPage(player, page(player) + 1);
             case "rbazaar_prev_page" -> turnPage(player, Math.max(1, page(player) - 1));
 
-            default -> { /* unknown effect id — ignore */ }
+            default -> { /* unknown effect id: ignore */ }
         }
     }
 
@@ -94,7 +96,7 @@ public final class EffectDispatcher {
         if ("all".equalsIgnoreCase(amountArg)) {
             amount = Long.MAX_VALUE;
         } else if ("fill".equalsIgnoreCase(amountArg)) {
-            // As much as fits and can be paid for. Resolved here so the config can just say "fill".
+            // as much as fits and can be paid for
             amount = service.fillAmount(player, item);
             if (amount <= 0) {
                 messages.send(player, "buy.cannot-fill",
@@ -106,13 +108,12 @@ public final class EffectDispatcher {
         }
         TradeResult result = buy ? service.buy(player, item, amount) : service.sell(player, item, amount);
         sendFeedback(player, result);
-        gui.refresh(player); // prices moved — re-render
+        gui.refresh(player);
     }
 
     private void openMenu(Player player, String menu, String category, String group) {
         switch (menu) {
-            // The old hub is retired. A config still pointing at it lands on the default category
-            // instead of a dead end, so existing menus keep working without being edited.
+            // retired hub: old configs pointing at it land on the default category
             case "bazaar_main" -> gui.openDefault(player);
             case "bazaar_category" -> gui.openCategory(player, category, 1);
             case "bazaar_group" -> gui.openGroup(player, category, group, 1);
@@ -128,33 +129,31 @@ public final class EffectDispatcher {
             float volume = (float) toDouble(e.argString("volume", "1"), 1.0);
             player.playSound(player.getLocation(), sound, volume, pitch);
         } catch (IllegalArgumentException ignored) {
-            // unknown sound name — skip
+            // unknown sound name, skip
         }
     }
 
     private void sendFeedback(Player player, TradeResult r) {
-        if (r.ok()) {
-            boolean bought = r.side() == TradeSide.BUY;
-            messages.send(player, bought ? "trade.bought" : "trade.sold",
-                    bought ? "&aBought &f{amount} &afor &e${total}" : "&aSold &f{amount} &afor &e${total}",
-                    java.util.Map.of("amount", String.valueOf(r.filled()),
-                            "total", String.format("%,.2f", r.total())));
+        if (!r.ok()) {
+            sendFailure(messages, player, r);
+            return;
+        }
+        Map<String, String> values = Map.of("amount", String.valueOf(r.filled()),
+                "total", String.format("%,.2f", r.total()));
+        if (r.side() == TradeSide.BUY) {
+            messages.send(player, "trade.bought", "&aBought &f{amount} &afor &e${total}", values);
         } else {
-            messages.send(player, "trade.failed", "&c{reason}",
-                    java.util.Map.of("reason", r.message() == null ? messages.get("trade.reasons.generic", "Trade failed.") : r.message()));
+            messages.send(player, "trade.sold", "&aSold &f{amount} &afor &e${total}", values);
         }
     }
 
-    /**
-     * Sell everything in the player's inventory that the current view covers.
-     *
-     * <p>Scope follows how deep the player has navigated, not which category they happen to be browsing.
-     * Anywhere above a group — including inside a category — the button sells the whole inventory, because
-     * a player standing in the bazaar wants one button that empties their bags. Only once they open a
-     * specific group does it narrow to that group, where the intent is clearly "sell just these".
-     *
-     * <p>{@code scope: all} in the config forces the wide behaviour even inside a group.
-     */
+    static void sendFailure(MessageManager messages, Player player, TradeResult r) {
+        String reason = r.message() != null ? r.message() : messages.get("trade.reasons.generic", "Trade failed.");
+        messages.send(player, "trade.failed", "&c{reason}", Map.of("reason", reason));
+    }
+
+    // sells the whole inventory everywhere except inside a group, where it narrows to that group;
+    // scope: all forces the whole inventory there too
     private void sellAll(Player player, String scope) {
         OpenView view = gui.viewOf(player);
         String categoryId = view == null ? null : view.categoryId();
@@ -169,54 +168,59 @@ public final class EffectDispatcher {
             items = market.all();
             what = messages.get("sell-all.scope-inventory", "your inventory");
         }
+        sendSellAllSummary(messages, player, what, service.sellAll(player, items));
+        gui.refresh(player);
+    }
 
-        BazaarService.SellAllResult result = service.sellAll(player, items);
+    /** Also used by /bazaar sellall. {@code scope} fills {scope} in sell-all.nothing. */
+    public static void sendSellAllSummary(MessageManager messages, Player player, String scope,
+                                          BazaarService.SellAllResult result) {
         if (result.soldNothing()) {
             messages.send(player, "sell-all.nothing", "&eNothing in {scope} could be sold here.",
-                    java.util.Map.of("scope", what));
+                    Map.of("scope", scope));
         } else {
             messages.send(player, "sell-all.done",
                     "&aSold &f{units}&a from &f{items}&a item type(s) for &6{proceeds}&a.",
-                    java.util.Map.of("units", String.valueOf(result.units()),
+                    Map.of("units", String.valueOf(result.units()),
                             "items", String.valueOf(result.distinctItems()),
                             "proceeds", String.format("%,.2f", result.proceeds())));
         }
         if (result.blocked() > 0) {
             messages.send(player, "sell-all.blocked", "&c{blocked} item type(s) were blocked and not sold.",
-                    java.util.Map.of("blocked", String.valueOf(result.blocked())));
+                    Map.of("blocked", String.valueOf(result.blocked())));
         }
-        gui.refresh(player);
     }
 
-    /** The item the open view is about, so a button doesn't have to repeat it in config. */
     private String itemOf(Player player) {
         OpenView view = gui.viewOf(player);
         return view == null ? null : view.itemId();
     }
 
-    /** Ask for a buy quantity in a dialog, then buy that many. */
     private void askBuyAmount(Player player, String itemId) {
         if (itemId == null) {
             return;
         }
-        textInput.request(player, messages.lines("sign.buy-amount", List.of("&8^^^^^^^^^^^^^^^", "&8How many", "&8to buy?")), typed -> {
-            if (typed == null && !TextInput.showingOwnInventory(player)) {
-                return;                             // another plugin's menu took over — leave it be
+        List<String> title = messages.lines("input.buy-amount",
+                List.of("&fBuy a custom amount", "&7How many do you want to buy?"));
+        textInput.request(player, title, typed -> {
+            if (typed == null) {
+                if (canReopen(player)) gui.openBuy(player, itemId);
+                return;
             }
-            if (typed == null || typed.isBlank()) {
-                gui.openBuy(player, itemId);        // cancelled — back where they were
+            if (typed.isBlank()) {
+                gui.openBuy(player, itemId);        // cancelled: back where they were
                 return;
             }
             long amount;
             try {
                 amount = Long.parseLong(typed.replace(",", "").trim());
             } catch (NumberFormatException bad) {
-                messages.send(player, "buy.bad-amount", "&cThat isn't a number.");
+                messages.send(player, "not-a-number", "&cNot a number.");
                 gui.openBuy(player, itemId);
                 return;
             }
             if (amount <= 0) {
-                messages.send(player, "buy.amount-positive", "&cEnter an amount above zero.");
+                messages.send(player, "amount-positive", "&cAmount must be positive.");
                 gui.openBuy(player, itemId);
                 return;
             }
@@ -225,14 +229,8 @@ public final class EffectDispatcher {
         });
     }
 
-    /**
-     * Go up one level from wherever the player is: a product returns to its group (or its category, if it
-     * isn't grouped), a group returns to its category, and anything else falls back to the default view.
-     *
-     * <p>Worked out from the open view rather than hard-coded per menu, because a fixed target is wrong
-     * as soon as a menu is reachable from more than one place — a product opened from a group and the
-     * same product opened from a search need different parents.
-     */
+    // parent is worked out from the open view, not fixed per menu: a product can be reached from a
+    // group or from a search
     private void goBack(Player player) {
         OpenView view = gui.viewOf(player);
         if (view == null) {
@@ -262,21 +260,30 @@ public final class EffectDispatcher {
         gui.openDefault(player);
     }
 
-    /** Ask for a search term in a dialog, then show the results. */
     private void beginSearch(Player player) {
-        textInput.request(player, messages.lines("sign.search", List.of("&8^^^^^^^^^^^^^^^", "&8Type an item", "&8name to search")), query -> {
-            if (query == null && !TextInput.showingOwnInventory(player)) {
-                return;                       // another plugin's menu took over — leave it be
+        List<String> title = messages.lines("input.search",
+                List.of("&fSearch the bazaar", "&7Type an item name"));
+        textInput.request(player, title, query -> {
+            if (query == null) {
+                if (canReopen(player)) gui.openDefault(player);
+                return;
             }
-            if (query == null || query.isBlank()) {
-                gui.openDefault(player);      // cancelled — put them back
+            if (query.isBlank()) {
+                gui.openDefault(player);      // cancelled
                 return;
             }
             gui.openSearch(player, query, 1);
         });
     }
 
-    /** Page the current view, staying inside a search result set rather than falling back to a category. */
+    // after a null answer the player may have quit, died, opened another menu or started a newer prompt
+    private boolean canReopen(Player player) {
+        if (!player.isOnline() || player.isDead() || textInput.isWaiting(player)) return false;
+        InventoryType top = player.getOpenInventory().getTopInventory().getType();
+        return top == InventoryType.CRAFTING || top == InventoryType.CREATIVE;
+    }
+
+    // stays inside a search result set rather than falling back to a category
     private void turnPage(Player player, int page) {
         OpenView view = gui.viewOf(player);
         if (view != null && view.query() != null) {

@@ -1,8 +1,5 @@
-# ============================================================
-#  RoyalBazaar messages
-#  Colour codes use '&' (e.g. &a). Placeholders are in {curly braces}.
-#  A prefix is prepended to every message; leave it "" for none.
-# ============================================================
+# Colour codes use '&' (e.g. &a). Placeholders are in {curly braces}.
+# The prefix is prepended to every message; leave it "" for none.
 prefix: ""
 
 players-only: "Only players can open the bazaar."
@@ -10,29 +7,45 @@ no-permission: "&cNo permission."
 reloaded: "&aRoyalBazaar reloaded."
 price-usage: "&cUsage: /bazaar price <item>"
 unknown-item: "&cUnknown item: {item}"
-price-unavailable: "N/A"
 price-line: "&e{item}&7: buy &a${buy} &7sell &e${sell} &7(mid {mid})"
+# Shown instead of a price for a direction an item can't be traded in (trade_mode in its category file).
+price-unavailable: "-"
 
 prompt-amount: "&eType an amount in chat &7(or 'cancel')&e."
 cancelled: "&7Cancelled."
 not-a-number: "&cNot a number."
 amount-positive: "&cAmount must be positive."
+no-categories: "&cThe bazaar has no categories configured."
+unknown-category: "&cUnknown category: {category}"
+
+# /bazaar admin. {old} and {new} are mid prices.
+admin-usage: "&cUsage: /bazaar admin <set|freeze|unfreeze|reset> <item> [mid]"
+admin-set-usage: "&cUsage: /bazaar admin set <item> <mid>"
+admin-mid-positive: "&cThe mid must be a positive number."
+admin-set: "&aSet &f{item}&a mid: &e{old} &7-> &e{new}"
+# used instead of admin-set when the new mid was outside the item's floor/ceiling
+admin-set-clamped: "&aSet &f{item}&a mid: &e{old} &7-> &e{new} &7(clamped to this item's floor/ceiling)"
+admin-reset: "&aReset &f{item}&a to its base price: &e{old} &7-> &e{new}"
+admin-freeze: "&eFroze &f{item}&e: trades refused, price held. Clears on unfreeze or restart."
+admin-unfreeze: "&aUnfroze &f{item}&a: trading and reversion resumed."
 
 trade:
   bought: "&aBought &f{amount} &afor &e${total}"
   sold: "&aSold &f{amount} &afor &e${total}"
   done: "&aDone: &f{amount} &7for &e${total}"
   failed: "&c{reason}"
-  # Why a trade was refused, shown through {reason} above.
+  # {reason} in trade.failed: why a trade was refused
   reasons:
-    buy-disabled: "You cannot buy this item."
-    sell-disabled: "You cannot sell this item."
-    generic: "Trade failed."
+    # the trade goes against the item's trade_mode
+    buy-disabled: "This item can't be bought here, only sold."
+    sell-disabled: "This item can't be sold here, only bought."
     unknown-item: "Unknown item."
     invalid-amount: "Invalid amount."
-    max-order: "You can buy at most {max} at once."
     frozen: "This item is temporarily frozen."
+    # {max} is max-order from config.yml
+    max-order: "You can buy at most {max} at once."
     unavailable: "This item is currently unavailable."
+    # refused by EconGuard
     blocked: "Trade blocked."
     not-enough-money: "Not enough money."
     not-enough-space: "Not enough inventory space."
@@ -41,49 +54,68 @@ trade:
     payment-failed-returned: "Payment failed. Your items have been returned."
     none-to-sell: "You have none to sell."
     inventory-changed: "Your inventory changed. Please try again."
+    generic: "Trade failed."
 
 buy:
+  # the "fill inventory" button when nothing fits or nothing is affordable
   cannot-fill: "&cNo room in your inventory, or not enough money to fill it."
-  bad-amount: "&cThat isn't a number."
-  amount-positive: "&cEnter an amount above zero."
 
+# Sell-all button and /bazaar sellall. {scope} is scope-group, scope-inventory or a category name.
 sell-all:
   nothing: "&eNothing in {scope} could be sold here."
   done: "&aSold &f{units}&a from &f{items}&a item type(s) for &6{proceeds}&a."
   blocked: "&c{blocked} item type(s) were blocked and not sold."
-  # What {scope} says when selling from a group menu or the whole inventory.
   scope-group: "this group"
   scope-inventory: "your inventory"
+  players-only: "Only players can sell to the bazaar."
 
-unknown-category: "&cUnknown category: {category}"
-no-categories: "&cThe bazaar has no categories configured."
-
-# Text-input dialog titles (the lines are joined; lines of only '^' are skipped).
-sign:
-  search:
-    - "&8^^^^^^^^^^^^^^^"
-    - "&8Type an item"
-    - "&8name to search"
-  buy-amount:
-    - "&8^^^^^^^^^^^^^^^"
-    - "&8How many"
-    - "&8to buy?"
-  amount-buy:
-    - "&8^^^^^^^^^^^^^^^"
-    - "&8Amount to buy"
-    - "&8(or 'cancel')"
-  amount-sell:
-    - "&8^^^^^^^^^^^^^^^"
-    - "&8Amount to sell"
-    - "&8(or 'cancel')"
+# %rbazaar_trade_mode% in the menus, one per trade_mode
+trade-mode:
+  both: "&aBuy and sell"
+  buy-only: "&eBuy only"
+  sell-only: "&eSell only"
 
 gui:
-  browse-category: "&7Click to browse this category."
+  # added under the category rail lore of the category being viewed
   currently-viewing: "&aCurrently viewing"
-  # Fills %rbazaar_category% on the search results menu.
+  # fills %rbazaar_category% on the search results menu
   search-title: "Search: {query} ({count})"
 
-# Buttons of the text-input dialog (search, custom amounts).
+# Values of the trend and change placeholders in the menus.
+format:
+  # %rbazaar_trend%, %rbazaar_trend_7d% and %rbazaar_group_trend%
+  trend:
+    up: "&a▲"
+    down: "&c▼"
+    flat: "&7▬"
+    # %rbazaar_group_trend% uses these two instead of flat
+    group-flat: "&7="
+    group-empty: "&7-"
+  # %rbazaar_change_24h%, %rbazaar_change_7d% and %rbazaar_group_change_24h%; {percent} has one decimal
+  change:
+    up: "&a+{percent}%"
+    down: "&c{percent}%"
+    # 24h change before there is a price from a day ago, and for an empty group
+    no-history: "0.0%"
+    # 7d change before there is a price from a week ago
+    no-history-7d: "&7-"
+  # %rbazaar_low_7d% and %rbazaar_high_7d% before there is a week of prices
+  no-week-range: "-"
+
+# The text-input dialog (search and custom amounts). In each prompt the first line is the
+# dialog title and any further lines are shown under it.
 input:
   confirm: "&aDone"
   cancel: "&cCancel"
+  search:
+    - "&fSearch the bazaar"
+    - "&7Type an item name"
+  buy-amount:
+    - "&fBuy a custom amount"
+    - "&7How many do you want to buy?"
+  amount-buy:
+    - "&fBuy a custom amount"
+    - "&7How many do you want to buy?"
+  amount-sell:
+    - "&fSell a custom amount"
+    - "&7How many do you want to sell?"

@@ -19,12 +19,20 @@ import java.util.Map;
  */
 public record MenuEffect(String id, Map<String, Object> args) {
 
-    /** Direction needed by this action, including navigation and quantity prompts. */
+    /** The trade direction this effect leads to, or null for effects that don't buy or sell one item. */
     public TradeSide tradeSide() {
         return switch (id.toLowerCase(Locale.ROOT)) {
             case "rbazaar_buy", "rbazaar_open_buy", "rbazaar_buy_prompt", "rbazaar_buy_amount_prompt" -> TradeSide.BUY;
             case "rbazaar_sell", "rbazaar_sell_prompt" -> TradeSide.SELL;
-            default -> null; // sell-all filters its mixed scope in the service
+            default -> null;
+        };
+    }
+
+    // open_buy and the buy-amount prompt fall back to the open product; the others need an item arg
+    public String tradeItem(String openItem) {
+        return switch (id.toLowerCase(Locale.ROOT)) {
+            case "rbazaar_open_buy", "rbazaar_buy_amount_prompt" -> argString("item", openItem);
+            default -> argString("item", null);
         };
     }
 
@@ -45,7 +53,6 @@ public record MenuEffect(String id, Map<String, Object> args) {
         }
     }
 
-    /** Parse a YAML effect list (list of maps with id/args). */
     public static List<MenuEffect> parseList(List<Map<?, ?>> raw) {
         List<MenuEffect> out = new ArrayList<>();
         if (raw == null) {

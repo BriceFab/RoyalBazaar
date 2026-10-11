@@ -1,22 +1,17 @@
 package com.mystipixel.royalbazaar.gui;
 
 import com.mystipixel.royalbazaar.market.TradeResult;
-import com.mystipixel.royalbazaar.market.TradeSide;
 import com.mystipixel.royalbazaar.message.MessageManager;
 import com.mystipixel.royalbazaar.service.BazaarService;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryType;
 
 import java.util.List;
 import java.util.Map;
 
 /**
- * The "custom amount" flow: ask for a number in a text-input dialog — the same input the search box
- * and the instant-buy screen already use — then run the trade and reopen the product page.
- *
- * <p>This used to prompt in chat. A dialog is better on every axis the suite cares about: the amount
- * stays private instead of appearing in public chat, the player is never stranded staring at a chat
- * box with no menu, and {@link TextInput}'s callback arrives on the main thread so the trade runs
- * inline with no scheduling hop.
+ * Custom amount flow: read a number from a text dialog (main-thread callback), run the trade, reopen
+ * the product page.
  */
 public final class AmountPrompt {
 
@@ -36,25 +31,20 @@ public final class AmountPrompt {
         if (itemId == null) {
             return;
         }
-        TradeResult restriction = service.tradeRestriction(itemId, buy ? TradeSide.BUY : TradeSide.SELL);
-        if (restriction != null) {
-            messages.send(player, "trade.failed", "&c{reason}", Map.of("reason", restriction.message()));
-            gui.openProduct(player, itemId);
-            return;
-        }
-        textInput.request(player,
-                buy ? messages.lines("sign.amount-buy", List.of("&8^^^^^^^^^^^^^^^", "&8Amount to buy", "&8(or 'cancel')"))
-                    : messages.lines("sign.amount-sell", List.of("&8^^^^^^^^^^^^^^^", "&8Amount to sell", "&8(or 'cancel')")),
-                typed -> finish(player, itemId, buy, typed));
+        List<String> title = buy
+                ? messages.lines("input.amount-buy", List.of("&fBuy a custom amount", "&7How many do you want to buy?"))
+                : messages.lines("input.amount-sell", List.of("&fSell a custom amount", "&7How many do you want to sell?"));
+        textInput.request(player, title, typed -> finish(player, itemId, buy, typed));
     }
 
-    /** Runs on the main thread with what was typed (blank when cancelled). */
+    // typed is null when no answer is coming
     private void finish(Player player, String itemId, boolean buy, String typed) {
-        if (typed == null && !TextInput.showingOwnInventory(player)) {
-            return;                               // another plugin's menu took over — leave it be
+        if (typed == null) {
+            if (canReopen(player)) gui.openProduct(player, itemId);
+            return;
         }
-        if (typed == null || typed.isBlank() || typed.equalsIgnoreCase("cancel")) {
-            gui.openProduct(player, itemId);      // cancelled — back where they were
+        if (typed.isBlank() || typed.equalsIgnoreCase("cancel")) {
+            gui.openProduct(player, itemId);      // cancelled: back where they were
             return;
         }
         long amount;
@@ -76,9 +66,15 @@ public final class AmountPrompt {
                     Map.of("amount", String.valueOf(r.filled()),
                             "total", String.format("%,.2f", r.total())));
         } else {
-            messages.send(player, "trade.failed", "&c{reason}",
-                    Map.of("reason", r.message() == null ? messages.get("trade.reasons.generic", "Trade failed.") : r.message()));
+            EffectDispatcher.sendFailure(messages, player, r);
         }
         gui.openProduct(player, itemId);
+    }
+
+    // after a null answer the player may have quit, died, opened another menu or started a newer prompt
+    private boolean canReopen(Player player) {
+        if (!player.isOnline() || player.isDead() || textInput.isWaiting(player)) return false;
+        InventoryType top = player.getOpenInventory().getTopInventory().getType();
+        return top == InventoryType.CRAFTING || top == InventoryType.CREATIVE;
     }
 }

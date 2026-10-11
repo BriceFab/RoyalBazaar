@@ -4,10 +4,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Set;
 
-/**
- * Sanity-checks RoyalBazaar's config on load and warns about values that would silently misbehave.
- * Warn-only: {@link PluginConfig} already applies safe fallbacks, but an admin sees what looks wrong.
- */
+/** Warns about config values that would silently misbehave. Warn-only: {@link PluginConfig} applies the fallbacks. */
 public final class ConfigValidator {
 
     private static final Set<String> INVENTORY_POLICIES = Set.of("refund", "drop", "partial");
@@ -31,6 +28,11 @@ public final class ConfigValidator {
         if (!INVENTORY_POLICIES.contains(policy)) {
             warn("trading.inventory-full is '" + policy + "'; expected one of refund, drop, partial. "
                     + "Buys that overflow the inventory may not behave as intended.");
+        }
+
+        String conflict = config.npcArbitrageConflict();
+        if (!conflict.equals("keep") && !conflict.equals("skip")) {
+            warn("trading.npc-arbitrage-conflict is '" + conflict + "'; expected keep or skip. Using keep.");
         }
 
         if (config.loadCategories().isEmpty()) {
