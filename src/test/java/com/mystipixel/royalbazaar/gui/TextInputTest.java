@@ -2,46 +2,48 @@ package com.mystipixel.royalbazaar.gui;
 
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class TextInputTest {
 
-    private static final List<String> TITLE = List.of("&fSearch the bazaar", "&7Type an item name");
+    private static final List<String> TITLE = List.of("&fName it", "&7Leave it blank to cancel");
+    private static final List<String> NULL_ANSWER = Arrays.asList((String) null);
 
-    private FakeScreen screen;
+    private FakeHost host;
     private TextInput input;
     private Player player;
     private final List<String> answers = new ArrayList<>();
-    private int calls;
 
     @BeforeEach
     void setUp() {
-        screen = new FakeScreen();
-        input = new TextInput(screen);
+        host = new FakeHost();
+        input = new TextInput(host);
         player = mock(Player.class);
         when(player.getUniqueId()).thenReturn(UUID.randomUUID());
+        when(player.isOnline()).thenReturn(true);
     }
 
-    private Consumer<String> record() {
-        return text -> {
-            calls++;
-            answers.add(text);
-        };
+    private void ask() {
+        input.request(player, TITLE, answers::add);
     }
 
     @Test
@@ -49,184 +51,219 @@ class TextInputTest {
         assertEquals("", TextInput.sanitize(null));
         assertEquals("casque", TextInput.sanitize("  casque \n"));
         assertEquals("ab", TextInput.sanitize("a\u0000\u0007b"));
+        assertEquals("ab", TextInput.sanitize("a\u0085\u009Fb"));
         assertEquals("' OR '1'='1; DROP TABLE x; --", TextInput.sanitize("' OR '1'='1; DROP TABLE x; --"),
                 "Kept verbatim: callers bind it, never build SQL from it");
         assertEquals(TextInput.MAX_LENGTH, TextInput.sanitize("x".repeat(10_000)).length());
-        String emoji = "😀".repeat(TextInput.MAX_LENGTH + 5);
-        String cut = TextInput.sanitize(emoji);
-        assertEquals(TextInput.MAX_LENGTH, cut.codePointCount(0, cut.length()), "Never splits a surrogate pair");
-        assertTrue(Character.isLowSurrogate(cut.charAt(cut.length() - 1)));
+        String emoji = TextInput.sanitize("😀".repeat(TextInput.MAX_LENGTH + 5));
+        assertEquals(TextInput.MAX_LENGTH, emoji.codePointCount(0, emoji.length()), "Never splits a surrogate pair");
+        assertTrue(Character.isLowSurrogate(emoji.charAt(emoji.length() - 1)));
+        String mixed = TextInput.sanitize("a".repeat(TextInput.MAX_LENGTH - 1) + "😀😀");
+        assertFalse(Character.isHighSurrogate(mixed.charAt(mixed.length() - 1)));
+        assertTrue(mixed.endsWith("😀"));
     }
 
     @Test
-    void doneAnswersOnceWithCleanedText() {
-        input.request(player, TITLE, record());
+    void doneAnswersOnceWithCleanedTextOnTheNextTick() {
+        ask();
         verify(player).closeInventory();
-        assertEquals(TITLE, screen.lastTitle);
+        assertEquals(TITLE, host.lastLines);
+        assertEquals(TextInput.TIMEOUT, host.lastDelay);
 
-        screen.done.accept("  diamond\u0000 ");
-        screen.done.accept("again");
-        screen.tick();
-
+        host.done.get(0).accept("  diamond\u0000 ");
+        assertTrue(answers.isEmpty(), "Answer waits for the main thread");
+        host.runTicks();
         assertEquals(List.of("diamond"), answers);
-        assertEquals(1, calls);
-        assertTrue(screen.timeoutsCancelled >= 1);
+        assertTrue(host.timeouts.isEmpty(), "Timeout cancelled");
+        assertFalse(input.isWaiting(player));
+
+        host.done.get(0).accept("again");
+        host.cancel.get(0).run();
+        host.runTicks();
+        assertEquals(List.of("diamond"), answers);
     }
 
     @Test
     void doneWithBlankTextAnswersEmpty() {
-        input.request(player, TITLE, record());
-        screen.done.accept("   ");
-        screen.tick();
+        ask();
+        host.done.get(0).accept("   ");
+        host.runTicks();
         assertEquals(List.of(""), answers);
     }
 
     @Test
     void cancelOrEscapeAnswersNull() {
-        input.request(player, TITLE, record());
-        screen.cancel.run();
-        screen.done.accept("late");
-        screen.tick();
-        assertEquals(1, calls);
-        assertEquals(null, answers.get(0));
+        ask();
+        host.cancel.get(0).run();
+        host.done.get(0).accept("late");
+        host.runTicks();
+        assertEquals(NULL_ANSWER, answers);
     }
 
     @Test
-    void quitAnswersNullAndLaterClickIsIgnored() {
-        input.request(player, TITLE, record());
-        Consumer<String> done = screen.done;
+    void quitAnswersNullAndALaterClickIsIgnored() {
+        ask();
         input.onQuit(new PlayerQuitEvent(player, Component.empty(), PlayerQuitEvent.QuitReason.DISCONNECTED));
-        screen.tick();
-        done.accept("late");
-        screen.tick();
-        assertEquals(1, calls);
-        assertEquals(null, answers.get(0));
+        host.runTicks();
+        assertEquals(NULL_ANSWER, answers);
+        host.done.get(0).accept("late");
+        host.runTicks();
+        assertEquals(1, answers.size());
     }
 
     @Test
-    void newRequestSupersedesTheOldOne() {
+    void deathClosesTheDialogAndAnswersNull() {
+        ask();
+        PlayerDeathEvent death = mock(PlayerDeathEvent.class);
+        when(death.getEntity()).thenReturn(player);
+        input.onDeath(death);
+        host.runTicks();
+        assertEquals(List.of(player), host.closed);
+        assertEquals(NULL_ANSWER, answers);
+    }
+
+    @Test
+    void openingAnotherInventoryAnswersNull() {
+        ask();
+        InventoryOpenEvent open = mock(InventoryOpenEvent.class);
+        when(open.getPlayer()).thenReturn(player);
+        input.onInventoryOpen(open);
+        assertTrue(input.isWaiting(player), "Still waiting until the next tick");
+        host.runTicks();
+        assertEquals(NULL_ANSWER, answers);
+    }
+
+    @Test
+    void newRequestSupersedesTheOldOneAndItsButtonsGoDead() {
         List<String> first = new ArrayList<>();
-        input.request(player, TITLE, first::add);
-        Consumer<String> staleDone = screen.done;
+        List<Boolean> waitingWhenTold = new ArrayList<>();
+        input.request(player, List.of("a"), text -> {
+            first.add(text);
+            waitingWhenTold.add(input.isWaiting(player));
+        });
+        ask();
+        assertEquals(NULL_ANSWER, first, "Old prompt is answered before the new one opens");
+        assertEquals(List.of(true), waitingWhenTold, "The old caller can tell a newer prompt is up");
+        assertEquals(1, host.timeouts.size(), "Old timeout cancelled");
 
-        input.request(player, TITLE, record());
-        assertEquals(1, first.size(), "Old prompt is answered before the new one opens");
-        assertEquals(null, first.get(0));
-
-        staleDone.accept("stale");
-        screen.tick();
+        host.done.get(0).accept("stale");
+        host.runTicks();
         assertEquals(1, first.size());
-        assertEquals(0, calls, "A click from the old prompt does not answer the new one");
+        assertTrue(answers.isEmpty(), "A click from the old prompt does not answer the new one");
 
-        screen.done.accept("fresh");
-        screen.tick();
+        host.done.get(1).accept("fresh");
+        host.runTicks();
         assertEquals(List.of("fresh"), answers);
     }
 
     @Test
-    void timeoutAnswersNullAndClosesTheDialog() {
-        input.request(player, TITLE, record());
-        Consumer<String> done = screen.done;
-        assertEquals(TextInput.TIMEOUT, screen.lastDelay);
+    void callbackThatAsksAgainWinsOverTheRequestThatSupersededIt() {
+        List<String> second = new ArrayList<>();
+        input.request(player, List.of("a"), text -> input.request(player, List.of("c"), answers::add));
+        input.request(player, List.of("b"), second::add);
+        assertEquals(NULL_ANSWER, second);
+        assertEquals(2, host.done.size(), "The replaced prompt is never shown");
+        host.done.get(1).accept("x");
+        host.runTicks();
+        assertEquals(List.of("x"), answers);
+    }
 
-        screen.fireTimeout();
-        screen.tick();
-        assertEquals(1, calls);
-        assertEquals(null, answers.get(0));
-        assertEquals(1, screen.closed);
+    @Test
+    void dismissalQueuedBeforeANewPromptDoesNotAnswerIt() {
+        ask();
+        InventoryOpenEvent open = mock(InventoryOpenEvent.class);
+        when(open.getPlayer()).thenReturn(player);
+        input.onInventoryOpen(open);
+        List<String> second = new ArrayList<>();
+        input.request(player, List.of("b"), second::add);
+        host.runTicks();
+        assertTrue(second.isEmpty());
+        assertTrue(input.isWaiting(player));
+    }
 
-        done.accept("too late");
-        screen.tick();
-        assertEquals(1, calls);
+    @Test
+    void timeoutClosesTheDialogAndAnswersNull() {
+        ask();
+        host.timeouts.get(0).run();
+        assertEquals(List.of(player), host.closed);
+        assertEquals(NULL_ANSWER, answers);
+        host.done.get(0).accept("too late");
+        host.runTicks();
+        assertEquals(1, answers.size());
     }
 
     @Test
     void shutdownClosesDialogsWithoutCallingBack() {
-        input.request(player, TITLE, record());
-        Consumer<String> done = screen.done;
+        ask();
         input.shutdown();
-        assertEquals(1, screen.closed);
+        assertEquals(List.of(player), host.closed);
+        assertTrue(host.timeouts.isEmpty());
+        assertFalse(input.isWaiting(player));
 
-        done.accept("after disable");
-        screen.cancel.run();
-        screen.tick();
-        assertEquals(0, calls);
-        assertEquals(0, screen.queued(), "Nothing is scheduled on a disabled plugin");
+        host.enabled = false;
+        assertDoesNotThrow(() -> host.done.get(0).accept("after disable"));
+        assertDoesNotThrow(() -> host.cancel.get(0).run());
+        assertTrue(host.ticks.isEmpty(), "Nothing is scheduled on a disabled plugin");
+        assertTrue(answers.isEmpty());
+
+        ask();
+        assertEquals(1, host.done.size(), "No new prompts after shutdown");
     }
 
     @Test
-    void clickAfterPluginDisabledDoesNothing() {
-        input.request(player, TITLE, record());
-        screen.active = false;
-        screen.done.accept("x");
-        assertEquals(0, screen.queued());
-        assertEquals(0, calls);
+    void clickAfterThePluginIsDisabledDoesNothing() {
+        ask();
+        host.enabled = false;
+        host.done.get(0).accept("late");
+        assertTrue(host.ticks.isEmpty());
+        assertTrue(answers.isEmpty());
     }
 
-    @Test
-    void screenFreeIsFalseForOfflinePlayers() {
-        when(player.isOnline()).thenReturn(false);
-        assertEquals(false, TextInput.screenFree(player));
-        verify(player, never()).getOpenInventory();
-    }
-
-    private static final class FakeScreen implements TextInput.Screen {
-        boolean active = true;
-        List<String> lastTitle;
-        Consumer<String> done;
-        Runnable cancel;
+    private static final class FakeHost implements TextInput.Host {
+        boolean enabled = true;
+        List<String> lastLines;
         Duration lastDelay;
-        Runnable timeout;
-        int timeoutsCancelled;
-        int closed;
-        private final List<Runnable> nextTick = new ArrayList<>();
+        final List<Runnable> ticks = new ArrayList<>();
+        final List<Runnable> timeouts = new ArrayList<>();
+        final List<Consumer<String>> done = new ArrayList<>();
+        final List<Runnable> cancel = new ArrayList<>();
+        final List<Player> closed = new ArrayList<>();
 
         @Override
-        public boolean active() {
-            return active;
+        public boolean enabled() {
+            return enabled;
         }
 
         @Override
-        public void runNextTick(Runnable task) {
-            nextTick.add(task);
+        public void nextTick(Runnable task) {
+            ticks.add(task);
         }
 
         @Override
-        public Runnable runLater(Duration delay, Runnable task) {
+        public Runnable later(Duration delay, Runnable task) {
             lastDelay = delay;
-            timeout = task;
-            return () -> {
-                timeoutsCancelled++;
-                if (timeout == task) {
-                    timeout = null;
-                }
-            };
+            timeouts.add(task);
+            return () -> timeouts.remove(task);
         }
 
         @Override
-        public void show(Player player, List<String> titleLines, Consumer<String> done, Runnable cancel) {
-            this.lastTitle = titleLines;
-            this.done = done;
-            this.cancel = cancel;
+        public void show(Player player, List<String> lines, Consumer<String> done, Runnable cancel) {
+            this.lastLines = lines;
+            this.done.add(done);
+            this.cancel.add(cancel);
         }
 
         @Override
-        public void close(UUID player) {
-            closed++;
+        public void close(Player player) {
+            closed.add(player);
         }
 
-        void fireTimeout() {
-            timeout.run();
-        }
-
-        int queued() {
-            return nextTick.size();
-        }
-
-        void tick() {
-            List<Runnable> tasks = new ArrayList<>(nextTick);
-            nextTick.clear();
-            tasks.forEach(Runnable::run);
+        void runTicks() {
+            while (!ticks.isEmpty()) {
+                List<Runnable> now = new ArrayList<>(ticks);
+                ticks.clear();
+                now.forEach(Runnable::run);
+            }
         }
     }
 }

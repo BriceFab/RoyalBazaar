@@ -4,6 +4,7 @@ import com.mystipixel.royalbazaar.market.TradeResult;
 import com.mystipixel.royalbazaar.message.MessageManager;
 import com.mystipixel.royalbazaar.service.BazaarService;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryType;
 
 import java.util.List;
 import java.util.Map;
@@ -38,10 +39,11 @@ public final class AmountPrompt {
 
     // typed is null when no answer is coming
     private void finish(Player player, String itemId, boolean buy, String typed) {
-        if (typed == null && !TextInput.screenFree(player)) {
-            return;                               // gone, dead or in another menu, leave it be
+        if (typed == null) {
+            if (canReopen(player)) gui.openProduct(player, itemId);
+            return;
         }
-        if (typed == null || typed.isBlank() || typed.equalsIgnoreCase("cancel")) {
+        if (typed.isBlank() || typed.equalsIgnoreCase("cancel")) {
             gui.openProduct(player, itemId);      // cancelled: back where they were
             return;
         }
@@ -67,5 +69,12 @@ public final class AmountPrompt {
             EffectDispatcher.sendFailure(messages, player, r);
         }
         gui.openProduct(player, itemId);
+    }
+
+    // after a null answer the player may have quit, died, opened another menu or started a newer prompt
+    private boolean canReopen(Player player) {
+        if (!player.isOnline() || player.isDead() || textInput.isWaiting(player)) return false;
+        InventoryType top = player.getOpenInventory().getTopInventory().getType();
+        return top == InventoryType.CRAFTING || top == InventoryType.CREATIVE;
     }
 }

@@ -10,6 +10,7 @@ import com.mystipixel.royalbazaar.service.BazaarService;
 import com.mystipixel.royalbazaar.util.Text;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryType;
 
 import java.util.Collection;
 import java.util.List;
@@ -202,10 +203,11 @@ public final class EffectDispatcher {
         List<String> title = messages.lines("input.buy-amount",
                 List.of("&fBuy a custom amount", "&7How many do you want to buy?"));
         textInput.request(player, title, typed -> {
-            if (typed == null && !TextInput.screenFree(player)) {
-                return;                             // gone, dead or in another menu, leave it be
+            if (typed == null) {
+                if (canReopen(player)) gui.openBuy(player, itemId);
+                return;
             }
-            if (typed == null || typed.isBlank()) {
+            if (typed.isBlank()) {
                 gui.openBuy(player, itemId);        // cancelled: back where they were
                 return;
             }
@@ -262,15 +264,23 @@ public final class EffectDispatcher {
         List<String> title = messages.lines("input.search",
                 List.of("&fSearch the bazaar", "&7Type an item name"));
         textInput.request(player, title, query -> {
-            if (query == null && !TextInput.screenFree(player)) {
-                return;                       // gone, dead or in another menu, leave it be
+            if (query == null) {
+                if (canReopen(player)) gui.openDefault(player);
+                return;
             }
-            if (query == null || query.isBlank()) {
+            if (query.isBlank()) {
                 gui.openDefault(player);      // cancelled
                 return;
             }
             gui.openSearch(player, query, 1);
         });
+    }
+
+    // after a null answer the player may have quit, died, opened another menu or started a newer prompt
+    private boolean canReopen(Player player) {
+        if (!player.isOnline() || player.isDead() || textInput.isWaiting(player)) return false;
+        InventoryType top = player.getOpenInventory().getTopInventory().getType();
+        return top == InventoryType.CRAFTING || top == InventoryType.CREATIVE;
     }
 
     // stays inside a search result set rather than falling back to a category
