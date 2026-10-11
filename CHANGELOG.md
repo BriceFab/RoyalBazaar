@@ -1,3 +1,8 @@
+## 2026.41.2 - 2026-10-11
+
+### Fixes
+- price smelted items at or below their inputs plus fuel (`b57faac`)
+
 ## 2026.41.1 - 2026-10-11
 
 ### Fixes
