@@ -1,8 +1,9 @@
-# Vanilla crafting and stonecutting recipes, read by verify_bazaar.py crafting and
+# Vanilla crafting, stonecutting and cooking recipes, read by verify_bazaar.py crafting and
 # CategoryPricesCraftingTest. Regenerate with: verify_bazaar.py extract-recipes DIR
 #   tag <name> <item>...                       an item tag, any one item fits
 #   remainder <ingredient> <item>              handed back when the recipe is crafted
 #   <id> <kind> <count> <output> <- <n>*<a>|<b>...  n of any one of a, b
+#   kind: shaped, shapeless, stonecutter, smelting, blasting, smoking, campfire
 tag acacia_logs acacia_log acacia_wood stripped_acacia_log stripped_acacia_wood
 tag bamboo_blocks bamboo_block stripped_bamboo_block
 tag birch_logs birch_log birch_wood stripped_birch_log stripped_birch_wood
@@ -16,12 +17,15 @@ tag eggs egg blue_egg brown_egg
 tag gold_tool_materials gold_ingot
 tag iron_tool_materials iron_ingot
 tag jungle_logs jungle_log jungle_wood stripped_jungle_log stripped_jungle_wood
+tag leaves jungle_leaves oak_leaves spruce_leaves pale_oak_leaves dark_oak_leaves acacia_leaves birch_leaves azalea_leaves flowering_azalea_leaves mangrove_leaves cherry_leaves
 tag logs dark_oak_log dark_oak_wood stripped_dark_oak_log stripped_dark_oak_wood pale_oak_log pale_oak_wood stripped_pale_oak_log stripped_pale_oak_wood oak_log oak_wood stripped_oak_log stripped_oak_wood acacia_log acacia_wood stripped_acacia_log stripped_acacia_wood birch_log birch_wood stripped_birch_log stripped_birch_wood jungle_log jungle_wood stripped_jungle_log stripped_jungle_wood spruce_log spruce_wood stripped_spruce_log stripped_spruce_wood mangrove_log mangrove_wood stripped_mangrove_log stripped_mangrove_wood cherry_log cherry_wood stripped_cherry_log stripped_cherry_wood crimson_stem stripped_crimson_stem crimson_hyphae stripped_crimson_hyphae warped_stem stripped_warped_stem warped_hyphae stripped_warped_hyphae
+tag logs_that_burn dark_oak_log dark_oak_wood stripped_dark_oak_log stripped_dark_oak_wood pale_oak_log pale_oak_wood stripped_pale_oak_log stripped_pale_oak_wood oak_log oak_wood stripped_oak_log stripped_oak_wood acacia_log acacia_wood stripped_acacia_log stripped_acacia_wood birch_log birch_wood stripped_birch_log stripped_birch_wood jungle_log jungle_wood stripped_jungle_log stripped_jungle_wood spruce_log spruce_wood stripped_spruce_log stripped_spruce_wood mangrove_log mangrove_wood stripped_mangrove_log stripped_mangrove_wood cherry_log cherry_wood stripped_cherry_log stripped_cherry_wood
 tag mangrove_logs mangrove_log mangrove_wood stripped_mangrove_log stripped_mangrove_wood
 tag metal_nuggets copper_nugget iron_nugget gold_nugget
 tag oak_logs oak_log oak_wood stripped_oak_log stripped_oak_wood
 tag pale_oak_logs pale_oak_log pale_oak_wood stripped_pale_oak_log stripped_pale_oak_wood
 tag planks oak_planks spruce_planks birch_planks jungle_planks acacia_planks dark_oak_planks pale_oak_planks crimson_planks warped_planks mangrove_planks bamboo_planks cherry_planks
+tag smelts_to_glass sand red_sand
 tag soul_fire_base_blocks soul_sand soul_soil
 tag spruce_logs spruce_log spruce_wood stripped_spruce_log stripped_spruce_wood
 tag stone_crafting_materials cobblestone blackstone cobbled_deepslate
@@ -63,6 +67,9 @@ andesite_wall_from_andesite_stonecutting stonecutter 1 andesite_wall <- 1*andesi
 anvil shaped 1 anvil <- 3*iron_block 4*iron_ingot
 armor_stand shaped 1 armor_stand <- 6*stick 1*smooth_stone_slab
 arrow shaped 4 arrow <- 1*flint 1*stick 1*feather
+baked_potato smelting 1 baked_potato <- 1*potato
+baked_potato_from_campfire_cooking campfire 1 baked_potato <- 1*potato
+baked_potato_from_smoking smoking 1 baked_potato <- 1*potato
 bamboo_block shapeless 1 bamboo_block <- 9*bamboo
 bamboo_button shapeless 1 bamboo_button <- 1*bamboo_planks
 bamboo_chest_raft shapeless 1 bamboo_chest_raft <- 1*chest 1*bamboo_raft
@@ -107,6 +114,7 @@ black_carpet shaped 3 black_carpet <- 2*black_wool
 black_concrete_powder shapeless 8 black_concrete_powder <- 1*black_dye 4*sand 4*gravel
 black_dye shapeless 1 black_dye <- 1*ink_sac
 black_dye_from_wither_rose shapeless 1 black_dye <- 1*wither_rose
+black_glazed_terracotta smelting 1 black_glazed_terracotta <- 1*black_terracotta
 black_harness shaped 1 black_harness <- 3*leather 2*glass 1*black_wool
 black_stained_glass shaped 8 black_stained_glass <- 8*glass 1*black_dye
 black_stained_glass_pane shaped 16 black_stained_glass_pane <- 6*black_stained_glass
@@ -127,6 +135,7 @@ blue_carpet shaped 3 blue_carpet <- 2*blue_wool
 blue_concrete_powder shapeless 8 blue_concrete_powder <- 1*blue_dye 4*sand 4*gravel
 blue_dye shapeless 1 blue_dye <- 1*lapis_lazuli
 blue_dye_from_cornflower shapeless 1 blue_dye <- 1*cornflower
+blue_glazed_terracotta smelting 1 blue_glazed_terracotta <- 1*blue_terracotta
 blue_harness shaped 1 blue_harness <- 3*leather 2*glass 1*blue_wool
 blue_ice shapeless 1 blue_ice <- 9*packed_ice
 blue_stained_glass shaped 8 blue_stained_glass <- 8*glass 1*blue_dye
@@ -144,6 +153,7 @@ bow shaped 1 bow <- 3*stick 3*string
 bowl shaped 4 bowl <- 3*#planks
 bread shaped 1 bread <- 3*wheat
 brewing_stand shaped 1 brewing_stand <- 1*blaze_rod 3*#stone_crafting_materials
+brick smelting 1 brick <- 1*clay_ball
 brick_slab shaped 6 brick_slab <- 3*bricks
 brick_slab_from_bricks_stonecutting stonecutter 2 brick_slab <- 1*bricks
 brick_stairs shaped 4 brick_stairs <- 6*bricks
@@ -157,6 +167,7 @@ brown_candle shapeless 1 brown_candle <- 1*candle 1*brown_dye
 brown_carpet shaped 3 brown_carpet <- 2*brown_wool
 brown_concrete_powder shapeless 8 brown_concrete_powder <- 1*brown_dye 4*sand 4*gravel
 brown_dye shapeless 1 brown_dye <- 1*cocoa_beans
+brown_glazed_terracotta smelting 1 brown_glazed_terracotta <- 1*brown_terracotta
 brown_harness shaped 1 brown_harness <- 3*leather 2*glass 1*brown_wool
 brown_stained_glass shaped 8 brown_stained_glass <- 8*glass 1*brown_dye
 brown_stained_glass_pane shaped 16 brown_stained_glass_pane <- 6*brown_stained_glass
@@ -172,6 +183,7 @@ candle shaped 1 candle <- 1*string 1*honeycomb
 carrot_on_a_stick shaped 1 carrot_on_a_stick <- 1*fishing_rod 1*carrot
 cartography_table shaped 1 cartography_table <- 2*paper 4*#planks
 cauldron shaped 1 cauldron <- 7*iron_ingot
+charcoal smelting 1 charcoal <- 1*#logs_that_burn
 cherry_boat shaped 1 cherry_boat <- 5*cherry_planks
 cherry_button shapeless 1 cherry_button <- 1*cherry_planks
 cherry_chest_boat shapeless 1 cherry_chest_boat <- 1*chest 1*cherry_boat
@@ -247,6 +259,10 @@ clay shaped 1 clay <- 4*clay_ball
 clock shaped 1 clock <- 4*gold_ingot 1*redstone
 coal shapeless 9 coal <- 1*coal_block
 coal_block shaped 1 coal_block <- 9*coal
+coal_from_blasting_coal_ore blasting 1 coal <- 1*coal_ore
+coal_from_blasting_deepslate_coal_ore blasting 1 coal <- 1*deepslate_coal_ore
+coal_from_smelting_coal_ore smelting 1 coal <- 1*coal_ore
+coal_from_smelting_deepslate_coal_ore smelting 1 coal <- 1*deepslate_coal_ore
 coarse_dirt shaped 4 coarse_dirt <- 2*dirt 2*gravel
 coast_armor_trim_smithing_template shaped 2 coast_armor_trim_smithing_template <- 7*diamond 1*coast_armor_trim_smithing_template 1*cobblestone
 cobbled_deepslate_from_deepslate_stonecutting stonecutter 1 cobbled_deepslate <- 1*deepslate
@@ -273,6 +289,27 @@ comparator shaped 1 comparator <- 3*redstone_torch 1*quartz 3*stone
 compass shaped 1 compass <- 4*iron_ingot 1*redstone
 composter shaped 1 composter <- 7*#wooden_slabs
 conduit shaped 1 conduit <- 8*nautilus_shell 1*heart_of_the_sea
+cooked_beef smelting 1 cooked_beef <- 1*beef
+cooked_beef_from_campfire_cooking campfire 1 cooked_beef <- 1*beef
+cooked_beef_from_smoking smoking 1 cooked_beef <- 1*beef
+cooked_chicken smelting 1 cooked_chicken <- 1*chicken
+cooked_chicken_from_campfire_cooking campfire 1 cooked_chicken <- 1*chicken
+cooked_chicken_from_smoking smoking 1 cooked_chicken <- 1*chicken
+cooked_cod smelting 1 cooked_cod <- 1*cod
+cooked_cod_from_campfire_cooking campfire 1 cooked_cod <- 1*cod
+cooked_cod_from_smoking smoking 1 cooked_cod <- 1*cod
+cooked_mutton smelting 1 cooked_mutton <- 1*mutton
+cooked_mutton_from_campfire_cooking campfire 1 cooked_mutton <- 1*mutton
+cooked_mutton_from_smoking smoking 1 cooked_mutton <- 1*mutton
+cooked_porkchop smelting 1 cooked_porkchop <- 1*porkchop
+cooked_porkchop_from_campfire_cooking campfire 1 cooked_porkchop <- 1*porkchop
+cooked_porkchop_from_smoking smoking 1 cooked_porkchop <- 1*porkchop
+cooked_rabbit smelting 1 cooked_rabbit <- 1*rabbit
+cooked_rabbit_from_campfire_cooking campfire 1 cooked_rabbit <- 1*rabbit
+cooked_rabbit_from_smoking smoking 1 cooked_rabbit <- 1*rabbit
+cooked_salmon smelting 1 cooked_salmon <- 1*salmon
+cooked_salmon_from_campfire_cooking campfire 1 cooked_salmon <- 1*salmon
+cooked_salmon_from_smoking smoking 1 cooked_salmon <- 1*salmon
 cookie shaped 8 cookie <- 2*wheat 1*cocoa_beans
 copper_axe shaped 1 copper_axe <- 3*#copper_tool_materials 2*stick
 copper_bars shaped 16 copper_bars <- 6*copper_ingot
@@ -288,17 +325,30 @@ copper_grate_from_copper_block_stonecutting stonecutter 4 copper_grate <- 1*copp
 copper_helmet shaped 1 copper_helmet <- 5*copper_ingot
 copper_hoe shaped 1 copper_hoe <- 2*#copper_tool_materials 2*stick
 copper_ingot shapeless 9 copper_ingot <- 1*copper_block
+copper_ingot_from_blasting_copper_ore blasting 1 copper_ingot <- 1*copper_ore
+copper_ingot_from_blasting_deepslate_copper_ore blasting 1 copper_ingot <- 1*deepslate_copper_ore
+copper_ingot_from_blasting_raw_copper blasting 1 copper_ingot <- 1*raw_copper
 copper_ingot_from_nuggets shaped 1 copper_ingot <- 9*copper_nugget
+copper_ingot_from_smelting_copper_ore smelting 1 copper_ingot <- 1*copper_ore
+copper_ingot_from_smelting_deepslate_copper_ore smelting 1 copper_ingot <- 1*deepslate_copper_ore
+copper_ingot_from_smelting_raw_copper smelting 1 copper_ingot <- 1*raw_copper
 copper_ingot_from_waxed_copper_block shapeless 9 copper_ingot <- 1*waxed_copper_block
 copper_lantern shaped 1 copper_lantern <- 8*copper_nugget 1*copper_torch
 copper_leggings shaped 1 copper_leggings <- 7*copper_ingot
 copper_nugget shapeless 9 copper_nugget <- 1*copper_ingot
+copper_nugget_from_blasting blasting 1 copper_nugget <- 1*copper_pickaxe|copper_shovel|copper_axe|copper_hoe|copper_sword|copper_spear|copper_helmet|copper_chestplate|copper_leggings|copper_boots|copper_horse_armor|copper_nautilus_armor
+copper_nugget_from_smelting smelting 1 copper_nugget <- 1*copper_pickaxe|copper_shovel|copper_axe|copper_hoe|copper_sword|copper_spear|copper_helmet|copper_chestplate|copper_leggings|copper_boots|copper_horse_armor|copper_nautilus_armor
 copper_pickaxe shaped 1 copper_pickaxe <- 3*#copper_tool_materials 2*stick
 copper_shovel shaped 1 copper_shovel <- 1*#copper_tool_materials 2*stick
 copper_spear shaped 1 copper_spear <- 1*#copper_tool_materials 2*stick
 copper_sword shaped 1 copper_sword <- 2*#copper_tool_materials 1*stick
 copper_torch shaped 4 copper_torch <- 1*copper_nugget 1*coal|charcoal 1*stick
 copper_trapdoor shaped 1 copper_trapdoor <- 4*copper_ingot
+cracked_deepslate_bricks smelting 1 cracked_deepslate_bricks <- 1*deepslate_bricks
+cracked_deepslate_tiles smelting 1 cracked_deepslate_tiles <- 1*deepslate_tiles
+cracked_nether_bricks smelting 1 cracked_nether_bricks <- 1*nether_bricks
+cracked_polished_blackstone_bricks smelting 1 cracked_polished_blackstone_bricks <- 1*polished_blackstone_bricks
+cracked_stone_bricks smelting 1 cracked_stone_bricks <- 1*stone_bricks
 crafter shaped 1 crafter <- 5*iron_ingot 1*crafting_table 2*redstone 1*dropper
 crafting_table shaped 1 crafting_table <- 4*#planks
 creaking_heart shaped 1 creaking_heart <- 2*pale_oak_log 1*resin_block
@@ -342,6 +392,7 @@ cyan_carpet shaped 3 cyan_carpet <- 2*cyan_wool
 cyan_concrete_powder shapeless 8 cyan_concrete_powder <- 1*cyan_dye 4*sand 4*gravel
 cyan_dye shapeless 2 cyan_dye <- 1*blue_dye 1*green_dye
 cyan_dye_from_pitcher_plant shapeless 2 cyan_dye <- 1*pitcher_plant
+cyan_glazed_terracotta smelting 1 cyan_glazed_terracotta <- 1*cyan_terracotta
 cyan_harness shaped 1 cyan_harness <- 3*leather 2*glass 1*cyan_wool
 cyan_stained_glass shaped 8 cyan_stained_glass <- 8*glass 1*cyan_dye
 cyan_stained_glass_pane shaped 16 cyan_stained_glass_pane <- 6*cyan_stained_glass
@@ -369,6 +420,7 @@ dark_prismarine_stairs shaped 4 dark_prismarine_stairs <- 6*dark_prismarine
 dark_prismarine_stairs_from_dark_prismarine_stonecutting stonecutter 1 dark_prismarine_stairs <- 1*dark_prismarine
 daylight_detector shaped 1 daylight_detector <- 3*glass 3*quartz 3*#wooden_slabs
 decorated_pot_simple shaped 1 decorated_pot <- 4*brick
+deepslate smelting 1 deepslate <- 1*cobbled_deepslate
 deepslate_brick_slab shaped 6 deepslate_brick_slab <- 3*deepslate_bricks
 deepslate_brick_slab_from_cobbled_deepslate_stonecutting stonecutter 2 deepslate_brick_slab <- 1*cobbled_deepslate
 deepslate_brick_slab_from_deepslate_bricks_stonecutting stonecutter 2 deepslate_brick_slab <- 1*deepslate_bricks
@@ -417,6 +469,10 @@ diamond_axe shaped 1 diamond_axe <- 3*#diamond_tool_materials 2*stick
 diamond_block shaped 1 diamond_block <- 9*diamond
 diamond_boots shaped 1 diamond_boots <- 4*diamond
 diamond_chestplate shaped 1 diamond_chestplate <- 8*diamond
+diamond_from_blasting_deepslate_diamond_ore blasting 1 diamond <- 1*deepslate_diamond_ore
+diamond_from_blasting_diamond_ore blasting 1 diamond <- 1*diamond_ore
+diamond_from_smelting_deepslate_diamond_ore smelting 1 diamond <- 1*deepslate_diamond_ore
+diamond_from_smelting_diamond_ore smelting 1 diamond <- 1*diamond_ore
 diamond_helmet shaped 1 diamond_helmet <- 5*diamond
 diamond_hoe shaped 1 diamond_hoe <- 2*#diamond_tool_materials 2*stick
 diamond_leggings shaped 1 diamond_leggings <- 7*diamond
@@ -435,6 +491,9 @@ dispenser shaped 1 dispenser <- 7*cobblestone 1*bow 1*redstone
 dried_ghast shaped 1 dried_ghast <- 8*ghast_tear 1*soul_sand
 dried_kelp shapeless 9 dried_kelp <- 1*dried_kelp_block
 dried_kelp_block shaped 1 dried_kelp_block <- 9*dried_kelp
+dried_kelp_from_campfire_cooking campfire 1 dried_kelp <- 1*kelp
+dried_kelp_from_smelting smelting 1 dried_kelp <- 1*kelp
+dried_kelp_from_smoking smoking 1 dried_kelp <- 1*kelp
 dripstone_block shaped 1 dripstone_block <- 4*pointed_dripstone
 dropper shaped 1 dropper <- 7*cobblestone 1*redstone
 dune_armor_trim_smithing_template shaped 2 dune_armor_trim_smithing_template <- 7*diamond 1*dune_armor_trim_smithing_template 1*sandstone
@@ -504,6 +563,10 @@ dye_yellow_harness shapeless 1 yellow_harness <- 1*yellow_dye 1*white_harness|or
 dye_yellow_wool shapeless 1 yellow_wool <- 1*yellow_dye 1*white_wool|orange_wool|magenta_wool|light_blue_wool|lime_wool|pink_wool|gray_wool|light_gray_wool|cyan_wool|purple_wool|blue_wool|brown_wool|green_wool|red_wool|black_wool
 emerald shapeless 9 emerald <- 1*emerald_block
 emerald_block shaped 1 emerald_block <- 9*emerald
+emerald_from_blasting_deepslate_emerald_ore blasting 1 emerald <- 1*deepslate_emerald_ore
+emerald_from_blasting_emerald_ore blasting 1 emerald <- 1*emerald_ore
+emerald_from_smelting_deepslate_emerald_ore smelting 1 emerald <- 1*deepslate_emerald_ore
+emerald_from_smelting_emerald_ore smelting 1 emerald <- 1*emerald_ore
 enchanting_table shaped 1 enchanting_table <- 1*book 2*diamond 4*obsidian
 end_crystal shaped 1 end_crystal <- 7*glass 1*ender_eye 1*ghast_tear
 end_rod shaped 4 end_rod <- 1*blaze_rod 1*popped_chorus_fruit
@@ -547,15 +610,26 @@ flower_banner_pattern shapeless 1 flower_banner_pattern <- 1*paper 1*oxeye_daisy
 flower_pot shaped 1 flower_pot <- 3*brick
 furnace shaped 1 furnace <- 8*#stone_crafting_materials
 furnace_minecart shapeless 1 furnace_minecart <- 1*furnace 1*minecart
+glass smelting 1 glass <- 1*#smelts_to_glass
 glass_bottle shaped 3 glass_bottle <- 3*glass
 glass_pane shaped 16 glass_pane <- 6*glass
 glistering_melon_slice shaped 1 glistering_melon_slice <- 8*gold_nugget 1*melon_slice
 glow_item_frame shapeless 1 glow_item_frame <- 1*item_frame 1*glow_ink_sac
 glowstone shaped 1 glowstone <- 4*glowstone_dust
 gold_block shaped 1 gold_block <- 9*gold_ingot
+gold_ingot_from_blasting_deepslate_gold_ore blasting 1 gold_ingot <- 1*deepslate_gold_ore
+gold_ingot_from_blasting_gold_ore blasting 1 gold_ingot <- 1*gold_ore
+gold_ingot_from_blasting_nether_gold_ore blasting 1 gold_ingot <- 1*nether_gold_ore
+gold_ingot_from_blasting_raw_gold blasting 1 gold_ingot <- 1*raw_gold
 gold_ingot_from_gold_block shapeless 9 gold_ingot <- 1*gold_block
 gold_ingot_from_nuggets shaped 1 gold_ingot <- 9*gold_nugget
+gold_ingot_from_smelting_deepslate_gold_ore smelting 1 gold_ingot <- 1*deepslate_gold_ore
+gold_ingot_from_smelting_gold_ore smelting 1 gold_ingot <- 1*gold_ore
+gold_ingot_from_smelting_nether_gold_ore smelting 1 gold_ingot <- 1*nether_gold_ore
+gold_ingot_from_smelting_raw_gold smelting 1 gold_ingot <- 1*raw_gold
 gold_nugget shapeless 9 gold_nugget <- 1*gold_ingot
+gold_nugget_from_blasting blasting 1 gold_nugget <- 1*golden_pickaxe|golden_shovel|golden_axe|golden_hoe|golden_sword|golden_spear|golden_helmet|golden_chestplate|golden_leggings|golden_boots|golden_horse_armor|golden_nautilus_armor
+gold_nugget_from_smelting smelting 1 gold_nugget <- 1*golden_pickaxe|golden_shovel|golden_axe|golden_hoe|golden_sword|golden_spear|golden_helmet|golden_chestplate|golden_leggings|golden_boots|golden_horse_armor|golden_nautilus_armor
 golden_apple shaped 1 golden_apple <- 8*gold_ingot 1*apple
 golden_axe shaped 1 golden_axe <- 3*#gold_tool_materials 2*stick
 golden_boots shaped 1 golden_boots <- 4*gold_ingot
@@ -583,6 +657,7 @@ gray_carpet shaped 3 gray_carpet <- 2*gray_wool
 gray_concrete_powder shapeless 8 gray_concrete_powder <- 1*gray_dye 4*sand 4*gravel
 gray_dye shapeless 2 gray_dye <- 1*black_dye 1*white_dye
 gray_dye_from_closed_eyeblossom shapeless 1 gray_dye <- 1*closed_eyeblossom
+gray_glazed_terracotta smelting 1 gray_glazed_terracotta <- 1*gray_terracotta
 gray_harness shaped 1 gray_harness <- 3*leather 2*glass 1*gray_wool
 gray_stained_glass shaped 8 gray_stained_glass <- 8*glass 1*gray_dye
 gray_stained_glass_pane shaped 16 gray_stained_glass_pane <- 6*gray_stained_glass
@@ -593,6 +668,8 @@ green_bed shaped 1 green_bed <- 3*green_wool 3*#planks
 green_candle shapeless 1 green_candle <- 1*candle 1*green_dye
 green_carpet shaped 3 green_carpet <- 2*green_wool
 green_concrete_powder shapeless 8 green_concrete_powder <- 1*green_dye 4*sand 4*gravel
+green_dye smelting 1 green_dye <- 1*cactus
+green_glazed_terracotta smelting 1 green_glazed_terracotta <- 1*green_terracotta
 green_harness shaped 1 green_harness <- 3*leather 2*glass 1*green_wool
 green_stained_glass shaped 8 green_stained_glass <- 8*glass 1*green_dye
 green_stained_glass_pane shaped 16 green_stained_glass_pane <- 6*green_stained_glass
@@ -616,10 +693,18 @@ iron_chestplate shaped 1 iron_chestplate <- 8*iron_ingot
 iron_door shaped 3 iron_door <- 6*iron_ingot
 iron_helmet shaped 1 iron_helmet <- 5*iron_ingot
 iron_hoe shaped 1 iron_hoe <- 2*#iron_tool_materials 2*stick
+iron_ingot_from_blasting_deepslate_iron_ore blasting 1 iron_ingot <- 1*deepslate_iron_ore
+iron_ingot_from_blasting_iron_ore blasting 1 iron_ingot <- 1*iron_ore
+iron_ingot_from_blasting_raw_iron blasting 1 iron_ingot <- 1*raw_iron
 iron_ingot_from_iron_block shapeless 9 iron_ingot <- 1*iron_block
 iron_ingot_from_nuggets shaped 1 iron_ingot <- 9*iron_nugget
+iron_ingot_from_smelting_deepslate_iron_ore smelting 1 iron_ingot <- 1*deepslate_iron_ore
+iron_ingot_from_smelting_iron_ore smelting 1 iron_ingot <- 1*iron_ore
+iron_ingot_from_smelting_raw_iron smelting 1 iron_ingot <- 1*raw_iron
 iron_leggings shaped 1 iron_leggings <- 7*iron_ingot
 iron_nugget shapeless 9 iron_nugget <- 1*iron_ingot
+iron_nugget_from_blasting blasting 1 iron_nugget <- 1*iron_pickaxe|iron_shovel|iron_axe|iron_hoe|iron_sword|iron_spear|iron_helmet|iron_chestplate|iron_leggings|iron_boots|iron_horse_armor|iron_nautilus_armor|chainmail_helmet|chainmail_chestplate|chainmail_leggings|chainmail_boots
+iron_nugget_from_smelting smelting 1 iron_nugget <- 1*iron_pickaxe|iron_shovel|iron_axe|iron_hoe|iron_sword|iron_spear|iron_helmet|iron_chestplate|iron_leggings|iron_boots|iron_horse_armor|chainmail_helmet|chainmail_chestplate|chainmail_leggings|chainmail_boots|iron_nautilus_armor
 iron_pickaxe shaped 1 iron_pickaxe <- 3*#iron_tool_materials 2*stick
 iron_shovel shaped 1 iron_shovel <- 1*#iron_tool_materials 2*stick
 iron_spear shaped 1 iron_spear <- 1*#iron_tool_materials 2*stick
@@ -647,7 +732,12 @@ ladder shaped 3 ladder <- 7*stick
 lantern shaped 1 lantern <- 8*iron_nugget 1*torch
 lapis_block shaped 1 lapis_block <- 9*lapis_lazuli
 lapis_lazuli shapeless 9 lapis_lazuli <- 1*lapis_block
+lapis_lazuli_from_blasting_deepslate_lapis_ore blasting 1 lapis_lazuli <- 1*deepslate_lapis_ore
+lapis_lazuli_from_blasting_lapis_ore blasting 1 lapis_lazuli <- 1*lapis_ore
+lapis_lazuli_from_smelting_deepslate_lapis_ore smelting 1 lapis_lazuli <- 1*deepslate_lapis_ore
+lapis_lazuli_from_smelting_lapis_ore smelting 1 lapis_lazuli <- 1*lapis_ore
 lead shaped 2 lead <- 5*string
+leaf_litter smelting 1 leaf_litter <- 1*#leaves
 leather shaped 1 leather <- 4*rabbit_hide
 leather_boots shaped 1 leather_boots <- 4*leather
 leather_chestplate shaped 1 leather_chestplate <- 8*leather
@@ -663,6 +753,7 @@ light_blue_carpet shaped 3 light_blue_carpet <- 2*light_blue_wool
 light_blue_concrete_powder shapeless 8 light_blue_concrete_powder <- 1*light_blue_dye 4*sand 4*gravel
 light_blue_dye_from_blue_orchid shapeless 1 light_blue_dye <- 1*blue_orchid
 light_blue_dye_from_blue_white_dye shapeless 2 light_blue_dye <- 1*blue_dye 1*white_dye
+light_blue_glazed_terracotta smelting 1 light_blue_glazed_terracotta <- 1*light_blue_terracotta
 light_blue_harness shaped 1 light_blue_harness <- 3*leather 2*glass 1*light_blue_wool
 light_blue_stained_glass shaped 8 light_blue_stained_glass <- 8*glass 1*light_blue_dye
 light_blue_stained_glass_pane shaped 16 light_blue_stained_glass_pane <- 6*light_blue_stained_glass
@@ -678,6 +769,7 @@ light_gray_dye_from_black_white_dye shapeless 3 light_gray_dye <- 1*black_dye 2*
 light_gray_dye_from_gray_white_dye shapeless 2 light_gray_dye <- 1*gray_dye 1*white_dye
 light_gray_dye_from_oxeye_daisy shapeless 1 light_gray_dye <- 1*oxeye_daisy
 light_gray_dye_from_white_tulip shapeless 1 light_gray_dye <- 1*white_tulip
+light_gray_glazed_terracotta smelting 1 light_gray_glazed_terracotta <- 1*light_gray_terracotta
 light_gray_harness shaped 1 light_gray_harness <- 3*leather 2*glass 1*light_gray_wool
 light_gray_stained_glass shaped 8 light_gray_stained_glass <- 8*glass 1*light_gray_dye
 light_gray_stained_glass_pane shaped 16 light_gray_stained_glass_pane <- 6*light_gray_stained_glass
@@ -691,6 +783,8 @@ lime_candle shapeless 1 lime_candle <- 1*candle 1*lime_dye
 lime_carpet shaped 3 lime_carpet <- 2*lime_wool
 lime_concrete_powder shapeless 8 lime_concrete_powder <- 1*lime_dye 4*sand 4*gravel
 lime_dye shapeless 2 lime_dye <- 1*green_dye 1*white_dye
+lime_dye_from_smelting smelting 1 lime_dye <- 1*sea_pickle
+lime_glazed_terracotta smelting 1 lime_glazed_terracotta <- 1*lime_terracotta
 lime_harness shaped 1 lime_harness <- 3*leather 2*glass 1*lime_wool
 lime_stained_glass shaped 8 lime_stained_glass <- 8*glass 1*lime_dye
 lime_stained_glass_pane shaped 16 lime_stained_glass_pane <- 6*lime_stained_glass
@@ -709,6 +803,7 @@ magenta_dye_from_blue_red_pink shapeless 3 magenta_dye <- 1*blue_dye 1*red_dye 1
 magenta_dye_from_blue_red_white_dye shapeless 4 magenta_dye <- 1*blue_dye 2*red_dye 1*white_dye
 magenta_dye_from_lilac shapeless 2 magenta_dye <- 1*lilac
 magenta_dye_from_purple_and_pink shapeless 2 magenta_dye <- 1*purple_dye 1*pink_dye
+magenta_glazed_terracotta smelting 1 magenta_glazed_terracotta <- 1*magenta_terracotta
 magenta_harness shaped 1 magenta_harness <- 3*leather 2*glass 1*magenta_wool
 magenta_stained_glass shaped 8 magenta_stained_glass <- 8*glass 1*magenta_dye
 magenta_stained_glass_pane shaped 16 magenta_stained_glass_pane <- 6*magenta_stained_glass
@@ -764,6 +859,7 @@ muddy_mangrove_roots shapeless 1 muddy_mangrove_roots <- 1*mud 1*mangrove_roots
 mushroom_stew shapeless 1 mushroom_stew <- 1*brown_mushroom 1*red_mushroom 1*bowl
 music_disc_5 shapeless 1 music_disc_5 <- 9*disc_fragment_5
 name_tag shaped 1 name_tag <- 1*#metal_nuggets 1*paper
+nether_brick smelting 1 nether_brick <- 1*netherrack
 nether_brick_fence shaped 6 nether_brick_fence <- 4*nether_bricks 2*nether_brick
 nether_brick_slab shaped 6 nether_brick_slab <- 3*nether_bricks
 nether_brick_slab_from_nether_bricks_stonecutting stonecutter 2 nether_brick_slab <- 1*nether_bricks
@@ -776,6 +872,8 @@ nether_wart_block shapeless 1 nether_wart_block <- 9*nether_wart
 netherite_block shaped 1 netherite_block <- 9*netherite_ingot
 netherite_ingot shapeless 1 netherite_ingot <- 4*netherite_scrap 4*gold_ingot
 netherite_ingot_from_netherite_block shapeless 9 netherite_ingot <- 1*netherite_block
+netherite_scrap smelting 1 netherite_scrap <- 1*ancient_debris
+netherite_scrap_from_blasting blasting 1 netherite_scrap <- 1*ancient_debris
 netherite_upgrade_smithing_template shaped 2 netherite_upgrade_smithing_template <- 7*diamond 1*netherite_upgrade_smithing_template 1*netherrack
 note_block shaped 1 note_block <- 8*#planks 1*redstone
 oak_boat shaped 1 oak_boat <- 5*oak_planks
@@ -803,6 +901,7 @@ orange_dye_from_open_eyeblossom shapeless 1 orange_dye <- 1*open_eyeblossom
 orange_dye_from_orange_tulip shapeless 1 orange_dye <- 1*orange_tulip
 orange_dye_from_red_yellow shapeless 2 orange_dye <- 1*red_dye 1*yellow_dye
 orange_dye_from_torchflower shapeless 1 orange_dye <- 1*torchflower
+orange_glazed_terracotta smelting 1 orange_glazed_terracotta <- 1*orange_terracotta
 orange_harness shaped 1 orange_harness <- 3*leather 2*glass 1*orange_wool
 orange_stained_glass shaped 8 orange_stained_glass <- 8*glass 1*orange_dye
 orange_stained_glass_pane shaped 16 orange_stained_glass_pane <- 6*orange_stained_glass
@@ -852,6 +951,7 @@ pink_dye_from_peony shapeless 2 pink_dye <- 1*peony
 pink_dye_from_pink_petals shapeless 1 pink_dye <- 1*pink_petals
 pink_dye_from_pink_tulip shapeless 1 pink_dye <- 1*pink_tulip
 pink_dye_from_red_white_dye shapeless 2 pink_dye <- 1*red_dye 1*white_dye
+pink_glazed_terracotta smelting 1 pink_glazed_terracotta <- 1*pink_terracotta
 pink_harness shaped 1 pink_harness <- 3*leather 2*glass 1*pink_wool
 pink_stained_glass shaped 8 pink_stained_glass <- 8*glass 1*pink_dye
 pink_stained_glass_pane shaped 16 pink_stained_glass_pane <- 6*pink_stained_glass
@@ -960,6 +1060,7 @@ polished_tuff_stairs_from_tuff_stonecutting stonecutter 1 polished_tuff_stairs <
 polished_tuff_wall shaped 6 polished_tuff_wall <- 6*polished_tuff
 polished_tuff_wall_from_polished_tuff_stonecutting stonecutter 1 polished_tuff_wall <- 1*polished_tuff
 polished_tuff_wall_from_tuff_stonecutting stonecutter 1 polished_tuff_wall <- 1*tuff
+popped_chorus_fruit smelting 1 popped_chorus_fruit <- 1*chorus_fruit
 potent_sulfur shapeless 1 potent_sulfur <- 9*sulfur
 powered_rail shaped 6 powered_rail <- 6*gold_ingot 1*stick 1*redstone
 prismarine shaped 1 prismarine <- 4*prismarine_shard
@@ -982,6 +1083,7 @@ purple_candle shapeless 1 purple_candle <- 1*candle 1*purple_dye
 purple_carpet shaped 3 purple_carpet <- 2*purple_wool
 purple_concrete_powder shapeless 8 purple_concrete_powder <- 1*purple_dye 4*sand 4*gravel
 purple_dye shapeless 2 purple_dye <- 1*blue_dye 1*red_dye
+purple_glazed_terracotta smelting 1 purple_glazed_terracotta <- 1*purple_terracotta
 purple_harness shaped 1 purple_harness <- 3*leather 2*glass 1*purple_wool
 purple_stained_glass shaped 8 purple_stained_glass <- 8*glass 1*purple_dye
 purple_stained_glass_pane shaped 16 purple_stained_glass_pane <- 6*purple_stained_glass
@@ -994,9 +1096,11 @@ purpur_slab shaped 6 purpur_slab <- 3*purpur_block|purpur_pillar
 purpur_slab_from_purpur_block_stonecutting stonecutter 2 purpur_slab <- 1*purpur_block
 purpur_stairs shaped 4 purpur_stairs <- 6*purpur_block|purpur_pillar
 purpur_stairs_from_purpur_block_stonecutting stonecutter 1 purpur_stairs <- 1*purpur_block
+quartz smelting 1 quartz <- 1*nether_quartz_ore
 quartz_block shaped 1 quartz_block <- 4*quartz
 quartz_bricks shaped 4 quartz_bricks <- 4*quartz_block
 quartz_bricks_from_quartz_block_stonecutting stonecutter 1 quartz_bricks <- 1*quartz_block
+quartz_from_blasting blasting 1 quartz <- 1*nether_quartz_ore
 quartz_pillar shaped 2 quartz_pillar <- 2*quartz_block
 quartz_pillar_from_quartz_block_stonecutting stonecutter 1 quartz_pillar <- 1*quartz_block
 quartz_slab shaped 6 quartz_slab <- 3*chiseled_quartz_block|quartz_block|quartz_pillar
@@ -1023,6 +1127,7 @@ red_dye_from_beetroot shapeless 1 red_dye <- 1*beetroot
 red_dye_from_poppy shapeless 1 red_dye <- 1*poppy
 red_dye_from_rose_bush shapeless 2 red_dye <- 1*rose_bush
 red_dye_from_tulip shapeless 1 red_dye <- 1*red_tulip
+red_glazed_terracotta smelting 1 red_glazed_terracotta <- 1*red_terracotta
 red_harness shaped 1 red_harness <- 3*leather 2*glass 1*red_wool
 red_nether_brick_slab shaped 6 red_nether_brick_slab <- 3*red_nether_bricks
 red_nether_brick_slab_from_red_nether_bricks_stonecutting stonecutter 2 red_nether_brick_slab <- 1*red_nether_bricks
@@ -1044,10 +1149,15 @@ red_stained_glass_pane_from_glass_pane shaped 8 red_stained_glass_pane <- 8*glas
 red_terracotta shaped 8 red_terracotta <- 8*terracotta 1*red_dye
 redstone shapeless 9 redstone <- 1*redstone_block
 redstone_block shaped 1 redstone_block <- 9*redstone
+redstone_from_blasting_deepslate_redstone_ore blasting 1 redstone <- 1*deepslate_redstone_ore
+redstone_from_blasting_redstone_ore blasting 1 redstone <- 1*redstone_ore
+redstone_from_smelting_deepslate_redstone_ore smelting 1 redstone <- 1*deepslate_redstone_ore
+redstone_from_smelting_redstone_ore smelting 1 redstone <- 1*redstone_ore
 redstone_lamp shaped 1 redstone_lamp <- 4*redstone 1*glowstone
 redstone_torch shaped 1 redstone_torch <- 1*redstone 1*stick
 repeater shaped 1 repeater <- 2*redstone_torch 1*redstone 3*stone
 resin_block shaped 1 resin_block <- 9*resin_clump
+resin_brick smelting 1 resin_brick <- 1*resin_clump
 resin_brick_slab shaped 6 resin_brick_slab <- 3*resin_bricks
 resin_brick_slab_from_resin_bricks_stonecutting stonecutter 2 resin_brick_slab <- 1*resin_bricks
 resin_brick_stairs shaped 4 resin_brick_stairs <- 6*resin_bricks
@@ -1079,18 +1189,23 @@ slime_ball shapeless 9 slime_ball <- 1*slime_block
 slime_block shaped 1 slime_block <- 9*slime_ball
 smithing_table shaped 1 smithing_table <- 2*iron_ingot 4*#planks
 smoker shaped 1 smoker <- 4*#logs 1*furnace
+smooth_basalt smelting 1 smooth_basalt <- 1*basalt
+smooth_quartz smelting 1 smooth_quartz <- 1*quartz_block
 smooth_quartz_slab shaped 6 smooth_quartz_slab <- 3*smooth_quartz
 smooth_quartz_slab_from_smooth_quartz_stonecutting stonecutter 2 smooth_quartz_slab <- 1*smooth_quartz
 smooth_quartz_stairs shaped 4 smooth_quartz_stairs <- 6*smooth_quartz
 smooth_quartz_stairs_from_smooth_quartz_stonecutting stonecutter 1 smooth_quartz_stairs <- 1*smooth_quartz
+smooth_red_sandstone smelting 1 smooth_red_sandstone <- 1*red_sandstone
 smooth_red_sandstone_slab shaped 6 smooth_red_sandstone_slab <- 3*smooth_red_sandstone
 smooth_red_sandstone_slab_from_smooth_red_sandstone_stonecutting stonecutter 2 smooth_red_sandstone_slab <- 1*smooth_red_sandstone
 smooth_red_sandstone_stairs shaped 4 smooth_red_sandstone_stairs <- 6*smooth_red_sandstone
 smooth_red_sandstone_stairs_from_smooth_red_sandstone_stonecutting stonecutter 1 smooth_red_sandstone_stairs <- 1*smooth_red_sandstone
+smooth_sandstone smelting 1 smooth_sandstone <- 1*sandstone
 smooth_sandstone_slab shaped 6 smooth_sandstone_slab <- 3*smooth_sandstone
 smooth_sandstone_slab_from_smooth_sandstone_stonecutting stonecutter 2 smooth_sandstone_slab <- 1*smooth_sandstone
 smooth_sandstone_stairs shaped 4 smooth_sandstone_stairs <- 6*smooth_sandstone
 smooth_sandstone_stairs_from_smooth_sandstone_stonecutting stonecutter 1 smooth_sandstone_stairs <- 1*smooth_sandstone
+smooth_stone smelting 1 smooth_stone <- 1*stone
 smooth_stone_slab shaped 6 smooth_stone_slab <- 3*smooth_stone
 smooth_stone_slab_from_smooth_stone_stonecutting stonecutter 2 smooth_stone_slab <- 1*smooth_stone
 snout_armor_trim_smithing_template shaped 2 snout_armor_trim_smithing_template <- 7*diamond 1*snout_armor_trim_smithing_template 1*blackstone
@@ -1101,6 +1216,7 @@ soul_lantern shaped 1 soul_lantern <- 8*iron_nugget 1*soul_torch
 soul_torch shaped 4 soul_torch <- 1*coal|charcoal 1*stick 1*#soul_fire_base_blocks
 spectral_arrow shaped 2 spectral_arrow <- 4*glowstone_dust 1*arrow
 spire_armor_trim_smithing_template shaped 2 spire_armor_trim_smithing_template <- 7*diamond 1*spire_armor_trim_smithing_template 1*purpur_block
+sponge smelting 1 sponge <- 1*wet_sponge
 spruce_boat shaped 1 spruce_boat <- 5*spruce_planks
 spruce_button shapeless 1 spruce_button <- 1*spruce_planks
 spruce_chest_boat shapeless 1 spruce_chest_boat <- 1*chest 1*spruce_boat
@@ -1120,6 +1236,7 @@ spyglass shaped 1 spyglass <- 1*amethyst_shard 2*copper_ingot
 stick shaped 4 stick <- 2*#planks
 stick_from_bamboo_item shaped 1 stick <- 2*bamboo
 sticky_piston shaped 1 sticky_piston <- 1*slime_ball 1*piston
+stone smelting 1 stone <- 1*cobblestone
 stone_axe shaped 1 stone_axe <- 3*#stone_tool_materials 2*stick
 stone_brick_slab shaped 6 stone_brick_slab <- 3*stone_bricks
 stone_brick_slab_from_stone_bricks_stonecutting stonecutter 2 stone_brick_slab <- 1*stone_bricks
@@ -1197,6 +1314,7 @@ suspicious_stew_from_torchflower shapeless 1 suspicious_stew <- 1*bowl 1*brown_m
 suspicious_stew_from_white_tulip shapeless 1 suspicious_stew <- 1*bowl 1*brown_mushroom 1*red_mushroom 1*white_tulip
 suspicious_stew_from_wither_rose shapeless 1 suspicious_stew <- 1*bowl 1*brown_mushroom 1*red_mushroom 1*wither_rose
 target shaped 1 target <- 4*redstone 1*hay_block
+terracotta smelting 1 terracotta <- 1*clay
 tide_armor_trim_smithing_template shaped 2 tide_armor_trim_smithing_template <- 7*diamond 1*tide_armor_trim_smithing_template 1*prismarine
 tinted_glass shaped 2 tinted_glass <- 4*amethyst_shard 1*glass
 tnt shaped 1 tnt <- 5*gunpowder 4*sand|red_sand
@@ -1381,6 +1499,7 @@ white_carpet shaped 3 white_carpet <- 2*white_wool
 white_concrete_powder shapeless 8 white_concrete_powder <- 1*white_dye 4*sand 4*gravel
 white_dye shapeless 1 white_dye <- 1*bone_meal
 white_dye_from_lily_of_the_valley shapeless 1 white_dye <- 1*lily_of_the_valley
+white_glazed_terracotta smelting 1 white_glazed_terracotta <- 1*white_terracotta
 white_harness shaped 1 white_harness <- 3*leather 2*glass 1*white_wool
 white_stained_glass shaped 8 white_stained_glass <- 8*glass 1*white_dye
 white_stained_glass_pane shaped 16 white_stained_glass_pane <- 6*white_stained_glass
@@ -1406,6 +1525,7 @@ yellow_dye_from_dandelion shapeless 1 yellow_dye <- 1*dandelion
 yellow_dye_from_golden_dandelion shapeless 1 yellow_dye <- 1*golden_dandelion
 yellow_dye_from_sunflower shapeless 2 yellow_dye <- 1*sunflower
 yellow_dye_from_wildflowers shapeless 1 yellow_dye <- 1*wildflowers
+yellow_glazed_terracotta smelting 1 yellow_glazed_terracotta <- 1*yellow_terracotta
 yellow_harness shaped 1 yellow_harness <- 3*leather 2*glass 1*yellow_wool
 yellow_stained_glass shaped 8 yellow_stained_glass <- 8*glass 1*yellow_dye
 yellow_stained_glass_pane shaped 16 yellow_stained_glass_pane <- 6*yellow_stained_glass

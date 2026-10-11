@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
@@ -23,15 +24,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 // Same rule as `python3 tools/verify_bazaar.py crafting`: with every item at its base price, and again with
 // every item at its floor, the bazaar must not pay more for a recipe's output than its inputs cost to buy.
+// Furnace, smoker and blast furnace recipes also pay for fuel; a campfire burns nothing.
 class CategoryPricesCraftingTest {
 
     private static final Path CATEGORIES = Path.of("src", "main", "resources", "categories");
     private static final Path RECIPES = Path.of("tools", "vanilla_recipes.txt");
+    // keep in step with DEFAULT_FUEL and DEFAULT_FUEL_SMELTS in verify_bazaar.py
+    private static final String FUEL = "coal";
+    private static final double FUEL_SMELTS = 8;
+    private static final Set<String> FUELED_KINDS = Set.of("smelting", "blasting", "smoking");
+    private static final Set<String> COOKING_KINDS = Set.of("smelting", "blasting", "smoking", "campfire");
 
     private record Slot(int count, List<String> items) {
     }
 
-    private record Recipe(String id, int count, String output, List<Slot> inputs) {
+    private record Recipe(String id, String kind, int count, String output, List<Slot> inputs) {
     }
 
     private record RecipeTable(List<Recipe> recipes, Map<String, String> remainders) {
@@ -46,7 +53,7 @@ class CategoryPricesCraftingTest {
         RecipeTable table = loadRecipes();
         Map<String, Listed> listed = loadShipped();
         List<String> problems = violations(listed, table);
-        assertTrue(problems.isEmpty(), problems.size() + " crafting printer(s) in the shipped categories:\n"
+        assertTrue(problems.isEmpty(), problems.size() + " recipe printer(s) in the shipped categories:\n"
                 + String.join("\n", problems));
     }
 
@@ -60,6 +67,13 @@ class CategoryPricesCraftingTest {
                 .filter(r -> r.inputs().stream().allMatch(s -> s.items().stream().anyMatch(listed::containsKey)))
                 .count();
         assertTrue(checked > 150, "only " + checked + " recipes are made of listed items; is the table parsed?");
+        long cooked = table.recipes().stream()
+                .filter(r -> COOKING_KINDS.contains(r.kind()))
+                .filter(r -> listed.containsKey(r.output()))
+                .filter(r -> r.inputs().stream().allMatch(s -> s.items().stream().anyMatch(listed::containsKey)))
+                .count();
+        assertTrue(cooked > 50, "only " + cooked + " cooking recipes are made of listed items");
+        assertTrue(listed.containsKey(FUEL), "the fuel item " + FUEL + " is not listed, so smelting would be free");
     }
 
     @Test
@@ -77,8 +91,43 @@ class CategoryPricesCraftingTest {
         assertEquals(List.of(), violations(listed, table), "players can't sell a buy_only output here");
     }
 
+    @Test
+    void smeltingPaysForCoal() throws IOException {
+        RecipeTable table = loadRecipes();
+        Map<String, Listed> listed = new HashMap<>();
+        listed.put("coal", listed("coal", 5.0, 0.05, 0.4, TradeMode.BOTH));
+        listed.put("raw_iron", listed("raw_iron", 10.0, 0.05, 0.4, TradeMode.BOTH));
+        listed.put("iron_ingot", listed("iron_ingot", 12.0, 0.05, 0.4, TradeMode.BOTH));
+        // furnace and blast furnace, at base and at floor: 10.25 + 5.125 / 8 < 11.70
+        assertEquals(4, violations(listed, table).size());
+
+        listed.put("raw_iron", listed("raw_iron", 10.9, 0.05, 0.4, TradeMode.BOTH));
+        assertEquals(List.of(), violations(listed, table));
+
+        listed.remove("coal");
+        assertEquals(4, violations(listed, table).size(), "an unlisted fuel counts as free");
+    }
+
+    @Test
+    void campfireCookingNeedsNoFuel() throws IOException {
+        RecipeTable table = loadRecipes();
+        Map<String, Listed> listed = new HashMap<>();
+        listed.put("coal", listed("coal", 5.0, 0.05, 0.4, TradeMode.BOTH));
+        listed.put("beef", listed("beef", 5.0, 0.05, 0.4, TradeMode.BOTH));
+        // covers beef plus coal in a furnace or smoker, but not beef alone on a campfire
+        listed.put("cooked_beef", listed("cooked_beef", 5.6, 0.05, 0.4, TradeMode.BOTH));
+        List<String> problems = violations(listed, table);
+        assertEquals(2, problems.size());
+        assertTrue(problems.stream().allMatch(p -> p.contains("cooked_beef_from_campfire_cooking")), problems::toString);
+
+        listed.put("cooked_beef", listed("cooked_beef", 5.2, 0.05, 0.4, TradeMode.BOTH));
+        assertEquals(List.of(), violations(listed, table));
+    }
+
     private static List<String> violations(Map<String, Listed> listed, RecipeTable table) {
         List<String> problems = new ArrayList<>();
+        Listed fuel = listed.get(FUEL);
+        boolean fuelBuyable = fuel != null && fuel.states()[0].tradeMode().allows(TradeSide.BUY);
         for (Recipe r : table.recipes()) {
             Listed out = listed.get(r.output());
             if (out == null || !out.states()[0].tradeMode().allows(TradeSide.SELL)) {
@@ -104,6 +153,9 @@ class CategoryPricesCraftingTest {
                     if (back != null) {
                         cost -= slot.count() * PricingEngine.sellPrice(back.states()[st]);
                     }
+                }
+                if (fuelBuyable && FUELED_KINDS.contains(r.kind())) {
+                    cost += PricingEngine.buyPrice(fuel.states()[st]) / FUEL_SMELTS;
                 }
                 double pays = r.count() * PricingEngine.sellPrice(out.states()[st]);
                 if (pays > cost + 1e-9) {
@@ -178,7 +230,7 @@ class CategoryPricesCraftingTest {
                 }
                 inputs.add(new Slot(Integer.parseInt(term[0]), items));
             }
-            recipes.add(new Recipe(parts[0], Integer.parseInt(parts[2]), parts[3], inputs));
+            recipes.add(new Recipe(parts[0], parts[1], Integer.parseInt(parts[2]), parts[3], inputs));
         }
         return new RecipeTable(recipes, remainders);
     }

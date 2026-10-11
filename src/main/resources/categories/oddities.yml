@@ -139,7 +139,7 @@ items:
   end_crystal:
     item: "minecraft:end_crystal"
     group: end
-    base_price: 221.0     # 7 glass + eye of ender + ghast tear
+    base_price: 218.0     # 7 glass + eye of ender + ghast tear
 
   # Amethyst
   amethyst_shard:
@@ -191,7 +191,7 @@ items:
   glass_bottle:
     item: "minecraft:glass_bottle"
     group: brewing
-    base_price: 3.0       # 3 glass (9.0) yields 3
+    base_price: 2.75      # 3 glass (8.1) yields 3
   brewing_stand:
     item: "minecraft:brewing_stand"
     group: brewing

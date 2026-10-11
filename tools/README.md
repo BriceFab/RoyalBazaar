@@ -12,7 +12,7 @@ These are **offline authoring tools**, not part of the plugin. Nothing here ship
 | `gen_hypixel.py` | Prices that layout and writes `out/categories/*.yml`. |
 | `gen_newitems.py` | Writes EcoItems configs for items the pack is missing. |
 | `verify_bazaar.py` | **Audits the bazaar for money printers. Run after every price change.** |
-| `vanilla_recipes.txt` | Vanilla crafting and stonecutting recipes, read by `verify_bazaar.py crafting` and the build. |
+| `vanilla_recipes.txt` | Vanilla crafting, stonecutting and cooking recipes, read by `verify_bazaar.py crafting` and the build. |
 | `audit_recipes.py` | **Audits EcoShop against the real vanilla recipe graph.** Run after any NPC price change. |
 | `repricer.py` | Syncs EcoItems `shop-pricing` + lore to the generated prices. |
 
@@ -121,16 +121,16 @@ break-even isn't safe, it's one price tweak from being a printer.
 buy.** Every printer found so far broke exactly that — blocks priced at a 50% sell ratio while their
 parts used 25%, and a diamond sword worth more than two diamonds.
 
-## Crafting arbitrage in the shipped categories
+## Crafting and smelting arbitrage in the shipped categories
 
 The categories in `src/main/resources/categories` are what a fresh server gets, so they are checked on
 their own, against vanilla recipes instead of EcoShop:
 
 ```bash
-python3 tools/verify_bazaar.py crafting     # must print: PASS: no crafting arbitrage
+python3 tools/verify_bazaar.py crafting     # must print: PASS: no crafting or smelting arbitrage
 ```
 
-For every crafting or stonecutting recipe whose output and inputs are all listed, the bazaar must not
+For every crafting, stonecutting or cooking recipe whose output and inputs are all listed, the bazaar must not
 pay more for the output than the inputs cost to buy on the bazaar. It is checked twice: with every item
 at its `base_price`, and with every item at its floor (`base_price x floor_pct`), using each item's own
 spread. A remainder (the glass bottle back from honey) counts at what the bazaar pays for it. The rule is
@@ -148,5 +148,20 @@ python3 tools/verify_bazaar.py extract-recipes /tmp/rx    # /tmp/rx/data/minecra
 ```
 
 Remainders are not in the recipe data; they are kept by hand in `REMAINDERS` in `verify_bazaar.py`.
-Smelting is not checked yet. It costs fuel and furnace time, so it is slow, but several shipped pairs
-(raw iron to iron ingot, cooked meats, cobblestone to stone) still pay a little more than input plus fuel.
+
+Cooking recipes (furnace, blast furnace, smoker, campfire) are checked the same way, plus fuel. The fuel
+assumption is **1 coal per 8 items, at the bazaar's own coal price**: a furnace smelts 8 items per coal, and
+a blast furnace or smoker burns it twice as fast but also cooks twice as fast, so it is 8 there too. A
+campfire burns nothing, so campfire food (cooked meat and fish, baked potato, dried kelp) must sell for no
+more than the raw item alone. Furnace time is not counted. To check against another fuel:
+
+```bash
+python3 tools/verify_bazaar.py crafting --fuel coal_block --fuel-smelts 80
+python3 tools/verify_bazaar.py crafting --fuel charcoal --fuel-smelts 8
+```
+
+At the shipped prices charcoal (4.0) and coal blocks (45.0) are a little cheaper per item than coal, and a
+few smelts (glass, brick, copper, popped chorus, raw iron and gold) still come out a fraction of a coin
+ahead with them. The coal default leaves that open: the margin is under 3%, one furnace makes about 6
+items a minute, and both fuels are bought on the bazaar, which pushes their price up.
+`CategoryPricesCraftingTest` uses the same coal default (`FUEL`, `FUEL_SMELTS`).
