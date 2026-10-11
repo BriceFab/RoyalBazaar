@@ -2,8 +2,8 @@
 # 'slot' is where its icon sits in the category grid. Items inherit 'defaults' unless they override a field.
 #
 # Shipped defaults are VANILLA ONLY, so the bazaar works on a fresh server with no other plugins.
-# Mob drops are priced by how dangerous/slow the mob is to farm. Gear is priced ABOVE its
-# material cost (see mining.yml for the ingot anchors), so smelting loot into armour never pays.
+# Mob drops are priced by how dangerous/slow the mob is to farm. Gear is priced at or below its
+# material cost (see mining.yml for the ingot anchors), so crafting gear to sell never pays.
 
 name: "&cCombat"
 icon: "minecraft:iron_sword"
@@ -92,7 +92,7 @@ items:
   bone_block:
     item: "minecraft:bone_block"
     group: bone
-    base_price: 16.0      # 9 bone meal = 3 bones
+    base_price: 14.1      # 9 bone meal = 3 bones
 
   # String & Web
   string:
@@ -118,7 +118,7 @@ items:
   fermented_spider_eye:
     item: "minecraft:fermented_spider_eye"
     group: spider_eye
-    base_price: 15.0      # spider eye + sugar + brown mushroom
+    base_price: 11.5      # spider eye + sugar + brown mushroom
 
   # Zombie & Drowned
   rotten_flesh:
@@ -141,7 +141,7 @@ items:
   blaze_rod:
     item: "minecraft:blaze_rod"
     group: blaze
-    base_price: 40.0
+    base_price: 43.7
   blaze_powder:
     item: "minecraft:blaze_powder"
     group: blaze
@@ -159,7 +159,7 @@ items:
   magma_cream:
     item: "minecraft:magma_cream"
     group: slime
-    base_price: 40.0      # slime ball + blaze powder
+    base_price: 38.7      # slime ball + blaze powder
 
   # Enderman
   ender_pearl:
@@ -169,7 +169,7 @@ items:
   ender_eye:
     item: "minecraft:ender_eye"
     group: ender
-    base_price: 72.0      # pearl + blaze powder
+    base_price: 70.1      # pearl + blaze powder
 
   # Ghast
   ghast_tear:
@@ -196,7 +196,7 @@ items:
   breeze_rod:
     item: "minecraft:breeze_rod"
     group: trial
-    base_price: 150.0
+    base_price: 153.0
   wind_charge:
     item: "minecraft:wind_charge"
     group: trial
@@ -228,7 +228,7 @@ items:
   bow:
     item: "minecraft:bow"
     group: bows
-    base_price: 20.0      # 3 sticks + 3 string
+    base_price: 14.1      # 3 sticks + 3 string
   crossbow:
     item: "minecraft:crossbow"
     group: bows
@@ -238,57 +238,57 @@ items:
   iron_helmet:
     item: "minecraft:iron_helmet"
     group: armor
-    base_price: 66.0      # 5 ingots
+    base_price: 62.8      # 5 ingots
   iron_chestplate:
     item: "minecraft:iron_chestplate"
     group: armor
-    base_price: 105.0     # 8 ingots
+    base_price: 100.0     # 8 ingots
   iron_leggings:
     item: "minecraft:iron_leggings"
     group: armor
-    base_price: 92.0      # 7 ingots
+    base_price: 87.9      # 7 ingots
   iron_boots:
     item: "minecraft:iron_boots"
     group: armor
-    base_price: 53.0      # 4 ingots
+    base_price: 50.2      # 4 ingots
   diamond_helmet:
     item: "minecraft:diamond_helmet"
     group: armor
-    base_price: 660.0     # 5 diamonds
+    base_price: 628.0     # 5 diamonds
   diamond_chestplate:
     item: "minecraft:diamond_chestplate"
     group: armor
-    base_price: 1050.0    # 8 diamonds
+    base_price: 1005.0    # 8 diamonds
   diamond_leggings:
     item: "minecraft:diamond_leggings"
     group: armor
-    base_price: 920.0     # 7 diamonds
+    base_price: 879.0     # 7 diamonds
   diamond_boots:
     item: "minecraft:diamond_boots"
     group: armor
-    base_price: 530.0     # 4 diamonds
+    base_price: 502.0     # 4 diamonds
   turtle_helmet:
     item: "minecraft:turtle_helmet"
     group: armor
-    base_price: 350.0     # 5 turtle scutes
+    base_price: 314.0     # 5 turtle scutes
   shield:
     item: "minecraft:shield"
     group: armor
-    base_price: 22.0      # 6 planks + iron ingot
+    base_price: 18.8      # 6 planks + iron ingot
 
   # Weapons
   iron_sword:
     item: "minecraft:iron_sword"
     group: weapons
-    base_price: 28.0      # 2 ingots + stick
+    base_price: 25.6      # 2 ingots + stick
   golden_sword:
     item: "minecraft:golden_sword"
     group: weapons
-    base_price: 45.0      # 2 ingots + stick
+    base_price: 42.4      # 2 ingots + stick
   diamond_sword:
     item: "minecraft:diamond_sword"
     group: weapons
-    base_price: 265.0     # 2 diamonds + stick
+    base_price: 251.0     # 2 diamonds + stick
   trident:
     item: "minecraft:trident"
     group: weapons
@@ -318,11 +318,11 @@ items:
   saddle:
     item: "minecraft:saddle"
     group: rare
-    base_price: 120.0
+    base_price: 42.0
   name_tag:
     item: "minecraft:name_tag"
     group: rare
-    base_price: 150.0
+    base_price: 3.35
   experience_bottle:
     item: "minecraft:experience_bottle"
     group: rare
