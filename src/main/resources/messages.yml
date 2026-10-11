@@ -15,22 +15,92 @@ prompt-amount: "&eType an amount in chat &7(or 'cancel')&e."
 cancelled: "&7Cancelled."
 not-a-number: "&cNot a number."
 amount-positive: "&cAmount must be positive."
+no-categories: "&cThe bazaar has no categories configured."
+unknown-category: "&cUnknown category: {category}"
+
+# /bazaar admin. {old} and {new} are mid prices.
+admin-usage: "&cUsage: /bazaar admin <set|freeze|unfreeze|reset> <item> [mid]"
+admin-set-usage: "&cUsage: /bazaar admin set <item> <mid>"
+admin-mid-positive: "&cThe mid must be a positive number."
+admin-set: "&aSet &f{item}&a mid: &e{old} &7-> &e{new}"
+# used instead of admin-set when the new mid was outside the item's floor/ceiling
+admin-set-clamped: "&aSet &f{item}&a mid: &e{old} &7-> &e{new} &7(clamped to this item's floor/ceiling)"
+admin-reset: "&aReset &f{item}&a to its base price: &e{old} &7-> &e{new}"
+admin-freeze: "&eFroze &f{item}&e: trades refused, price held. Clears on unfreeze or restart."
+admin-unfreeze: "&aUnfroze &f{item}&a: trading and reversion resumed."
 
 trade:
   bought: "&aBought &f{amount} &afor &e${total}"
   sold: "&aSold &f{amount} &afor &e${total}"
   done: "&aDone: &f{amount} &7for &e${total}"
   failed: "&c{reason}"
-  # {reason} in trade.failed when a trade goes against the item's trade_mode
+  # {reason} in trade.failed: why a trade was refused
   reasons:
+    # the trade goes against the item's trade_mode
     buy-disabled: "This item can't be bought here, only sold."
     sell-disabled: "This item can't be sold here, only bought."
+    unknown-item: "Unknown item."
+    invalid-amount: "Invalid amount."
+    frozen: "This item is temporarily frozen."
+    # {max} is max-order from config.yml
+    max-order: "You can buy at most {max} at once."
+    unavailable: "This item is currently unavailable."
+    # refused by EconGuard
+    blocked: "Trade blocked."
+    not-enough-money: "Not enough money."
+    not-enough-space: "Not enough inventory space."
+    inventory-full: "Inventory full."
+    payment-failed: "Payment failed."
+    payment-failed-returned: "Payment failed. Your items have been returned."
+    none-to-sell: "You have none to sell."
+    inventory-changed: "Your inventory changed. Please try again."
+    generic: "Trade failed."
+
+buy:
+  # the "fill inventory" button when nothing fits or nothing is affordable
+  cannot-fill: "&cNo room in your inventory, or not enough money to fill it."
+
+# Sell-all button and /bazaar sellall. {scope} is scope-group, scope-inventory or a category name.
+sell-all:
+  nothing: "&eNothing in {scope} could be sold here."
+  done: "&aSold &f{units}&a from &f{items}&a item type(s) for &6{proceeds}&a."
+  blocked: "&c{blocked} item type(s) were blocked and not sold."
+  scope-group: "this group"
+  scope-inventory: "your inventory"
+  players-only: "Only players can sell to the bazaar."
 
 # %rbazaar_trade_mode% in the menus, one per trade_mode
 trade-mode:
   both: "&aBuy and sell"
   buy-only: "&eBuy only"
   sell-only: "&eSell only"
+
+gui:
+  # added under the category rail lore of the category being viewed
+  currently-viewing: "&aCurrently viewing"
+  # fills %rbazaar_category% on the search results menu
+  search-title: "Search: {query} ({count})"
+
+# Values of the trend and change placeholders in the menus.
+format:
+  # %rbazaar_trend%, %rbazaar_trend_7d% and %rbazaar_group_trend%
+  trend:
+    up: "&a▲"
+    down: "&c▼"
+    flat: "&7▬"
+    # %rbazaar_group_trend% uses these two instead of flat
+    group-flat: "&7="
+    group-empty: "&7-"
+  # %rbazaar_change_24h%, %rbazaar_change_7d% and %rbazaar_group_change_24h%; {percent} has one decimal
+  change:
+    up: "&a+{percent}%"
+    down: "&c{percent}%"
+    # 24h change before there is a price from a day ago, and for an empty group
+    no-history: "0.0%"
+    # 7d change before there is a price from a week ago
+    no-history-7d: "&7-"
+  # %rbazaar_low_7d% and %rbazaar_high_7d% before there is a week of prices
+  no-week-range: "-"
 
 # The text-input dialog (search and custom amounts). In each prompt the first line is the
 # dialog title and any further lines are shown under it.

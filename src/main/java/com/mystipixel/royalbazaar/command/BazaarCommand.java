@@ -2,6 +2,7 @@ package com.mystipixel.royalbazaar.command;
 
 import com.mystipixel.royalbazaar.RoyalBazaarPlugin;
 import com.mystipixel.royalbazaar.config.CategoryConfig;
+import com.mystipixel.royalbazaar.gui.EffectDispatcher;
 import com.mystipixel.royalbazaar.gui.GuiManager;
 import com.mystipixel.royalbazaar.market.MarketItem;
 import com.mystipixel.royalbazaar.market.MarketManager;
@@ -17,6 +18,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /** {@code /bazaar [reload|price|sellall|admin]}. */
 public final class BazaarCommand implements CommandExecutor, TabCompleter {
@@ -65,12 +67,12 @@ public final class BazaarCommand implements CommandExecutor, TabCompleter {
                 MarketItem item = market.lookup(args[1]);
                 if (item == null) {
                     plugin.messages().send(sender, "unknown-item", "&cUnknown item: {item}",
-                            java.util.Map.of("item", args[1]));
+                            Map.of("item", args[1]));
                     return true;
                 }
                 plugin.messages().send(sender, "price-line",
                         "&e{item}&7: buy &a${buy} &7sell &e${sell} &7(mid {mid})",
-                        java.util.Map.of(
+                        Map.of(
                                 "item", item.id(),
                                 "buy", item.tradeMode().allows(TradeSide.BUY)
                                         ? fmt(PricingEngine.buyPrice(item)) : service.unavailablePrice(),
@@ -92,7 +94,7 @@ public final class BazaarCommand implements CommandExecutor, TabCompleter {
     // /bazaar sellall [category]: same sell path as the menu button (price impact, audit, EconGuard veto)
     private void sellAll(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            plugin.messages().send(sender, "players-only", "Only players can sell to the bazaar.");
+            plugin.messages().send(sender, "sell-all.players-only", "Only players can sell to the bazaar.");
             return;
         }
         Collection<MarketItem> scope;
@@ -101,28 +103,16 @@ public final class BazaarCommand implements CommandExecutor, TabCompleter {
             CategoryConfig cat = market.category(args[1].toLowerCase());
             if (cat == null) {
                 plugin.messages().send(sender, "unknown-category", "&cUnknown category: {category}",
-                        java.util.Map.of("category", args[1]));
+                        Map.of("category", args[1]));
                 return;
             }
             scope = market.itemsIn(cat.id());
             what = cat.displayName();
         } else {
             scope = market.all();
-            what = "your inventory";
+            what = plugin.messages().get("sell-all.scope-inventory", "your inventory");
         }
-        BazaarService.SellAllResult result = service.sellAll(player, scope);
-        if (result.soldNothing()) {
-            plugin.messages().send(player, "sell-all.nothing",
-                    "&eNothing in " + what + " could be sold here.");
-        } else {
-            plugin.messages().send(player, "sell-all.done",
-                    "&aSold &f" + result.units() + "&a from &f" + result.distinctItems()
-                            + "&a item type(s) for &6" + String.format("%,.2f", result.proceeds()) + "&a.");
-        }
-        if (result.blocked() > 0) {
-            plugin.messages().send(player, "sell-all.blocked",
-                    "&c" + result.blocked() + " item type(s) were blocked and not sold.");
-        }
+        EffectDispatcher.sendSellAllSummary(plugin.messages(), player, what, service.sellAll(player, scope));
     }
 
     // set/reset persist through the normal flush; freeze is in-memory only and clears on restart
@@ -139,13 +129,13 @@ public final class BazaarCommand implements CommandExecutor, TabCompleter {
         MarketItem item = market.lookup(args[2]);
         if (item == null) {
             plugin.messages().send(sender, "unknown-item", "&cUnknown item: {item}",
-                    java.util.Map.of("item", args[2]));
+                    Map.of("item", args[2]));
             return;
         }
         switch (args[1].toLowerCase()) {
             case "set" -> {
                 if (args.length < 4) {
-                    plugin.messages().send(sender, "admin-usage",
+                    plugin.messages().send(sender, "admin-set-usage",
                             "&cUsage: /bazaar admin set <item> <mid>");
                     return;
                 }
@@ -157,35 +147,39 @@ public final class BazaarCommand implements CommandExecutor, TabCompleter {
                     return;
                 }
                 if (!Double.isFinite(mid) || mid <= 0) {
-                    plugin.messages().send(sender, "not-a-number", "&cThe mid must be a positive number.");
+                    plugin.messages().send(sender, "admin-mid-positive", "&cThe mid must be a positive number.");
                     return;
                 }
                 double clamped = PricingEngine.clamp(mid, item.floor(), item.ceiling());
                 double old = item.mid();
                 item.setMid(clamped);
-                plugin.messages().send(sender, "admin-set",
-                        "&aSet &f{item}&a mid: &e{old} &7-> &e{new}" + (clamped != mid
-                                ? " &7(clamped to this item's floor/ceiling)" : ""),
-                        java.util.Map.of("item", item.id(), "old", fmt(old), "new", fmt(clamped)));
+                Map<String, String> values = Map.of("item", item.id(), "old", fmt(old), "new", fmt(clamped));
+                if (clamped != mid) {
+                    plugin.messages().send(sender, "admin-set-clamped",
+                            "&aSet &f{item}&a mid: &e{old} &7-> &e{new} &7(clamped to this item's floor/ceiling)",
+                            values);
+                } else {
+                    plugin.messages().send(sender, "admin-set", "&aSet &f{item}&a mid: &e{old} &7-> &e{new}", values);
+                }
             }
             case "reset" -> {
                 double old = item.mid();
                 item.setMid(PricingEngine.clamp(item.basePrice(), item.floor(), item.ceiling()));
                 plugin.messages().send(sender, "admin-reset",
                         "&aReset &f{item}&a to its base price: &e{old} &7-> &e{new}",
-                        java.util.Map.of("item", item.id(), "old", fmt(old), "new", fmt(item.mid())));
+                        Map.of("item", item.id(), "old", fmt(old), "new", fmt(item.mid())));
             }
             case "freeze" -> {
                 item.setFrozen(true);
                 plugin.messages().send(sender, "admin-freeze",
                         "&eFroze &f{item}&e: trades refused, price held. Clears on unfreeze or restart.",
-                        java.util.Map.of("item", item.id()));
+                        Map.of("item", item.id()));
             }
             case "unfreeze" -> {
                 item.setFrozen(false);
                 plugin.messages().send(sender, "admin-unfreeze",
                         "&aUnfroze &f{item}&a: trading and reversion resumed.",
-                        java.util.Map.of("item", item.id()));
+                        Map.of("item", item.id()));
             }
             default -> plugin.messages().send(sender, "admin-usage",
                     "&cUsage: /bazaar admin <set|freeze|unfreeze|reset> <item> [mid]");

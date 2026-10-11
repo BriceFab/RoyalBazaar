@@ -64,8 +64,7 @@ public final class AmountPrompt {
                     Map.of("amount", String.valueOf(r.filled()),
                             "total", String.format("%,.2f", r.total())));
         } else {
-            messages.send(player, "trade.failed", "&c{reason}",
-                    Map.of("reason", r.message() == null ? "Trade failed." : r.message()));
+            EffectDispatcher.sendFailure(messages, player, r);
         }
         gui.openProduct(player, itemId);
     }

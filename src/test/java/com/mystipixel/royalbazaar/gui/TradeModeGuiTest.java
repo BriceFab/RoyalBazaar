@@ -130,7 +130,7 @@ class TradeModeGuiTest {
     @Test
     void mixedButtonIsOnlyDisabledWhenEveryTradeOnItIsOff() {
         item(TradeMode.SELL_ONLY);
-        GuiManager real = new GuiManager(menus, market, service, eco, mock(ItemNames.class));
+        GuiManager real = new GuiManager(menus, market, service, eco, mock(ItemNames.class), mock(MessageManager.class));
         List<MenuEffect> buy = List.of(new MenuEffect("rbazaar_buy", Map.of("item", ID)));
         List<MenuEffect> sell = List.of(new MenuEffect("rbazaar_sell", Map.of("item", ID)));
         List<MenuEffect> back = List.of(new MenuEffect("rbazaar_back", Map.of()));
@@ -173,7 +173,7 @@ class TradeModeGuiTest {
         Inventory inventory = mock(Inventory.class);
         when(inventory.getSize()).thenReturn(36);
 
-        GuiManager real = new GuiManager(menus, market, service, eco, mock(ItemNames.class));
+        GuiManager real = new GuiManager(menus, market, service, eco, mock(ItemNames.class), mock(MessageManager.class));
         try (MockedStatic<BazaarMenuHolder> holder = mockStatic(BazaarMenuHolder.class)) {
             holder.when(() -> BazaarMenuHolder.create(anyInt(), any())).thenReturn(inventory);
             real.openBuy(player, ID);      // sell-only: lands on the product page instead
@@ -204,7 +204,7 @@ class TradeModeGuiTest {
         when(menus.get("bazaar_product")).thenReturn(template);
         Inventory inventory = mock(Inventory.class);
         when(inventory.getSize()).thenReturn(36);
-        GuiManager real = new GuiManager(menus, market, service, eco, mock(ItemNames.class));
+        GuiManager real = new GuiManager(menus, market, service, eco, mock(ItemNames.class), mock(MessageManager.class));
         try (MockedStatic<BazaarMenuHolder> holder = mockStatic(BazaarMenuHolder.class)) {
             holder.when(() -> BazaarMenuHolder.create(anyInt(), any())).thenReturn(inventory);
             real.openProduct(player, ID);

@@ -82,38 +82,43 @@ public final class BazaarService {
     public TradeResult buy(Player player, String itemId, long amount) {
         MarketItem item = market.get(itemId);
         if (item == null) {
-            return TradeResult.fail(TradeResult.Status.UNKNOWN_ITEM, TradeSide.BUY, itemId, "Unknown item.");
+            return TradeResult.fail(TradeResult.Status.UNKNOWN_ITEM, TradeSide.BUY, itemId,
+                    messages.get("trade.reasons.unknown-item", "Unknown item."));
         }
         TradeResult refused = tradeModeRefusal(item, TradeSide.BUY);
         if (refused != null) {
             return refused;
         }
         if (amount <= 0) {
-            return TradeResult.fail(TradeResult.Status.ERROR, TradeSide.BUY, itemId, "Invalid amount.");
+            return TradeResult.fail(TradeResult.Status.ERROR, TradeSide.BUY, itemId,
+                    messages.get("trade.reasons.invalid-amount", "Invalid amount."));
         }
         if (item.frozen()) {
             return TradeResult.fail(TradeResult.Status.DISABLED, TradeSide.BUY, itemId,
-                    "This item is temporarily frozen.");
+                    messages.get("trade.reasons.frozen", "This item is temporarily frozen."));
         }
         long maxOrder = config.maxOrder();
         if (maxOrder > 0 && amount > maxOrder) {
             return TradeResult.fail(TradeResult.Status.ERROR, TradeSide.BUY, itemId,
-                    "You can buy at most " + maxOrder + " at once.");
+                    messages.format("trade.reasons.max-order", "You can buy at most {max} at once.",
+                            Map.of("max", String.valueOf(maxOrder))));
         }
         // clamp before pricing so cost and the (int) delivery below describe the same quantity
         amount = Math.min(amount, Integer.MAX_VALUE);
         ItemStack prototype = eco.resolve(itemId, 1);
         if (prototype == null) {
             return TradeResult.fail(TradeResult.Status.DISABLED, TradeSide.BUY, itemId,
-                    "This item is currently unavailable.");
+                    messages.get("trade.reasons.unavailable", "This item is currently unavailable."));
         }
 
         double cost = PricingEngine.buyCost(item, amount);
         if (!guard.allow(player, TradeSide.BUY, itemId, amount, cost)) {
-            return TradeResult.fail(TradeResult.Status.REJECTED_BY_GUARD, TradeSide.BUY, itemId, "Trade blocked.");
+            return TradeResult.fail(TradeResult.Status.REJECTED_BY_GUARD, TradeSide.BUY, itemId,
+                    messages.get("trade.reasons.blocked", "Trade blocked."));
         }
         if (!vault.has(player, cost)) {
-            return TradeResult.fail(TradeResult.Status.INSUFFICIENT_FUNDS, TradeSide.BUY, itemId, "Not enough money.");
+            return TradeResult.fail(TradeResult.Status.INSUFFICIENT_FUNDS, TradeSide.BUY, itemId,
+                    messages.get("trade.reasons.not-enough-money", "Not enough money."));
         }
 
         int fits = spaceFor(player, itemId, prototype.getMaxStackSize(), (int) amount);
@@ -124,17 +129,19 @@ public final class BazaarService {
                 case "drop" -> { /* give all; overflow dropped below */ }
                 default -> {
                     return TradeResult.fail(TradeResult.Status.INVENTORY_FULL, TradeSide.BUY, itemId,
-                            "Not enough inventory space.");
+                            messages.get("trade.reasons.not-enough-space", "Not enough inventory space."));
                 }
             }
         }
         if (fill <= 0) {
-            return TradeResult.fail(TradeResult.Status.INVENTORY_FULL, TradeSide.BUY, itemId, "Inventory full.");
+            return TradeResult.fail(TradeResult.Status.INVENTORY_FULL, TradeSide.BUY, itemId,
+                    messages.get("trade.reasons.inventory-full", "Inventory full."));
         }
 
         double finalCost = fill == amount ? cost : PricingEngine.buyCost(item, fill);
         if (!vault.withdraw(player, finalCost)) {
-            return TradeResult.fail(TradeResult.Status.INSUFFICIENT_FUNDS, TradeSide.BUY, itemId, "Payment failed.");
+            return TradeResult.fail(TradeResult.Status.INSUFFICIENT_FUNDS, TradeSide.BUY, itemId,
+                    messages.get("trade.reasons.payment-failed", "Payment failed."));
         }
 
         giveItems(player, itemId, prototype.getMaxStackSize(), (int) fill);
@@ -186,7 +193,8 @@ public final class BazaarService {
     public TradeResult sell(Player player, String itemId, long amount) {
         MarketItem item = market.get(itemId);
         if (item == null) {
-            return TradeResult.fail(TradeResult.Status.UNKNOWN_ITEM, TradeSide.SELL, itemId, "Unknown item.");
+            return TradeResult.fail(TradeResult.Status.UNKNOWN_ITEM, TradeSide.SELL, itemId,
+                    messages.get("trade.reasons.unknown-item", "Unknown item."));
         }
         TradeResult refused = tradeModeRefusal(item, TradeSide.SELL);
         if (refused != null) {
@@ -194,20 +202,23 @@ public final class BazaarService {
         }
         if (item.frozen()) {
             return TradeResult.fail(TradeResult.Status.DISABLED, TradeSide.SELL, itemId,
-                    "This item is temporarily frozen.");
+                    messages.get("trade.reasons.frozen", "This item is temporarily frozen."));
         }
         if (amount <= 0) {
-            return TradeResult.fail(TradeResult.Status.ERROR, TradeSide.SELL, itemId, "Invalid amount.");
+            return TradeResult.fail(TradeResult.Status.ERROR, TradeSide.SELL, itemId,
+                    messages.get("trade.reasons.invalid-amount", "Invalid amount."));
         }
         int held = eco.countHeld(player, itemId);
         if (held <= 0) {
-            return TradeResult.fail(TradeResult.Status.INSUFFICIENT_ITEMS, TradeSide.SELL, itemId, "You have none to sell.");
+            return TradeResult.fail(TradeResult.Status.INSUFFICIENT_ITEMS, TradeSide.SELL, itemId,
+                    messages.get("trade.reasons.none-to-sell", "You have none to sell."));
         }
         long fill = Math.min(amount, held); // amount == Long.MAX_VALUE for "sell all"
         double proceeds = PricingEngine.sellProceeds(item, fill);
 
         if (!guard.allow(player, TradeSide.SELL, itemId, fill, proceeds)) {
-            return TradeResult.fail(TradeResult.Status.REJECTED_BY_GUARD, TradeSide.SELL, itemId, "Trade blocked.");
+            return TradeResult.fail(TradeResult.Status.REJECTED_BY_GUARD, TradeSide.SELL, itemId,
+                    messages.get("trade.reasons.blocked", "Trade blocked."));
         }
 
         // plan on cloned stacks and restore the originals on rejection; never rebuild them from the id,
@@ -216,13 +227,14 @@ public final class BazaarService {
         ItemStack[] reserved = reserveItems(before, itemId, (int) fill);
         if (reserved == null) {
             return TradeResult.fail(TradeResult.Status.INSUFFICIENT_ITEMS, TradeSide.SELL, itemId,
-                    "Your inventory changed. Please try again.");
+                    messages.get("trade.reasons.inventory-changed", "Your inventory changed. Please try again."));
         }
         player.getInventory().setStorageContents(reserved);
         if (!vault.deposit(player, proceeds)) {
             player.getInventory().setStorageContents(before);
             return TradeResult.fail(TradeResult.Status.ERROR, TradeSide.SELL, itemId,
-                    "Payment failed. Your items have been returned.");
+                    messages.get("trade.reasons.payment-failed-returned",
+                            "Payment failed. Your items have been returned."));
         }
         item.setMid(PricingEngine.midAfterSell(item, fill));
         item.volume().recordSell(fill);
@@ -357,8 +369,9 @@ public final class BazaarService {
         p.put("rbazaar_trend", trendArrow(item));
         p.put("rbazaar_change_7d", pctSince(item.mid(), item.midWeekAgo()));
         p.put("rbazaar_trend_7d", trendSince(item.mid(), item.midWeekAgo()));
-        p.put("rbazaar_low_7d", item.weekLow() > 0 ? vault.formatPrice(item.weekLow()) : "-");
-        p.put("rbazaar_high_7d", item.weekHigh() > 0 ? vault.formatPrice(item.weekHigh()) : "-");
+        String noWeekRange = messages.get("format.no-week-range", "-");
+        p.put("rbazaar_low_7d", item.weekLow() > 0 ? vault.formatPrice(item.weekLow()) : noWeekRange);
+        p.put("rbazaar_high_7d", item.weekHigh() > 0 ? vault.formatPrice(item.weekHigh()) : noWeekRange);
         if (viewer != null) {
             int held = eco.countHeld(viewer, item.id());
             p.put("rbazaar_held_amount", String.valueOf(held));
@@ -390,8 +403,8 @@ public final class BazaarService {
             p.put("rbazaar_group_min_buy", vault.formatPrice(0));
             p.put("rbazaar_group_max_buy", vault.formatPrice(0));
             p.put("rbazaar_group_volume_24h", "0");
-            p.put("rbazaar_group_trend", "&7-");
-            p.put("rbazaar_group_change_24h", "0.0%");
+            p.put("rbazaar_group_trend", messages.get("format.trend.group-empty", "&7-"));
+            p.put("rbazaar_group_change_24h", messages.get("format.change.no-history", "0.0%"));
             return p;
         }
 
@@ -417,9 +430,10 @@ public final class BazaarService {
 
         // from summed mids, so one cheap item can't swing the arrow
         double pct = weightedThen <= 0 ? 0 : (weightedNow - weightedThen) / weightedThen * 100.0;
-        p.put("rbazaar_group_change_24h", String.format("%s%.1f%%", pct >= 0 ? "&a+" : "&c", pct));
+        p.put("rbazaar_group_change_24h", changeText(pct));
         double eps = 0.1;
-        p.put("rbazaar_group_trend", pct > eps ? "&a▲" : pct < -eps ? "&c▼" : "&7=");
+        p.put("rbazaar_group_trend", pct > eps ? trendUp() : pct < -eps ? trendDown()
+                : messages.get("format.trend.group-flat", "&7="));
         return p;
     }
 
@@ -458,44 +472,61 @@ public final class BazaarService {
 
     private String changePct(MarketItem item) {
         if (item.midYesterday() <= 0) {
-            return "0.0%";
+            return messages.get("format.change.no-history", "0.0%");
         }
-        double pct = (item.mid() - item.midYesterday()) / item.midYesterday() * 100.0;
-        return String.format("%s%.1f%%", pct >= 0 ? "&a+" : "&c", pct);
+        return changeText((item.mid() - item.midYesterday()) / item.midYesterday() * 100.0);
     }
 
-    // a dash while no baseline exists yet
     private String pctSince(double now, double then) {
         if (then <= 0) {
-            return "&7-";
+            return messages.get("format.change.no-history-7d", "&7-");
         }
-        double pct = (now - then) / then * 100.0;
-        return String.format("%s%.1f%%", pct >= 0 ? "&a+" : "&c", pct);
+        return changeText((now - then) / then * 100.0);
     }
 
+    private String changeText(double pct) {
+        String percent = String.format("%.1f", pct);
+        return pct >= 0
+                ? messages.format("format.change.up", "&a+{percent}%", Map.of("percent", percent))
+                : messages.format("format.change.down", "&c{percent}%", Map.of("percent", percent));
+    }
+
+    // no baseline yet reads as flat
     private String trendSince(double now, double then) {
         if (then <= 0) {
-            return "&7▬";
+            return trendFlat();
         }
         double eps = then * 0.001;
         if (now - then > eps) {
-            return "&a▲";
+            return trendUp();
         }
         if (now - then < -eps) {
-            return "&c▼";
+            return trendDown();
         }
-        return "&7▬";
+        return trendFlat();
     }
 
     private String trendArrow(MarketItem item) {
         double d = item.mid() - item.emaShort();
         double eps = item.emaShort() * 0.001;
         if (d > eps) {
-            return "&a▲";
+            return trendUp();
         }
         if (d < -eps) {
-            return "&c▼";
+            return trendDown();
         }
-        return "&7▬";
+        return trendFlat();
+    }
+
+    private String trendUp() {
+        return messages.get("format.trend.up", "&a▲");
+    }
+
+    private String trendDown() {
+        return messages.get("format.trend.down", "&c▼");
+    }
+
+    private String trendFlat() {
+        return messages.get("format.trend.flat", "&7▬");
     }
 }
