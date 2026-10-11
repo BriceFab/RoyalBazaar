@@ -1,0 +1,1413 @@
+# Vanilla crafting and stonecutting recipes, read by verify_bazaar.py crafting and
+# CategoryPricesCraftingTest. Regenerate with: verify_bazaar.py extract-recipes DIR
+#   tag <name> <item>...                       an item tag, any one item fits
+#   remainder <ingredient> <item>              handed back when the recipe is crafted
+#   <id> <kind> <count> <output> <- <n>*<a>|<b>...  n of any one of a, b
+tag acacia_logs acacia_log acacia_wood stripped_acacia_log stripped_acacia_wood
+tag bamboo_blocks bamboo_block stripped_bamboo_block
+tag birch_logs birch_log birch_wood stripped_birch_log stripped_birch_wood
+tag cherry_logs cherry_log cherry_wood stripped_cherry_log stripped_cherry_wood
+tag coals coal charcoal
+tag copper_tool_materials copper_ingot
+tag crimson_stems crimson_stem stripped_crimson_stem crimson_hyphae stripped_crimson_hyphae
+tag dark_oak_logs dark_oak_log dark_oak_wood stripped_dark_oak_log stripped_dark_oak_wood
+tag diamond_tool_materials diamond
+tag eggs egg blue_egg brown_egg
+tag gold_tool_materials gold_ingot
+tag iron_tool_materials iron_ingot
+tag jungle_logs jungle_log jungle_wood stripped_jungle_log stripped_jungle_wood
+tag logs dark_oak_log dark_oak_wood stripped_dark_oak_log stripped_dark_oak_wood pale_oak_log pale_oak_wood stripped_pale_oak_log stripped_pale_oak_wood oak_log oak_wood stripped_oak_log stripped_oak_wood acacia_log acacia_wood stripped_acacia_log stripped_acacia_wood birch_log birch_wood stripped_birch_log stripped_birch_wood jungle_log jungle_wood stripped_jungle_log stripped_jungle_wood spruce_log spruce_wood stripped_spruce_log stripped_spruce_wood mangrove_log mangrove_wood stripped_mangrove_log stripped_mangrove_wood cherry_log cherry_wood stripped_cherry_log stripped_cherry_wood crimson_stem stripped_crimson_stem crimson_hyphae stripped_crimson_hyphae warped_stem stripped_warped_stem warped_hyphae stripped_warped_hyphae
+tag mangrove_logs mangrove_log mangrove_wood stripped_mangrove_log stripped_mangrove_wood
+tag metal_nuggets copper_nugget iron_nugget gold_nugget
+tag oak_logs oak_log oak_wood stripped_oak_log stripped_oak_wood
+tag pale_oak_logs pale_oak_log pale_oak_wood stripped_pale_oak_log stripped_pale_oak_wood
+tag planks oak_planks spruce_planks birch_planks jungle_planks acacia_planks dark_oak_planks pale_oak_planks crimson_planks warped_planks mangrove_planks bamboo_planks cherry_planks
+tag soul_fire_base_blocks soul_sand soul_soil
+tag spruce_logs spruce_log spruce_wood stripped_spruce_log stripped_spruce_wood
+tag stone_crafting_materials cobblestone blackstone cobbled_deepslate
+tag stone_tool_materials cobblestone blackstone cobbled_deepslate
+tag warped_stems warped_stem stripped_warped_stem warped_hyphae stripped_warped_hyphae
+tag wooden_slabs oak_slab spruce_slab birch_slab jungle_slab acacia_slab dark_oak_slab pale_oak_slab crimson_slab warped_slab mangrove_slab bamboo_slab cherry_slab
+tag wooden_tool_materials oak_planks spruce_planks birch_planks jungle_planks acacia_planks dark_oak_planks pale_oak_planks crimson_planks warped_planks mangrove_planks bamboo_planks cherry_planks
+tag wool white_wool orange_wool magenta_wool light_blue_wool yellow_wool lime_wool pink_wool gray_wool light_gray_wool cyan_wool purple_wool blue_wool brown_wool green_wool red_wool black_wool
+remainder dragon_breath glass_bottle
+remainder honey_bottle glass_bottle
+remainder lava_bucket bucket
+remainder milk_bucket bucket
+remainder powder_snow_bucket bucket
+remainder water_bucket bucket
+acacia_boat shaped 1 acacia_boat <- 5*acacia_planks
+acacia_button shapeless 1 acacia_button <- 1*acacia_planks
+acacia_chest_boat shapeless 1 acacia_chest_boat <- 1*chest 1*acacia_boat
+acacia_door shaped 3 acacia_door <- 6*acacia_planks
+acacia_fence shaped 3 acacia_fence <- 4*acacia_planks 2*stick
+acacia_fence_gate shaped 1 acacia_fence_gate <- 4*stick 2*acacia_planks
+acacia_hanging_sign shaped 6 acacia_hanging_sign <- 2*iron_chain 6*stripped_acacia_log
+acacia_planks shapeless 4 acacia_planks <- 1*#acacia_logs
+acacia_pressure_plate shaped 1 acacia_pressure_plate <- 2*acacia_planks
+acacia_shelf shaped 6 acacia_shelf <- 6*stripped_acacia_log
+acacia_sign shaped 3 acacia_sign <- 6*acacia_planks 1*stick
+acacia_slab shaped 6 acacia_slab <- 3*acacia_planks
+acacia_stairs shaped 4 acacia_stairs <- 6*acacia_planks
+acacia_trapdoor shaped 2 acacia_trapdoor <- 6*acacia_planks
+acacia_wood shaped 3 acacia_wood <- 4*acacia_log
+activator_rail shaped 6 activator_rail <- 6*iron_ingot 2*stick 1*redstone_torch
+amethyst_block shaped 1 amethyst_block <- 4*amethyst_shard
+andesite shapeless 2 andesite <- 1*diorite 1*cobblestone
+andesite_slab shaped 6 andesite_slab <- 3*andesite
+andesite_slab_from_andesite_stonecutting stonecutter 2 andesite_slab <- 1*andesite
+andesite_stairs shaped 4 andesite_stairs <- 6*andesite
+andesite_stairs_from_andesite_stonecutting stonecutter 1 andesite_stairs <- 1*andesite
+andesite_wall shaped 6 andesite_wall <- 6*andesite
+andesite_wall_from_andesite_stonecutting stonecutter 1 andesite_wall <- 1*andesite
+anvil shaped 1 anvil <- 3*iron_block 4*iron_ingot
+armor_stand shaped 1 armor_stand <- 6*stick 1*smooth_stone_slab
+arrow shaped 4 arrow <- 1*flint 1*stick 1*feather
+bamboo_block shapeless 1 bamboo_block <- 9*bamboo
+bamboo_button shapeless 1 bamboo_button <- 1*bamboo_planks
+bamboo_chest_raft shapeless 1 bamboo_chest_raft <- 1*chest 1*bamboo_raft
+bamboo_door shaped 3 bamboo_door <- 6*bamboo_planks
+bamboo_fence shaped 3 bamboo_fence <- 4*bamboo_planks 2*stick
+bamboo_fence_gate shaped 1 bamboo_fence_gate <- 4*stick 2*bamboo_planks
+bamboo_hanging_sign shaped 6 bamboo_hanging_sign <- 2*iron_chain 6*stripped_bamboo_block
+bamboo_mosaic shaped 1 bamboo_mosaic <- 2*bamboo_slab
+bamboo_mosaic_slab shaped 6 bamboo_mosaic_slab <- 3*bamboo_mosaic
+bamboo_mosaic_stairs shaped 4 bamboo_mosaic_stairs <- 6*bamboo_mosaic
+bamboo_planks shapeless 2 bamboo_planks <- 1*#bamboo_blocks
+bamboo_pressure_plate shaped 1 bamboo_pressure_plate <- 2*bamboo_planks
+bamboo_raft shaped 1 bamboo_raft <- 5*bamboo_planks
+bamboo_shelf shaped 6 bamboo_shelf <- 6*stripped_bamboo_block
+bamboo_sign shaped 3 bamboo_sign <- 6*bamboo_planks 1*stick
+bamboo_slab shaped 6 bamboo_slab <- 3*bamboo_planks
+bamboo_stairs shaped 4 bamboo_stairs <- 6*bamboo_planks
+bamboo_trapdoor shaped 2 bamboo_trapdoor <- 6*bamboo_planks
+barrel shaped 1 barrel <- 6*#planks 2*#wooden_slabs
+beacon shaped 1 beacon <- 5*glass 1*nether_star 3*obsidian
+beehive shaped 1 beehive <- 6*#planks 3*honeycomb
+beetroot_soup shapeless 1 beetroot_soup <- 1*bowl 6*beetroot
+birch_boat shaped 1 birch_boat <- 5*birch_planks
+birch_button shapeless 1 birch_button <- 1*birch_planks
+birch_chest_boat shapeless 1 birch_chest_boat <- 1*chest 1*birch_boat
+birch_door shaped 3 birch_door <- 6*birch_planks
+birch_fence shaped 3 birch_fence <- 4*birch_planks 2*stick
+birch_fence_gate shaped 1 birch_fence_gate <- 4*stick 2*birch_planks
+birch_hanging_sign shaped 6 birch_hanging_sign <- 2*iron_chain 6*stripped_birch_log
+birch_planks shapeless 4 birch_planks <- 1*#birch_logs
+birch_pressure_plate shaped 1 birch_pressure_plate <- 2*birch_planks
+birch_shelf shaped 6 birch_shelf <- 6*stripped_birch_log
+birch_sign shaped 3 birch_sign <- 6*birch_planks 1*stick
+birch_slab shaped 6 birch_slab <- 3*birch_planks
+birch_stairs shaped 4 birch_stairs <- 6*birch_planks
+birch_trapdoor shaped 2 birch_trapdoor <- 6*birch_planks
+birch_wood shaped 3 birch_wood <- 4*birch_log
+black_banner shaped 1 black_banner <- 6*black_wool 1*stick
+black_bed shaped 1 black_bed <- 3*black_wool 3*#planks
+black_candle shapeless 1 black_candle <- 1*candle 1*black_dye
+black_carpet shaped 3 black_carpet <- 2*black_wool
+black_concrete_powder shapeless 8 black_concrete_powder <- 1*black_dye 4*sand 4*gravel
+black_dye shapeless 1 black_dye <- 1*ink_sac
+black_dye_from_wither_rose shapeless 1 black_dye <- 1*wither_rose
+black_harness shaped 1 black_harness <- 3*leather 2*glass 1*black_wool
+black_stained_glass shaped 8 black_stained_glass <- 8*glass 1*black_dye
+black_stained_glass_pane shaped 16 black_stained_glass_pane <- 6*black_stained_glass
+black_stained_glass_pane_from_glass_pane shaped 8 black_stained_glass_pane <- 8*glass_pane 1*black_dye
+black_terracotta shaped 8 black_terracotta <- 8*terracotta 1*black_dye
+blackstone_slab shaped 6 blackstone_slab <- 3*blackstone
+blackstone_slab_from_blackstone_stonecutting stonecutter 2 blackstone_slab <- 1*blackstone
+blackstone_stairs shaped 4 blackstone_stairs <- 6*blackstone
+blackstone_stairs_from_blackstone_stonecutting stonecutter 1 blackstone_stairs <- 1*blackstone
+blackstone_wall shaped 6 blackstone_wall <- 6*blackstone
+blackstone_wall_from_blackstone_stonecutting stonecutter 1 blackstone_wall <- 1*blackstone
+blast_furnace shaped 1 blast_furnace <- 5*iron_ingot 1*furnace 3*smooth_stone
+blaze_powder shapeless 2 blaze_powder <- 1*blaze_rod
+blue_banner shaped 1 blue_banner <- 6*blue_wool 1*stick
+blue_bed shaped 1 blue_bed <- 3*blue_wool 3*#planks
+blue_candle shapeless 1 blue_candle <- 1*candle 1*blue_dye
+blue_carpet shaped 3 blue_carpet <- 2*blue_wool
+blue_concrete_powder shapeless 8 blue_concrete_powder <- 1*blue_dye 4*sand 4*gravel
+blue_dye shapeless 1 blue_dye <- 1*lapis_lazuli
+blue_dye_from_cornflower shapeless 1 blue_dye <- 1*cornflower
+blue_harness shaped 1 blue_harness <- 3*leather 2*glass 1*blue_wool
+blue_ice shapeless 1 blue_ice <- 9*packed_ice
+blue_stained_glass shaped 8 blue_stained_glass <- 8*glass 1*blue_dye
+blue_stained_glass_pane shaped 16 blue_stained_glass_pane <- 6*blue_stained_glass
+blue_stained_glass_pane_from_glass_pane shaped 8 blue_stained_glass_pane <- 8*glass_pane 1*blue_dye
+blue_terracotta shaped 8 blue_terracotta <- 8*terracotta 1*blue_dye
+bolt_armor_trim_smithing_template shaped 2 bolt_armor_trim_smithing_template <- 7*diamond 1*bolt_armor_trim_smithing_template 1*copper_block|waxed_copper_block
+bone_block shaped 1 bone_block <- 9*bone_meal
+bone_meal shapeless 3 bone_meal <- 1*bone
+bone_meal_from_bone_block shapeless 9 bone_meal <- 1*bone_block
+book shapeless 1 book <- 3*paper 1*leather
+bookshelf shaped 1 bookshelf <- 6*#planks 3*book
+bordure_indented_banner_pattern shapeless 1 bordure_indented_banner_pattern <- 1*paper 1*vine
+bow shaped 1 bow <- 3*stick 3*string
+bowl shaped 4 bowl <- 3*#planks
+bread shaped 1 bread <- 3*wheat
+brewing_stand shaped 1 brewing_stand <- 1*blaze_rod 3*#stone_crafting_materials
+brick_slab shaped 6 brick_slab <- 3*bricks
+brick_slab_from_bricks_stonecutting stonecutter 2 brick_slab <- 1*bricks
+brick_stairs shaped 4 brick_stairs <- 6*bricks
+brick_stairs_from_bricks_stonecutting stonecutter 1 brick_stairs <- 1*bricks
+brick_wall shaped 6 brick_wall <- 6*bricks
+brick_wall_from_bricks_stonecutting stonecutter 1 brick_wall <- 1*bricks
+bricks shaped 1 bricks <- 4*brick
+brown_banner shaped 1 brown_banner <- 6*brown_wool 1*stick
+brown_bed shaped 1 brown_bed <- 3*brown_wool 3*#planks
+brown_candle shapeless 1 brown_candle <- 1*candle 1*brown_dye
+brown_carpet shaped 3 brown_carpet <- 2*brown_wool
+brown_concrete_powder shapeless 8 brown_concrete_powder <- 1*brown_dye 4*sand 4*gravel
+brown_dye shapeless 1 brown_dye <- 1*cocoa_beans
+brown_harness shaped 1 brown_harness <- 3*leather 2*glass 1*brown_wool
+brown_stained_glass shaped 8 brown_stained_glass <- 8*glass 1*brown_dye
+brown_stained_glass_pane shaped 16 brown_stained_glass_pane <- 6*brown_stained_glass
+brown_stained_glass_pane_from_glass_pane shaped 8 brown_stained_glass_pane <- 8*glass_pane 1*brown_dye
+brown_terracotta shaped 8 brown_terracotta <- 8*terracotta 1*brown_dye
+brush shaped 1 brush <- 1*feather 1*copper_ingot 1*stick
+bucket shaped 1 bucket <- 3*iron_ingot
+bundle shaped 1 bundle <- 1*string 1*leather
+cake shaped 1 cake <- 3*milk_bucket 2*sugar 1*#eggs 3*wheat
+calibrated_sculk_sensor shaped 1 calibrated_sculk_sensor <- 3*amethyst_shard 1*sculk_sensor
+campfire shaped 1 campfire <- 3*stick 1*#coals 3*#logs
+candle shaped 1 candle <- 1*string 1*honeycomb
+carrot_on_a_stick shaped 1 carrot_on_a_stick <- 1*fishing_rod 1*carrot
+cartography_table shaped 1 cartography_table <- 2*paper 4*#planks
+cauldron shaped 1 cauldron <- 7*iron_ingot
+cherry_boat shaped 1 cherry_boat <- 5*cherry_planks
+cherry_button shapeless 1 cherry_button <- 1*cherry_planks
+cherry_chest_boat shapeless 1 cherry_chest_boat <- 1*chest 1*cherry_boat
+cherry_door shaped 3 cherry_door <- 6*cherry_planks
+cherry_fence shaped 3 cherry_fence <- 4*cherry_planks 2*stick
+cherry_fence_gate shaped 1 cherry_fence_gate <- 4*stick 2*cherry_planks
+cherry_hanging_sign shaped 6 cherry_hanging_sign <- 2*iron_chain 6*stripped_cherry_log
+cherry_planks shapeless 4 cherry_planks <- 1*#cherry_logs
+cherry_pressure_plate shaped 1 cherry_pressure_plate <- 2*cherry_planks
+cherry_shelf shaped 6 cherry_shelf <- 6*stripped_cherry_log
+cherry_sign shaped 3 cherry_sign <- 6*cherry_planks 1*stick
+cherry_slab shaped 6 cherry_slab <- 3*cherry_planks
+cherry_stairs shaped 4 cherry_stairs <- 6*cherry_planks
+cherry_trapdoor shaped 2 cherry_trapdoor <- 6*cherry_planks
+cherry_wood shaped 3 cherry_wood <- 4*cherry_log
+chest shaped 1 chest <- 8*#planks
+chest_minecart shapeless 1 chest_minecart <- 1*chest 1*minecart
+chiseled_bookshelf shaped 1 chiseled_bookshelf <- 6*#planks 3*#wooden_slabs
+chiseled_cinnabar shaped 1 chiseled_cinnabar <- 2*cinnabar_slab
+chiseled_cinnabar_from_cinnabar_stonecutting stonecutter 1 chiseled_cinnabar <- 1*cinnabar
+chiseled_copper shaped 1 chiseled_copper <- 2*cut_copper_slab
+chiseled_copper_from_copper_block_stonecutting stonecutter 4 chiseled_copper <- 1*copper_block
+chiseled_copper_from_cut_copper_stonecutting stonecutter 1 chiseled_copper <- 1*cut_copper
+chiseled_deepslate shaped 1 chiseled_deepslate <- 2*cobbled_deepslate_slab
+chiseled_deepslate_from_cobbled_deepslate_stonecutting stonecutter 1 chiseled_deepslate <- 1*cobbled_deepslate
+chiseled_deepslate_from_deepslate_stonecutting stonecutter 1 chiseled_deepslate <- 1*deepslate
+chiseled_nether_bricks shaped 1 chiseled_nether_bricks <- 2*nether_brick_slab
+chiseled_nether_bricks_from_nether_bricks_stonecutting stonecutter 1 chiseled_nether_bricks <- 1*nether_bricks
+chiseled_polished_blackstone shaped 1 chiseled_polished_blackstone <- 2*polished_blackstone_slab
+chiseled_polished_blackstone_from_blackstone_stonecutting stonecutter 1 chiseled_polished_blackstone <- 1*blackstone
+chiseled_polished_blackstone_from_polished_blackstone_stonecutting stonecutter 1 chiseled_polished_blackstone <- 1*polished_blackstone
+chiseled_quartz_block shaped 1 chiseled_quartz_block <- 2*quartz_slab
+chiseled_quartz_block_from_quartz_block_stonecutting stonecutter 1 chiseled_quartz_block <- 1*quartz_block
+chiseled_red_sandstone shaped 1 chiseled_red_sandstone <- 2*red_sandstone_slab
+chiseled_red_sandstone_from_red_sandstone_stonecutting stonecutter 1 chiseled_red_sandstone <- 1*red_sandstone
+chiseled_resin_bricks shaped 1 chiseled_resin_bricks <- 2*resin_brick_slab
+chiseled_resin_bricks_from_resin_bricks_stonecutting stonecutter 1 chiseled_resin_bricks <- 1*resin_bricks
+chiseled_sandstone shaped 1 chiseled_sandstone <- 2*sandstone_slab
+chiseled_sandstone_from_sandstone_stonecutting stonecutter 1 chiseled_sandstone <- 1*sandstone
+chiseled_stone_bricks shaped 1 chiseled_stone_bricks <- 2*stone_brick_slab
+chiseled_stone_bricks_from_stone_bricks_stonecutting stonecutter 1 chiseled_stone_bricks <- 1*stone_bricks
+chiseled_stone_bricks_from_stone_stonecutting stonecutter 1 chiseled_stone_bricks <- 1*stone
+chiseled_sulfur shaped 1 chiseled_sulfur <- 2*sulfur_slab
+chiseled_sulfur_from_sulfur_stonecutting stonecutter 1 chiseled_sulfur <- 1*sulfur
+chiseled_tuff shaped 1 chiseled_tuff <- 2*tuff_slab
+chiseled_tuff_bricks shaped 1 chiseled_tuff_bricks <- 2*tuff_brick_slab
+chiseled_tuff_bricks_from_polished_tuff_stonecutting stonecutter 1 chiseled_tuff_bricks <- 1*polished_tuff
+chiseled_tuff_bricks_from_tuff_bricks_stonecutting stonecutter 1 chiseled_tuff_bricks <- 1*tuff_bricks
+chiseled_tuff_bricks_from_tuff_stonecutting stonecutter 1 chiseled_tuff_bricks <- 1*tuff
+chiseled_tuff_from_tuff_stonecutting stonecutter 1 chiseled_tuff <- 1*tuff
+cinnabar_brick_slab shaped 6 cinnabar_brick_slab <- 3*cinnabar_bricks
+cinnabar_brick_slab_from_cinnabar_bricks_stonecutting stonecutter 2 cinnabar_brick_slab <- 1*cinnabar_bricks
+cinnabar_brick_slab_from_cinnabar_stonecutting stonecutter 2 cinnabar_brick_slab <- 1*cinnabar
+cinnabar_brick_slab_from_polished_cinnabar_stonecutting stonecutter 2 cinnabar_brick_slab <- 1*polished_cinnabar
+cinnabar_brick_stairs shaped 4 cinnabar_brick_stairs <- 6*cinnabar_bricks
+cinnabar_brick_stairs_from_cinnabar_bricks_stonecutting stonecutter 1 cinnabar_brick_stairs <- 1*cinnabar_bricks
+cinnabar_brick_stairs_from_cinnabar_stonecutting stonecutter 1 cinnabar_brick_stairs <- 1*cinnabar
+cinnabar_brick_stairs_from_polished_cinnabar_stonecutting stonecutter 1 cinnabar_brick_stairs <- 1*polished_cinnabar
+cinnabar_brick_wall shaped 6 cinnabar_brick_wall <- 6*cinnabar_bricks
+cinnabar_brick_wall_from_cinnabar_bricks_stonecutting stonecutter 1 cinnabar_brick_wall <- 1*cinnabar_bricks
+cinnabar_brick_wall_from_cinnabar_stonecutting stonecutter 1 cinnabar_brick_wall <- 1*cinnabar
+cinnabar_brick_wall_from_polished_cinnabar_stonecutting stonecutter 1 cinnabar_brick_wall <- 1*polished_cinnabar
+cinnabar_bricks shaped 4 cinnabar_bricks <- 4*polished_cinnabar
+cinnabar_bricks_from_cinnabar_stonecutting stonecutter 1 cinnabar_bricks <- 1*cinnabar
+cinnabar_bricks_from_polished_cinnabar_stonecutting stonecutter 1 cinnabar_bricks <- 1*polished_cinnabar
+cinnabar_slab shaped 6 cinnabar_slab <- 3*cinnabar
+cinnabar_slab_from_cinnabar_stonecutting stonecutter 2 cinnabar_slab <- 1*cinnabar
+cinnabar_stairs shaped 4 cinnabar_stairs <- 6*cinnabar
+cinnabar_stairs_from_cinnabar_stonecutting stonecutter 1 cinnabar_stairs <- 1*cinnabar
+cinnabar_wall shaped 6 cinnabar_wall <- 6*cinnabar
+cinnabar_wall_from_cinnabar_stonecutting stonecutter 1 cinnabar_wall <- 1*cinnabar
+clay shaped 1 clay <- 4*clay_ball
+clock shaped 1 clock <- 4*gold_ingot 1*redstone
+coal shapeless 9 coal <- 1*coal_block
+coal_block shaped 1 coal_block <- 9*coal
+coarse_dirt shaped 4 coarse_dirt <- 2*dirt 2*gravel
+coast_armor_trim_smithing_template shaped 2 coast_armor_trim_smithing_template <- 7*diamond 1*coast_armor_trim_smithing_template 1*cobblestone
+cobbled_deepslate_from_deepslate_stonecutting stonecutter 1 cobbled_deepslate <- 1*deepslate
+cobbled_deepslate_slab shaped 6 cobbled_deepslate_slab <- 3*cobbled_deepslate
+cobbled_deepslate_slab_from_cobbled_deepslate_stonecutting stonecutter 2 cobbled_deepslate_slab <- 1*cobbled_deepslate
+cobbled_deepslate_slab_from_deepslate_stonecutting stonecutter 2 cobbled_deepslate_slab <- 1*deepslate
+cobbled_deepslate_stairs shaped 4 cobbled_deepslate_stairs <- 6*cobbled_deepslate
+cobbled_deepslate_stairs_from_cobbled_deepslate_stonecutting stonecutter 1 cobbled_deepslate_stairs <- 1*cobbled_deepslate
+cobbled_deepslate_stairs_from_deepslate_stonecutting stonecutter 1 cobbled_deepslate_stairs <- 1*deepslate
+cobbled_deepslate_wall shaped 6 cobbled_deepslate_wall <- 6*cobbled_deepslate
+cobbled_deepslate_wall_from_cobbled_deepslate_stonecutting stonecutter 1 cobbled_deepslate_wall <- 1*cobbled_deepslate
+cobbled_deepslate_wall_from_deepslate_stonecutting stonecutter 1 cobbled_deepslate_wall <- 1*deepslate
+cobblestone_from_stone_stonecutting stonecutter 1 cobblestone <- 1*stone
+cobblestone_slab shaped 6 cobblestone_slab <- 3*cobblestone
+cobblestone_slab_from_cobblestone_stonecutting stonecutter 2 cobblestone_slab <- 1*cobblestone
+cobblestone_slab_from_stone_stonecutting stonecutter 2 cobblestone_slab <- 1*stone
+cobblestone_stairs shaped 4 cobblestone_stairs <- 6*cobblestone
+cobblestone_stairs_from_cobblestone_stonecutting stonecutter 1 cobblestone_stairs <- 1*cobblestone
+cobblestone_stairs_from_stone_stonecutting stonecutter 1 cobblestone_stairs <- 1*stone
+cobblestone_wall shaped 6 cobblestone_wall <- 6*cobblestone
+cobblestone_wall_from_cobblestone_stonecutting stonecutter 1 cobblestone_wall <- 1*cobblestone
+cobblestone_wall_from_stone_stonecutting stonecutter 1 cobblestone_wall <- 1*stone
+comparator shaped 1 comparator <- 3*redstone_torch 1*quartz 3*stone
+compass shaped 1 compass <- 4*iron_ingot 1*redstone
+composter shaped 1 composter <- 7*#wooden_slabs
+conduit shaped 1 conduit <- 8*nautilus_shell 1*heart_of_the_sea
+cookie shaped 8 cookie <- 2*wheat 1*cocoa_beans
+copper_axe shaped 1 copper_axe <- 3*#copper_tool_materials 2*stick
+copper_bars shaped 16 copper_bars <- 6*copper_ingot
+copper_block shaped 1 copper_block <- 9*copper_ingot
+copper_boots shaped 1 copper_boots <- 4*copper_ingot
+copper_bulb shaped 4 copper_bulb <- 3*copper_block 1*blaze_rod 1*redstone
+copper_chain shaped 1 copper_chain <- 2*copper_nugget 1*copper_ingot
+copper_chest shaped 1 copper_chest <- 8*copper_ingot 1*chest
+copper_chestplate shaped 1 copper_chestplate <- 8*copper_ingot
+copper_door shaped 3 copper_door <- 6*copper_ingot
+copper_grate shaped 4 copper_grate <- 4*copper_block
+copper_grate_from_copper_block_stonecutting stonecutter 4 copper_grate <- 1*copper_block
+copper_helmet shaped 1 copper_helmet <- 5*copper_ingot
+copper_hoe shaped 1 copper_hoe <- 2*#copper_tool_materials 2*stick
+copper_ingot shapeless 9 copper_ingot <- 1*copper_block
+copper_ingot_from_nuggets shaped 1 copper_ingot <- 9*copper_nugget
+copper_ingot_from_waxed_copper_block shapeless 9 copper_ingot <- 1*waxed_copper_block
+copper_lantern shaped 1 copper_lantern <- 8*copper_nugget 1*copper_torch
+copper_leggings shaped 1 copper_leggings <- 7*copper_ingot
+copper_nugget shapeless 9 copper_nugget <- 1*copper_ingot
+copper_pickaxe shaped 1 copper_pickaxe <- 3*#copper_tool_materials 2*stick
+copper_shovel shaped 1 copper_shovel <- 1*#copper_tool_materials 2*stick
+copper_spear shaped 1 copper_spear <- 1*#copper_tool_materials 2*stick
+copper_sword shaped 1 copper_sword <- 2*#copper_tool_materials 1*stick
+copper_torch shaped 4 copper_torch <- 1*copper_nugget 1*coal|charcoal 1*stick
+copper_trapdoor shaped 1 copper_trapdoor <- 4*copper_ingot
+crafter shaped 1 crafter <- 5*iron_ingot 1*crafting_table 2*redstone 1*dropper
+crafting_table shaped 1 crafting_table <- 4*#planks
+creaking_heart shaped 1 creaking_heart <- 2*pale_oak_log 1*resin_block
+creeper_banner_pattern shapeless 1 creeper_banner_pattern <- 1*paper 1*creeper_head
+crimson_button shapeless 1 crimson_button <- 1*crimson_planks
+crimson_door shaped 3 crimson_door <- 6*crimson_planks
+crimson_fence shaped 3 crimson_fence <- 4*crimson_planks 2*stick
+crimson_fence_gate shaped 1 crimson_fence_gate <- 4*stick 2*crimson_planks
+crimson_hanging_sign shaped 6 crimson_hanging_sign <- 2*iron_chain 6*stripped_crimson_stem
+crimson_hyphae shaped 3 crimson_hyphae <- 4*crimson_stem
+crimson_planks shapeless 4 crimson_planks <- 1*#crimson_stems
+crimson_pressure_plate shaped 1 crimson_pressure_plate <- 2*crimson_planks
+crimson_shelf shaped 6 crimson_shelf <- 6*stripped_crimson_stem
+crimson_sign shaped 3 crimson_sign <- 6*crimson_planks 1*stick
+crimson_slab shaped 6 crimson_slab <- 3*crimson_planks
+crimson_stairs shaped 4 crimson_stairs <- 6*crimson_planks
+crimson_trapdoor shaped 2 crimson_trapdoor <- 6*crimson_planks
+crossbow shaped 1 crossbow <- 3*stick 1*iron_ingot 2*string 1*tripwire_hook
+cut_copper shaped 4 cut_copper <- 4*copper_block
+cut_copper_from_copper_block_stonecutting stonecutter 4 cut_copper <- 1*copper_block
+cut_copper_slab shaped 6 cut_copper_slab <- 3*cut_copper
+cut_copper_slab_from_copper_block_stonecutting stonecutter 8 cut_copper_slab <- 1*copper_block
+cut_copper_slab_from_cut_copper_stonecutting stonecutter 2 cut_copper_slab <- 1*cut_copper
+cut_copper_stairs shaped 4 cut_copper_stairs <- 6*cut_copper
+cut_copper_stairs_from_copper_block_stonecutting stonecutter 4 cut_copper_stairs <- 1*copper_block
+cut_copper_stairs_from_cut_copper_stonecutting stonecutter 1 cut_copper_stairs <- 1*cut_copper
+cut_red_sandstone shaped 4 cut_red_sandstone <- 4*red_sandstone
+cut_red_sandstone_from_red_sandstone_stonecutting stonecutter 1 cut_red_sandstone <- 1*red_sandstone
+cut_red_sandstone_slab shaped 6 cut_red_sandstone_slab <- 3*cut_red_sandstone
+cut_red_sandstone_slab_from_cut_red_sandstone_stonecutting stonecutter 2 cut_red_sandstone_slab <- 1*cut_red_sandstone
+cut_red_sandstone_slab_from_red_sandstone_stonecutting stonecutter 2 cut_red_sandstone_slab <- 1*red_sandstone
+cut_sandstone shaped 4 cut_sandstone <- 4*sandstone
+cut_sandstone_from_sandstone_stonecutting stonecutter 1 cut_sandstone <- 1*sandstone
+cut_sandstone_slab shaped 6 cut_sandstone_slab <- 3*cut_sandstone
+cut_sandstone_slab_from_cut_sandstone_stonecutting stonecutter 2 cut_sandstone_slab <- 1*cut_sandstone
+cut_sandstone_slab_from_sandstone_stonecutting stonecutter 2 cut_sandstone_slab <- 1*sandstone
+cyan_banner shaped 1 cyan_banner <- 6*cyan_wool 1*stick
+cyan_bed shaped 1 cyan_bed <- 3*cyan_wool 3*#planks
+cyan_candle shapeless 1 cyan_candle <- 1*candle 1*cyan_dye
+cyan_carpet shaped 3 cyan_carpet <- 2*cyan_wool
+cyan_concrete_powder shapeless 8 cyan_concrete_powder <- 1*cyan_dye 4*sand 4*gravel
+cyan_dye shapeless 2 cyan_dye <- 1*blue_dye 1*green_dye
+cyan_dye_from_pitcher_plant shapeless 2 cyan_dye <- 1*pitcher_plant
+cyan_harness shaped 1 cyan_harness <- 3*leather 2*glass 1*cyan_wool
+cyan_stained_glass shaped 8 cyan_stained_glass <- 8*glass 1*cyan_dye
+cyan_stained_glass_pane shaped 16 cyan_stained_glass_pane <- 6*cyan_stained_glass
+cyan_stained_glass_pane_from_glass_pane shaped 8 cyan_stained_glass_pane <- 8*glass_pane 1*cyan_dye
+cyan_terracotta shaped 8 cyan_terracotta <- 8*terracotta 1*cyan_dye
+dark_oak_boat shaped 1 dark_oak_boat <- 5*dark_oak_planks
+dark_oak_button shapeless 1 dark_oak_button <- 1*dark_oak_planks
+dark_oak_chest_boat shapeless 1 dark_oak_chest_boat <- 1*chest 1*dark_oak_boat
+dark_oak_door shaped 3 dark_oak_door <- 6*dark_oak_planks
+dark_oak_fence shaped 3 dark_oak_fence <- 4*dark_oak_planks 2*stick
+dark_oak_fence_gate shaped 1 dark_oak_fence_gate <- 4*stick 2*dark_oak_planks
+dark_oak_hanging_sign shaped 6 dark_oak_hanging_sign <- 2*iron_chain 6*stripped_dark_oak_log
+dark_oak_planks shapeless 4 dark_oak_planks <- 1*#dark_oak_logs
+dark_oak_pressure_plate shaped 1 dark_oak_pressure_plate <- 2*dark_oak_planks
+dark_oak_shelf shaped 6 dark_oak_shelf <- 6*stripped_dark_oak_log
+dark_oak_sign shaped 3 dark_oak_sign <- 6*dark_oak_planks 1*stick
+dark_oak_slab shaped 6 dark_oak_slab <- 3*dark_oak_planks
+dark_oak_stairs shaped 4 dark_oak_stairs <- 6*dark_oak_planks
+dark_oak_trapdoor shaped 2 dark_oak_trapdoor <- 6*dark_oak_planks
+dark_oak_wood shaped 3 dark_oak_wood <- 4*dark_oak_log
+dark_prismarine shaped 1 dark_prismarine <- 8*prismarine_shard 1*black_dye
+dark_prismarine_slab shaped 6 dark_prismarine_slab <- 3*dark_prismarine
+dark_prismarine_slab_from_dark_prismarine_stonecutting stonecutter 2 dark_prismarine_slab <- 1*dark_prismarine
+dark_prismarine_stairs shaped 4 dark_prismarine_stairs <- 6*dark_prismarine
+dark_prismarine_stairs_from_dark_prismarine_stonecutting stonecutter 1 dark_prismarine_stairs <- 1*dark_prismarine
+daylight_detector shaped 1 daylight_detector <- 3*glass 3*quartz 3*#wooden_slabs
+decorated_pot_simple shaped 1 decorated_pot <- 4*brick
+deepslate_brick_slab shaped 6 deepslate_brick_slab <- 3*deepslate_bricks
+deepslate_brick_slab_from_cobbled_deepslate_stonecutting stonecutter 2 deepslate_brick_slab <- 1*cobbled_deepslate
+deepslate_brick_slab_from_deepslate_bricks_stonecutting stonecutter 2 deepslate_brick_slab <- 1*deepslate_bricks
+deepslate_brick_slab_from_deepslate_stonecutting stonecutter 2 deepslate_brick_slab <- 1*deepslate
+deepslate_brick_slab_from_polished_deepslate_stonecutting stonecutter 2 deepslate_brick_slab <- 1*polished_deepslate
+deepslate_brick_stairs shaped 4 deepslate_brick_stairs <- 6*deepslate_bricks
+deepslate_brick_stairs_from_cobbled_deepslate_stonecutting stonecutter 1 deepslate_brick_stairs <- 1*cobbled_deepslate
+deepslate_brick_stairs_from_deepslate_bricks_stonecutting stonecutter 1 deepslate_brick_stairs <- 1*deepslate_bricks
+deepslate_brick_stairs_from_deepslate_stonecutting stonecutter 1 deepslate_brick_stairs <- 1*deepslate
+deepslate_brick_stairs_from_polished_deepslate_stonecutting stonecutter 1 deepslate_brick_stairs <- 1*polished_deepslate
+deepslate_brick_wall shaped 6 deepslate_brick_wall <- 6*deepslate_bricks
+deepslate_brick_wall_from_cobbled_deepslate_stonecutting stonecutter 1 deepslate_brick_wall <- 1*cobbled_deepslate
+deepslate_brick_wall_from_deepslate_bricks_stonecutting stonecutter 1 deepslate_brick_wall <- 1*deepslate_bricks
+deepslate_brick_wall_from_deepslate_stonecutting stonecutter 1 deepslate_brick_wall <- 1*deepslate
+deepslate_brick_wall_from_polished_deepslate_stonecutting stonecutter 1 deepslate_brick_wall <- 1*polished_deepslate
+deepslate_bricks shaped 4 deepslate_bricks <- 4*polished_deepslate
+deepslate_bricks_from_cobbled_deepslate_stonecutting stonecutter 1 deepslate_bricks <- 1*cobbled_deepslate
+deepslate_bricks_from_deepslate_stonecutting stonecutter 1 deepslate_bricks <- 1*deepslate
+deepslate_bricks_from_polished_deepslate_stonecutting stonecutter 1 deepslate_bricks <- 1*polished_deepslate
+deepslate_tile_slab shaped 6 deepslate_tile_slab <- 3*deepslate_tiles
+deepslate_tile_slab_from_cobbled_deepslate_stonecutting stonecutter 2 deepslate_tile_slab <- 1*cobbled_deepslate
+deepslate_tile_slab_from_deepslate_bricks_stonecutting stonecutter 2 deepslate_tile_slab <- 1*deepslate_bricks
+deepslate_tile_slab_from_deepslate_stonecutting stonecutter 2 deepslate_tile_slab <- 1*deepslate
+deepslate_tile_slab_from_deepslate_tiles_stonecutting stonecutter 2 deepslate_tile_slab <- 1*deepslate_tiles
+deepslate_tile_slab_from_polished_deepslate_stonecutting stonecutter 2 deepslate_tile_slab <- 1*polished_deepslate
+deepslate_tile_stairs shaped 4 deepslate_tile_stairs <- 6*deepslate_tiles
+deepslate_tile_stairs_from_cobbled_deepslate_stonecutting stonecutter 1 deepslate_tile_stairs <- 1*cobbled_deepslate
+deepslate_tile_stairs_from_deepslate_bricks_stonecutting stonecutter 1 deepslate_tile_stairs <- 1*deepslate_bricks
+deepslate_tile_stairs_from_deepslate_stonecutting stonecutter 1 deepslate_tile_stairs <- 1*deepslate
+deepslate_tile_stairs_from_deepslate_tiles_stonecutting stonecutter 1 deepslate_tile_stairs <- 1*deepslate_tiles
+deepslate_tile_stairs_from_polished_deepslate_stonecutting stonecutter 1 deepslate_tile_stairs <- 1*polished_deepslate
+deepslate_tile_wall shaped 6 deepslate_tile_wall <- 6*deepslate_tiles
+deepslate_tile_wall_from_cobbled_deepslate_stonecutting stonecutter 1 deepslate_tile_wall <- 1*cobbled_deepslate
+deepslate_tile_wall_from_deepslate_bricks_stonecutting stonecutter 1 deepslate_tile_wall <- 1*deepslate_bricks
+deepslate_tile_wall_from_deepslate_stonecutting stonecutter 1 deepslate_tile_wall <- 1*deepslate
+deepslate_tile_wall_from_deepslate_tiles_stonecutting stonecutter 1 deepslate_tile_wall <- 1*deepslate_tiles
+deepslate_tile_wall_from_polished_deepslate_stonecutting stonecutter 1 deepslate_tile_wall <- 1*polished_deepslate
+deepslate_tiles shaped 4 deepslate_tiles <- 4*deepslate_bricks
+deepslate_tiles_from_cobbled_deepslate_stonecutting stonecutter 1 deepslate_tiles <- 1*cobbled_deepslate
+deepslate_tiles_from_deepslate_bricks_stonecutting stonecutter 1 deepslate_tiles <- 1*deepslate_bricks
+deepslate_tiles_from_deepslate_stonecutting stonecutter 1 deepslate_tiles <- 1*deepslate
+deepslate_tiles_from_polished_deepslate_stonecutting stonecutter 1 deepslate_tiles <- 1*polished_deepslate
+detector_rail shaped 6 detector_rail <- 6*iron_ingot 1*stone_pressure_plate 1*redstone
+diamond shapeless 9 diamond <- 1*diamond_block
+diamond_axe shaped 1 diamond_axe <- 3*#diamond_tool_materials 2*stick
+diamond_block shaped 1 diamond_block <- 9*diamond
+diamond_boots shaped 1 diamond_boots <- 4*diamond
+diamond_chestplate shaped 1 diamond_chestplate <- 8*diamond
+diamond_helmet shaped 1 diamond_helmet <- 5*diamond
+diamond_hoe shaped 1 diamond_hoe <- 2*#diamond_tool_materials 2*stick
+diamond_leggings shaped 1 diamond_leggings <- 7*diamond
+diamond_pickaxe shaped 1 diamond_pickaxe <- 3*#diamond_tool_materials 2*stick
+diamond_shovel shaped 1 diamond_shovel <- 1*#diamond_tool_materials 2*stick
+diamond_spear shaped 1 diamond_spear <- 1*#diamond_tool_materials 2*stick
+diamond_sword shaped 1 diamond_sword <- 2*#diamond_tool_materials 1*stick
+diorite shaped 2 diorite <- 2*cobblestone 2*quartz
+diorite_slab shaped 6 diorite_slab <- 3*diorite
+diorite_slab_from_diorite_stonecutting stonecutter 2 diorite_slab <- 1*diorite
+diorite_stairs shaped 4 diorite_stairs <- 6*diorite
+diorite_stairs_from_diorite_stonecutting stonecutter 1 diorite_stairs <- 1*diorite
+diorite_wall shaped 6 diorite_wall <- 6*diorite
+diorite_wall_from_diorite_stonecutting stonecutter 1 diorite_wall <- 1*diorite
+dispenser shaped 1 dispenser <- 7*cobblestone 1*bow 1*redstone
+dried_ghast shaped 1 dried_ghast <- 8*ghast_tear 1*soul_sand
+dried_kelp shapeless 9 dried_kelp <- 1*dried_kelp_block
+dried_kelp_block shaped 1 dried_kelp_block <- 9*dried_kelp
+dripstone_block shaped 1 dripstone_block <- 4*pointed_dripstone
+dropper shaped 1 dropper <- 7*cobblestone 1*redstone
+dune_armor_trim_smithing_template shaped 2 dune_armor_trim_smithing_template <- 7*diamond 1*dune_armor_trim_smithing_template 1*sandstone
+dye_black_bed shapeless 1 black_bed <- 1*black_dye 1*white_bed|orange_bed|magenta_bed|light_blue_bed|yellow_bed|lime_bed|pink_bed|gray_bed|light_gray_bed|cyan_bed|purple_bed|blue_bed|brown_bed|green_bed|red_bed
+dye_black_carpet shapeless 1 black_carpet <- 1*black_dye 1*white_carpet|orange_carpet|magenta_carpet|light_blue_carpet|yellow_carpet|lime_carpet|pink_carpet|gray_carpet|light_gray_carpet|cyan_carpet|purple_carpet|blue_carpet|brown_carpet|green_carpet|red_carpet
+dye_black_harness shapeless 1 black_harness <- 1*black_dye 1*white_harness|orange_harness|magenta_harness|light_blue_harness|yellow_harness|lime_harness|pink_harness|gray_harness|light_gray_harness|cyan_harness|purple_harness|blue_harness|brown_harness|green_harness|red_harness
+dye_black_wool shapeless 1 black_wool <- 1*black_dye 1*white_wool|orange_wool|magenta_wool|light_blue_wool|yellow_wool|lime_wool|pink_wool|gray_wool|light_gray_wool|cyan_wool|purple_wool|blue_wool|brown_wool|green_wool|red_wool
+dye_blue_bed shapeless 1 blue_bed <- 1*blue_dye 1*white_bed|orange_bed|magenta_bed|light_blue_bed|yellow_bed|lime_bed|pink_bed|gray_bed|light_gray_bed|cyan_bed|purple_bed|brown_bed|green_bed|red_bed|black_bed
+dye_blue_carpet shapeless 1 blue_carpet <- 1*blue_dye 1*white_carpet|orange_carpet|magenta_carpet|light_blue_carpet|yellow_carpet|lime_carpet|pink_carpet|gray_carpet|light_gray_carpet|cyan_carpet|purple_carpet|brown_carpet|green_carpet|red_carpet|black_carpet
+dye_blue_harness shapeless 1 blue_harness <- 1*blue_dye 1*white_harness|orange_harness|magenta_harness|light_blue_harness|yellow_harness|lime_harness|pink_harness|gray_harness|light_gray_harness|cyan_harness|purple_harness|brown_harness|green_harness|red_harness|black_harness
+dye_blue_wool shapeless 1 blue_wool <- 1*blue_dye 1*white_wool|orange_wool|magenta_wool|light_blue_wool|yellow_wool|lime_wool|pink_wool|gray_wool|light_gray_wool|cyan_wool|purple_wool|brown_wool|green_wool|red_wool|black_wool
+dye_brown_bed shapeless 1 brown_bed <- 1*brown_dye 1*white_bed|orange_bed|magenta_bed|light_blue_bed|yellow_bed|lime_bed|pink_bed|gray_bed|light_gray_bed|cyan_bed|purple_bed|blue_bed|green_bed|red_bed|black_bed
+dye_brown_carpet shapeless 1 brown_carpet <- 1*brown_dye 1*white_carpet|orange_carpet|magenta_carpet|light_blue_carpet|yellow_carpet|lime_carpet|pink_carpet|gray_carpet|light_gray_carpet|cyan_carpet|purple_carpet|blue_carpet|green_carpet|red_carpet|black_carpet
+dye_brown_harness shapeless 1 brown_harness <- 1*brown_dye 1*white_harness|orange_harness|magenta_harness|light_blue_harness|yellow_harness|lime_harness|pink_harness|gray_harness|light_gray_harness|cyan_harness|purple_harness|blue_harness|green_harness|red_harness|black_harness
+dye_brown_wool shapeless 1 brown_wool <- 1*brown_dye 1*white_wool|orange_wool|magenta_wool|light_blue_wool|yellow_wool|lime_wool|pink_wool|gray_wool|light_gray_wool|cyan_wool|purple_wool|blue_wool|green_wool|red_wool|black_wool
+dye_cyan_bed shapeless 1 cyan_bed <- 1*cyan_dye 1*white_bed|orange_bed|magenta_bed|light_blue_bed|yellow_bed|lime_bed|pink_bed|gray_bed|light_gray_bed|purple_bed|blue_bed|brown_bed|green_bed|red_bed|black_bed
+dye_cyan_carpet shapeless 1 cyan_carpet <- 1*cyan_dye 1*white_carpet|orange_carpet|magenta_carpet|light_blue_carpet|yellow_carpet|lime_carpet|pink_carpet|gray_carpet|light_gray_carpet|purple_carpet|blue_carpet|brown_carpet|green_carpet|red_carpet|black_carpet
+dye_cyan_harness shapeless 1 cyan_harness <- 1*cyan_dye 1*white_harness|orange_harness|magenta_harness|light_blue_harness|yellow_harness|lime_harness|pink_harness|gray_harness|light_gray_harness|purple_harness|blue_harness|brown_harness|green_harness|red_harness|black_harness
+dye_cyan_wool shapeless 1 cyan_wool <- 1*cyan_dye 1*white_wool|orange_wool|magenta_wool|light_blue_wool|yellow_wool|lime_wool|pink_wool|gray_wool|light_gray_wool|purple_wool|blue_wool|brown_wool|green_wool|red_wool|black_wool
+dye_gray_bed shapeless 1 gray_bed <- 1*gray_dye 1*white_bed|orange_bed|magenta_bed|light_blue_bed|yellow_bed|lime_bed|pink_bed|light_gray_bed|cyan_bed|purple_bed|blue_bed|brown_bed|green_bed|red_bed|black_bed
+dye_gray_carpet shapeless 1 gray_carpet <- 1*gray_dye 1*white_carpet|orange_carpet|magenta_carpet|light_blue_carpet|yellow_carpet|lime_carpet|pink_carpet|light_gray_carpet|cyan_carpet|purple_carpet|blue_carpet|brown_carpet|green_carpet|red_carpet|black_carpet
+dye_gray_harness shapeless 1 gray_harness <- 1*gray_dye 1*white_harness|orange_harness|magenta_harness|light_blue_harness|yellow_harness|lime_harness|pink_harness|light_gray_harness|cyan_harness|purple_harness|blue_harness|brown_harness|green_harness|red_harness|black_harness
+dye_gray_wool shapeless 1 gray_wool <- 1*gray_dye 1*white_wool|orange_wool|magenta_wool|light_blue_wool|yellow_wool|lime_wool|pink_wool|light_gray_wool|cyan_wool|purple_wool|blue_wool|brown_wool|green_wool|red_wool|black_wool
+dye_green_bed shapeless 1 green_bed <- 1*green_dye 1*white_bed|orange_bed|magenta_bed|light_blue_bed|yellow_bed|lime_bed|pink_bed|gray_bed|light_gray_bed|cyan_bed|purple_bed|blue_bed|brown_bed|red_bed|black_bed
+dye_green_carpet shapeless 1 green_carpet <- 1*green_dye 1*white_carpet|orange_carpet|magenta_carpet|light_blue_carpet|yellow_carpet|lime_carpet|pink_carpet|gray_carpet|light_gray_carpet|cyan_carpet|purple_carpet|blue_carpet|brown_carpet|red_carpet|black_carpet
+dye_green_harness shapeless 1 green_harness <- 1*green_dye 1*white_harness|orange_harness|magenta_harness|light_blue_harness|yellow_harness|lime_harness|pink_harness|gray_harness|light_gray_harness|cyan_harness|purple_harness|blue_harness|brown_harness|red_harness|black_harness
+dye_green_wool shapeless 1 green_wool <- 1*green_dye 1*white_wool|orange_wool|magenta_wool|light_blue_wool|yellow_wool|lime_wool|pink_wool|gray_wool|light_gray_wool|cyan_wool|purple_wool|blue_wool|brown_wool|red_wool|black_wool
+dye_light_blue_bed shapeless 1 light_blue_bed <- 1*light_blue_dye 1*white_bed|orange_bed|magenta_bed|yellow_bed|lime_bed|pink_bed|gray_bed|light_gray_bed|cyan_bed|purple_bed|blue_bed|brown_bed|green_bed|red_bed|black_bed
+dye_light_blue_carpet shapeless 1 light_blue_carpet <- 1*light_blue_dye 1*white_carpet|orange_carpet|magenta_carpet|yellow_carpet|lime_carpet|pink_carpet|gray_carpet|light_gray_carpet|cyan_carpet|purple_carpet|blue_carpet|brown_carpet|green_carpet|red_carpet|black_carpet
+dye_light_blue_harness shapeless 1 light_blue_harness <- 1*light_blue_dye 1*white_harness|orange_harness|magenta_harness|yellow_harness|lime_harness|pink_harness|gray_harness|light_gray_harness|cyan_harness|purple_harness|blue_harness|brown_harness|green_harness|red_harness|black_harness
+dye_light_blue_wool shapeless 1 light_blue_wool <- 1*light_blue_dye 1*white_wool|orange_wool|magenta_wool|yellow_wool|lime_wool|pink_wool|gray_wool|light_gray_wool|cyan_wool|purple_wool|blue_wool|brown_wool|green_wool|red_wool|black_wool
+dye_light_gray_bed shapeless 1 light_gray_bed <- 1*light_gray_dye 1*white_bed|orange_bed|magenta_bed|light_blue_bed|yellow_bed|lime_bed|pink_bed|gray_bed|cyan_bed|purple_bed|blue_bed|brown_bed|green_bed|red_bed|black_bed
+dye_light_gray_carpet shapeless 1 light_gray_carpet <- 1*light_gray_dye 1*white_carpet|orange_carpet|magenta_carpet|light_blue_carpet|yellow_carpet|lime_carpet|pink_carpet|gray_carpet|cyan_carpet|purple_carpet|blue_carpet|brown_carpet|green_carpet|red_carpet|black_carpet
+dye_light_gray_harness shapeless 1 light_gray_harness <- 1*light_gray_dye 1*white_harness|orange_harness|magenta_harness|light_blue_harness|yellow_harness|lime_harness|pink_harness|gray_harness|cyan_harness|purple_harness|blue_harness|brown_harness|green_harness|red_harness|black_harness
+dye_light_gray_wool shapeless 1 light_gray_wool <- 1*light_gray_dye 1*white_wool|orange_wool|magenta_wool|light_blue_wool|yellow_wool|lime_wool|pink_wool|gray_wool|cyan_wool|purple_wool|blue_wool|brown_wool|green_wool|red_wool|black_wool
+dye_lime_bed shapeless 1 lime_bed <- 1*lime_dye 1*white_bed|orange_bed|magenta_bed|light_blue_bed|yellow_bed|pink_bed|gray_bed|light_gray_bed|cyan_bed|purple_bed|blue_bed|brown_bed|green_bed|red_bed|black_bed
+dye_lime_carpet shapeless 1 lime_carpet <- 1*lime_dye 1*white_carpet|orange_carpet|magenta_carpet|light_blue_carpet|yellow_carpet|pink_carpet|gray_carpet|light_gray_carpet|cyan_carpet|purple_carpet|blue_carpet|brown_carpet|green_carpet|red_carpet|black_carpet
+dye_lime_harness shapeless 1 lime_harness <- 1*lime_dye 1*white_harness|orange_harness|magenta_harness|light_blue_harness|yellow_harness|pink_harness|gray_harness|light_gray_harness|cyan_harness|purple_harness|blue_harness|brown_harness|green_harness|red_harness|black_harness
+dye_lime_wool shapeless 1 lime_wool <- 1*lime_dye 1*white_wool|orange_wool|magenta_wool|light_blue_wool|yellow_wool|pink_wool|gray_wool|light_gray_wool|cyan_wool|purple_wool|blue_wool|brown_wool|green_wool|red_wool|black_wool
+dye_magenta_bed shapeless 1 magenta_bed <- 1*magenta_dye 1*white_bed|orange_bed|light_blue_bed|yellow_bed|lime_bed|pink_bed|gray_bed|light_gray_bed|cyan_bed|purple_bed|blue_bed|brown_bed|green_bed|red_bed|black_bed
+dye_magenta_carpet shapeless 1 magenta_carpet <- 1*magenta_dye 1*white_carpet|orange_carpet|light_blue_carpet|yellow_carpet|lime_carpet|pink_carpet|gray_carpet|light_gray_carpet|cyan_carpet|purple_carpet|blue_carpet|brown_carpet|green_carpet|red_carpet|black_carpet
+dye_magenta_harness shapeless 1 magenta_harness <- 1*magenta_dye 1*white_harness|orange_harness|light_blue_harness|yellow_harness|lime_harness|pink_harness|gray_harness|light_gray_harness|cyan_harness|purple_harness|blue_harness|brown_harness|green_harness|red_harness|black_harness
+dye_magenta_wool shapeless 1 magenta_wool <- 1*magenta_dye 1*white_wool|orange_wool|light_blue_wool|yellow_wool|lime_wool|pink_wool|gray_wool|light_gray_wool|cyan_wool|purple_wool|blue_wool|brown_wool|green_wool|red_wool|black_wool
+dye_orange_bed shapeless 1 orange_bed <- 1*orange_dye 1*white_bed|magenta_bed|light_blue_bed|yellow_bed|lime_bed|pink_bed|gray_bed|light_gray_bed|cyan_bed|purple_bed|blue_bed|brown_bed|green_bed|red_bed|black_bed
+dye_orange_carpet shapeless 1 orange_carpet <- 1*orange_dye 1*white_carpet|magenta_carpet|light_blue_carpet|yellow_carpet|lime_carpet|pink_carpet|gray_carpet|light_gray_carpet|cyan_carpet|purple_carpet|blue_carpet|brown_carpet|green_carpet|red_carpet|black_carpet
+dye_orange_harness shapeless 1 orange_harness <- 1*orange_dye 1*white_harness|magenta_harness|light_blue_harness|yellow_harness|lime_harness|pink_harness|gray_harness|light_gray_harness|cyan_harness|purple_harness|blue_harness|brown_harness|green_harness|red_harness|black_harness
+dye_orange_wool shapeless 1 orange_wool <- 1*orange_dye 1*white_wool|magenta_wool|light_blue_wool|yellow_wool|lime_wool|pink_wool|gray_wool|light_gray_wool|cyan_wool|purple_wool|blue_wool|brown_wool|green_wool|red_wool|black_wool
+dye_pink_bed shapeless 1 pink_bed <- 1*pink_dye 1*white_bed|orange_bed|magenta_bed|light_blue_bed|yellow_bed|lime_bed|gray_bed|light_gray_bed|cyan_bed|purple_bed|blue_bed|brown_bed|green_bed|red_bed|black_bed
+dye_pink_carpet shapeless 1 pink_carpet <- 1*pink_dye 1*white_carpet|orange_carpet|magenta_carpet|light_blue_carpet|yellow_carpet|lime_carpet|gray_carpet|light_gray_carpet|cyan_carpet|purple_carpet|blue_carpet|brown_carpet|green_carpet|red_carpet|black_carpet
+dye_pink_harness shapeless 1 pink_harness <- 1*pink_dye 1*white_harness|orange_harness|magenta_harness|light_blue_harness|yellow_harness|lime_harness|gray_harness|light_gray_harness|cyan_harness|purple_harness|blue_harness|brown_harness|green_harness|red_harness|black_harness
+dye_pink_wool shapeless 1 pink_wool <- 1*pink_dye 1*white_wool|orange_wool|magenta_wool|light_blue_wool|yellow_wool|lime_wool|gray_wool|light_gray_wool|cyan_wool|purple_wool|blue_wool|brown_wool|green_wool|red_wool|black_wool
+dye_purple_bed shapeless 1 purple_bed <- 1*purple_dye 1*white_bed|orange_bed|magenta_bed|light_blue_bed|yellow_bed|lime_bed|pink_bed|gray_bed|light_gray_bed|cyan_bed|blue_bed|brown_bed|green_bed|red_bed|black_bed
+dye_purple_carpet shapeless 1 purple_carpet <- 1*purple_dye 1*white_carpet|orange_carpet|magenta_carpet|light_blue_carpet|yellow_carpet|lime_carpet|pink_carpet|gray_carpet|light_gray_carpet|cyan_carpet|blue_carpet|brown_carpet|green_carpet|red_carpet|black_carpet
+dye_purple_harness shapeless 1 purple_harness <- 1*purple_dye 1*white_harness|orange_harness|magenta_harness|light_blue_harness|yellow_harness|lime_harness|pink_harness|gray_harness|light_gray_harness|cyan_harness|blue_harness|brown_harness|green_harness|red_harness|black_harness
+dye_purple_wool shapeless 1 purple_wool <- 1*purple_dye 1*white_wool|orange_wool|magenta_wool|light_blue_wool|yellow_wool|lime_wool|pink_wool|gray_wool|light_gray_wool|cyan_wool|blue_wool|brown_wool|green_wool|red_wool|black_wool
+dye_red_bed shapeless 1 red_bed <- 1*red_dye 1*white_bed|orange_bed|magenta_bed|light_blue_bed|yellow_bed|lime_bed|pink_bed|gray_bed|light_gray_bed|cyan_bed|purple_bed|blue_bed|brown_bed|green_bed|black_bed
+dye_red_carpet shapeless 1 red_carpet <- 1*red_dye 1*white_carpet|orange_carpet|magenta_carpet|light_blue_carpet|yellow_carpet|lime_carpet|pink_carpet|gray_carpet|light_gray_carpet|cyan_carpet|purple_carpet|blue_carpet|brown_carpet|green_carpet|black_carpet
+dye_red_harness shapeless 1 red_harness <- 1*red_dye 1*white_harness|orange_harness|magenta_harness|light_blue_harness|yellow_harness|lime_harness|pink_harness|gray_harness|light_gray_harness|cyan_harness|purple_harness|blue_harness|brown_harness|green_harness|black_harness
+dye_red_wool shapeless 1 red_wool <- 1*red_dye 1*white_wool|orange_wool|magenta_wool|light_blue_wool|yellow_wool|lime_wool|pink_wool|gray_wool|light_gray_wool|cyan_wool|purple_wool|blue_wool|brown_wool|green_wool|black_wool
+dye_white_bed shapeless 1 white_bed <- 1*white_dye 1*orange_bed|magenta_bed|light_blue_bed|yellow_bed|lime_bed|pink_bed|gray_bed|light_gray_bed|cyan_bed|purple_bed|blue_bed|brown_bed|green_bed|red_bed|black_bed
+dye_white_carpet shapeless 1 white_carpet <- 1*white_dye 1*orange_carpet|magenta_carpet|light_blue_carpet|yellow_carpet|lime_carpet|pink_carpet|gray_carpet|light_gray_carpet|cyan_carpet|purple_carpet|blue_carpet|brown_carpet|green_carpet|red_carpet|black_carpet
+dye_white_harness shapeless 1 white_harness <- 1*white_dye 1*orange_harness|magenta_harness|light_blue_harness|yellow_harness|lime_harness|pink_harness|gray_harness|light_gray_harness|cyan_harness|purple_harness|blue_harness|brown_harness|green_harness|red_harness|black_harness
+dye_white_wool shapeless 1 white_wool <- 1*white_dye 1*orange_wool|magenta_wool|light_blue_wool|yellow_wool|lime_wool|pink_wool|gray_wool|light_gray_wool|cyan_wool|purple_wool|blue_wool|brown_wool|green_wool|red_wool|black_wool
+dye_yellow_bed shapeless 1 yellow_bed <- 1*yellow_dye 1*white_bed|orange_bed|magenta_bed|light_blue_bed|lime_bed|pink_bed|gray_bed|light_gray_bed|cyan_bed|purple_bed|blue_bed|brown_bed|green_bed|red_bed|black_bed
+dye_yellow_carpet shapeless 1 yellow_carpet <- 1*yellow_dye 1*white_carpet|orange_carpet|magenta_carpet|light_blue_carpet|lime_carpet|pink_carpet|gray_carpet|light_gray_carpet|cyan_carpet|purple_carpet|blue_carpet|brown_carpet|green_carpet|red_carpet|black_carpet
+dye_yellow_harness shapeless 1 yellow_harness <- 1*yellow_dye 1*white_harness|orange_harness|magenta_harness|light_blue_harness|lime_harness|pink_harness|gray_harness|light_gray_harness|cyan_harness|purple_harness|blue_harness|brown_harness|green_harness|red_harness|black_harness
+dye_yellow_wool shapeless 1 yellow_wool <- 1*yellow_dye 1*white_wool|orange_wool|magenta_wool|light_blue_wool|lime_wool|pink_wool|gray_wool|light_gray_wool|cyan_wool|purple_wool|blue_wool|brown_wool|green_wool|red_wool|black_wool
+emerald shapeless 9 emerald <- 1*emerald_block
+emerald_block shaped 1 emerald_block <- 9*emerald
+enchanting_table shaped 1 enchanting_table <- 1*book 2*diamond 4*obsidian
+end_crystal shaped 1 end_crystal <- 7*glass 1*ender_eye 1*ghast_tear
+end_rod shaped 4 end_rod <- 1*blaze_rod 1*popped_chorus_fruit
+end_stone_brick_slab shaped 6 end_stone_brick_slab <- 3*end_stone_bricks
+end_stone_brick_slab_from_end_stone_bricks_stonecutting stonecutter 2 end_stone_brick_slab <- 1*end_stone_bricks
+end_stone_brick_slab_from_end_stone_stonecutting stonecutter 2 end_stone_brick_slab <- 1*end_stone
+end_stone_brick_stairs shaped 4 end_stone_brick_stairs <- 6*end_stone_bricks
+end_stone_brick_stairs_from_end_stone_bricks_stonecutting stonecutter 1 end_stone_brick_stairs <- 1*end_stone_bricks
+end_stone_brick_stairs_from_end_stone_stonecutting stonecutter 1 end_stone_brick_stairs <- 1*end_stone
+end_stone_brick_wall shaped 6 end_stone_brick_wall <- 6*end_stone_bricks
+end_stone_brick_wall_from_end_stone_bricks_stonecutting stonecutter 1 end_stone_brick_wall <- 1*end_stone_bricks
+end_stone_brick_wall_from_end_stone_stonecutting stonecutter 1 end_stone_brick_wall <- 1*end_stone
+end_stone_bricks shaped 4 end_stone_bricks <- 4*end_stone
+end_stone_bricks_from_end_stone_stonecutting stonecutter 1 end_stone_bricks <- 1*end_stone
+ender_chest shaped 1 ender_chest <- 8*obsidian 1*ender_eye
+ender_eye shapeless 1 ender_eye <- 1*ender_pearl 1*blaze_powder
+exposed_chiseled_copper shaped 1 exposed_chiseled_copper <- 2*exposed_cut_copper_slab
+exposed_chiseled_copper_from_exposed_copper_stonecutting stonecutter 4 exposed_chiseled_copper <- 1*exposed_copper
+exposed_chiseled_copper_from_exposed_cut_copper_stonecutting stonecutter 1 exposed_chiseled_copper <- 1*exposed_cut_copper
+exposed_copper_bulb shaped 4 exposed_copper_bulb <- 3*exposed_copper 1*blaze_rod 1*redstone
+exposed_copper_grate shaped 4 exposed_copper_grate <- 4*exposed_copper
+exposed_copper_grate_from_exposed_copper_stonecutting stonecutter 4 exposed_copper_grate <- 1*exposed_copper
+exposed_cut_copper shaped 4 exposed_cut_copper <- 4*exposed_copper
+exposed_cut_copper_from_exposed_copper_stonecutting stonecutter 4 exposed_cut_copper <- 1*exposed_copper
+exposed_cut_copper_slab shaped 6 exposed_cut_copper_slab <- 3*exposed_cut_copper
+exposed_cut_copper_slab_from_exposed_copper_stonecutting stonecutter 8 exposed_cut_copper_slab <- 1*exposed_copper
+exposed_cut_copper_slab_from_exposed_cut_copper_stonecutting stonecutter 2 exposed_cut_copper_slab <- 1*exposed_cut_copper
+exposed_cut_copper_stairs shaped 4 exposed_cut_copper_stairs <- 6*exposed_cut_copper
+exposed_cut_copper_stairs_from_exposed_copper_stonecutting stonecutter 4 exposed_cut_copper_stairs <- 1*exposed_copper
+exposed_cut_copper_stairs_from_exposed_cut_copper_stonecutting stonecutter 1 exposed_cut_copper_stairs <- 1*exposed_cut_copper
+eye_armor_trim_smithing_template shaped 2 eye_armor_trim_smithing_template <- 7*diamond 1*eye_armor_trim_smithing_template 1*end_stone
+fermented_spider_eye shapeless 1 fermented_spider_eye <- 1*spider_eye 1*brown_mushroom 1*sugar
+field_masoned_banner_pattern shapeless 1 field_masoned_banner_pattern <- 1*paper 1*bricks
+fire_charge shapeless 3 fire_charge <- 1*gunpowder 1*blaze_powder 1*coal|charcoal
+firework_rocket_simple shapeless 3 firework_rocket <- 1*gunpowder 1*paper
+fishing_rod shaped 1 fishing_rod <- 3*stick 2*string
+fletching_table shaped 1 fletching_table <- 2*flint 4*#planks
+flint_and_steel shapeless 1 flint_and_steel <- 1*iron_ingot 1*flint
+flow_armor_trim_smithing_template shaped 2 flow_armor_trim_smithing_template <- 7*diamond 1*flow_armor_trim_smithing_template 1*breeze_rod
+flower_banner_pattern shapeless 1 flower_banner_pattern <- 1*paper 1*oxeye_daisy
+flower_pot shaped 1 flower_pot <- 3*brick
+furnace shaped 1 furnace <- 8*#stone_crafting_materials
+furnace_minecart shapeless 1 furnace_minecart <- 1*furnace 1*minecart
+glass_bottle shaped 3 glass_bottle <- 3*glass
+glass_pane shaped 16 glass_pane <- 6*glass
+glistering_melon_slice shaped 1 glistering_melon_slice <- 8*gold_nugget 1*melon_slice
+glow_item_frame shapeless 1 glow_item_frame <- 1*item_frame 1*glow_ink_sac
+glowstone shaped 1 glowstone <- 4*glowstone_dust
+gold_block shaped 1 gold_block <- 9*gold_ingot
+gold_ingot_from_gold_block shapeless 9 gold_ingot <- 1*gold_block
+gold_ingot_from_nuggets shaped 1 gold_ingot <- 9*gold_nugget
+gold_nugget shapeless 9 gold_nugget <- 1*gold_ingot
+golden_apple shaped 1 golden_apple <- 8*gold_ingot 1*apple
+golden_axe shaped 1 golden_axe <- 3*#gold_tool_materials 2*stick
+golden_boots shaped 1 golden_boots <- 4*gold_ingot
+golden_carrot shaped 1 golden_carrot <- 8*gold_nugget 1*carrot
+golden_chestplate shaped 1 golden_chestplate <- 8*gold_ingot
+golden_dandelion shaped 1 golden_dandelion <- 8*gold_nugget 1*dandelion
+golden_helmet shaped 1 golden_helmet <- 5*gold_ingot
+golden_hoe shaped 1 golden_hoe <- 2*#gold_tool_materials 2*stick
+golden_leggings shaped 1 golden_leggings <- 7*gold_ingot
+golden_pickaxe shaped 1 golden_pickaxe <- 3*#gold_tool_materials 2*stick
+golden_shovel shaped 1 golden_shovel <- 1*#gold_tool_materials 2*stick
+golden_spear shaped 1 golden_spear <- 1*#gold_tool_materials 2*stick
+golden_sword shaped 1 golden_sword <- 2*#gold_tool_materials 1*stick
+granite shapeless 1 granite <- 1*diorite 1*quartz
+granite_slab shaped 6 granite_slab <- 3*granite
+granite_slab_from_granite_stonecutting stonecutter 2 granite_slab <- 1*granite
+granite_stairs shaped 4 granite_stairs <- 6*granite
+granite_stairs_from_granite_stonecutting stonecutter 1 granite_stairs <- 1*granite
+granite_wall shaped 6 granite_wall <- 6*granite
+granite_wall_from_granite_stonecutting stonecutter 1 granite_wall <- 1*granite
+gray_banner shaped 1 gray_banner <- 6*gray_wool 1*stick
+gray_bed shaped 1 gray_bed <- 3*gray_wool 3*#planks
+gray_candle shapeless 1 gray_candle <- 1*candle 1*gray_dye
+gray_carpet shaped 3 gray_carpet <- 2*gray_wool
+gray_concrete_powder shapeless 8 gray_concrete_powder <- 1*gray_dye 4*sand 4*gravel
+gray_dye shapeless 2 gray_dye <- 1*black_dye 1*white_dye
+gray_dye_from_closed_eyeblossom shapeless 1 gray_dye <- 1*closed_eyeblossom
+gray_harness shaped 1 gray_harness <- 3*leather 2*glass 1*gray_wool
+gray_stained_glass shaped 8 gray_stained_glass <- 8*glass 1*gray_dye
+gray_stained_glass_pane shaped 16 gray_stained_glass_pane <- 6*gray_stained_glass
+gray_stained_glass_pane_from_glass_pane shaped 8 gray_stained_glass_pane <- 8*glass_pane 1*gray_dye
+gray_terracotta shaped 8 gray_terracotta <- 8*terracotta 1*gray_dye
+green_banner shaped 1 green_banner <- 6*green_wool 1*stick
+green_bed shaped 1 green_bed <- 3*green_wool 3*#planks
+green_candle shapeless 1 green_candle <- 1*candle 1*green_dye
+green_carpet shaped 3 green_carpet <- 2*green_wool
+green_concrete_powder shapeless 8 green_concrete_powder <- 1*green_dye 4*sand 4*gravel
+green_harness shaped 1 green_harness <- 3*leather 2*glass 1*green_wool
+green_stained_glass shaped 8 green_stained_glass <- 8*glass 1*green_dye
+green_stained_glass_pane shaped 16 green_stained_glass_pane <- 6*green_stained_glass
+green_stained_glass_pane_from_glass_pane shaped 8 green_stained_glass_pane <- 8*glass_pane 1*green_dye
+green_terracotta shaped 8 green_terracotta <- 8*terracotta 1*green_dye
+grindstone shaped 1 grindstone <- 2*stick 1*stone_slab 2*#planks
+hay_block shapeless 1 hay_block <- 9*wheat
+heavy_weighted_pressure_plate shaped 1 heavy_weighted_pressure_plate <- 2*iron_ingot
+honey_block shaped 1 honey_block <- 4*honey_bottle
+honey_bottle shapeless 4 honey_bottle <- 1*honey_block 4*glass_bottle
+honeycomb_block shaped 1 honeycomb_block <- 4*honeycomb
+hopper shaped 1 hopper <- 5*iron_ingot 1*chest
+hopper_minecart shapeless 1 hopper_minecart <- 1*hopper 1*minecart
+host_armor_trim_smithing_template shaped 2 host_armor_trim_smithing_template <- 7*diamond 1*host_armor_trim_smithing_template 1*terracotta
+iron_axe shaped 1 iron_axe <- 3*#iron_tool_materials 2*stick
+iron_bars shaped 16 iron_bars <- 6*iron_ingot
+iron_block shaped 1 iron_block <- 9*iron_ingot
+iron_boots shaped 1 iron_boots <- 4*iron_ingot
+iron_chain shaped 1 iron_chain <- 2*iron_nugget 1*iron_ingot
+iron_chestplate shaped 1 iron_chestplate <- 8*iron_ingot
+iron_door shaped 3 iron_door <- 6*iron_ingot
+iron_helmet shaped 1 iron_helmet <- 5*iron_ingot
+iron_hoe shaped 1 iron_hoe <- 2*#iron_tool_materials 2*stick
+iron_ingot_from_iron_block shapeless 9 iron_ingot <- 1*iron_block
+iron_ingot_from_nuggets shaped 1 iron_ingot <- 9*iron_nugget
+iron_leggings shaped 1 iron_leggings <- 7*iron_ingot
+iron_nugget shapeless 9 iron_nugget <- 1*iron_ingot
+iron_pickaxe shaped 1 iron_pickaxe <- 3*#iron_tool_materials 2*stick
+iron_shovel shaped 1 iron_shovel <- 1*#iron_tool_materials 2*stick
+iron_spear shaped 1 iron_spear <- 1*#iron_tool_materials 2*stick
+iron_sword shaped 1 iron_sword <- 2*#iron_tool_materials 1*stick
+iron_trapdoor shaped 1 iron_trapdoor <- 4*iron_ingot
+item_frame shaped 1 item_frame <- 8*stick 1*leather
+jack_o_lantern shaped 1 jack_o_lantern <- 1*carved_pumpkin 1*torch
+jukebox shaped 1 jukebox <- 8*#planks 1*diamond
+jungle_boat shaped 1 jungle_boat <- 5*jungle_planks
+jungle_button shapeless 1 jungle_button <- 1*jungle_planks
+jungle_chest_boat shapeless 1 jungle_chest_boat <- 1*chest 1*jungle_boat
+jungle_door shaped 3 jungle_door <- 6*jungle_planks
+jungle_fence shaped 3 jungle_fence <- 4*jungle_planks 2*stick
+jungle_fence_gate shaped 1 jungle_fence_gate <- 4*stick 2*jungle_planks
+jungle_hanging_sign shaped 6 jungle_hanging_sign <- 2*iron_chain 6*stripped_jungle_log
+jungle_planks shapeless 4 jungle_planks <- 1*#jungle_logs
+jungle_pressure_plate shaped 1 jungle_pressure_plate <- 2*jungle_planks
+jungle_shelf shaped 6 jungle_shelf <- 6*stripped_jungle_log
+jungle_sign shaped 3 jungle_sign <- 6*jungle_planks 1*stick
+jungle_slab shaped 6 jungle_slab <- 3*jungle_planks
+jungle_stairs shaped 4 jungle_stairs <- 6*jungle_planks
+jungle_trapdoor shaped 2 jungle_trapdoor <- 6*jungle_planks
+jungle_wood shaped 3 jungle_wood <- 4*jungle_log
+ladder shaped 3 ladder <- 7*stick
+lantern shaped 1 lantern <- 8*iron_nugget 1*torch
+lapis_block shaped 1 lapis_block <- 9*lapis_lazuli
+lapis_lazuli shapeless 9 lapis_lazuli <- 1*lapis_block
+lead shaped 2 lead <- 5*string
+leather shaped 1 leather <- 4*rabbit_hide
+leather_boots shaped 1 leather_boots <- 4*leather
+leather_chestplate shaped 1 leather_chestplate <- 8*leather
+leather_helmet shaped 1 leather_helmet <- 5*leather
+leather_horse_armor shaped 1 leather_horse_armor <- 7*leather
+leather_leggings shaped 1 leather_leggings <- 7*leather
+lectern shaped 1 lectern <- 4*#wooden_slabs 1*bookshelf
+lever shaped 1 lever <- 1*stick 1*cobblestone
+light_blue_banner shaped 1 light_blue_banner <- 6*light_blue_wool 1*stick
+light_blue_bed shaped 1 light_blue_bed <- 3*light_blue_wool 3*#planks
+light_blue_candle shapeless 1 light_blue_candle <- 1*candle 1*light_blue_dye
+light_blue_carpet shaped 3 light_blue_carpet <- 2*light_blue_wool
+light_blue_concrete_powder shapeless 8 light_blue_concrete_powder <- 1*light_blue_dye 4*sand 4*gravel
+light_blue_dye_from_blue_orchid shapeless 1 light_blue_dye <- 1*blue_orchid
+light_blue_dye_from_blue_white_dye shapeless 2 light_blue_dye <- 1*blue_dye 1*white_dye
+light_blue_harness shaped 1 light_blue_harness <- 3*leather 2*glass 1*light_blue_wool
+light_blue_stained_glass shaped 8 light_blue_stained_glass <- 8*glass 1*light_blue_dye
+light_blue_stained_glass_pane shaped 16 light_blue_stained_glass_pane <- 6*light_blue_stained_glass
+light_blue_stained_glass_pane_from_glass_pane shaped 8 light_blue_stained_glass_pane <- 8*glass_pane 1*light_blue_dye
+light_blue_terracotta shaped 8 light_blue_terracotta <- 8*terracotta 1*light_blue_dye
+light_gray_banner shaped 1 light_gray_banner <- 6*light_gray_wool 1*stick
+light_gray_bed shaped 1 light_gray_bed <- 3*light_gray_wool 3*#planks
+light_gray_candle shapeless 1 light_gray_candle <- 1*candle 1*light_gray_dye
+light_gray_carpet shaped 3 light_gray_carpet <- 2*light_gray_wool
+light_gray_concrete_powder shapeless 8 light_gray_concrete_powder <- 1*light_gray_dye 4*sand 4*gravel
+light_gray_dye_from_azure_bluet shapeless 1 light_gray_dye <- 1*azure_bluet
+light_gray_dye_from_black_white_dye shapeless 3 light_gray_dye <- 1*black_dye 2*white_dye
+light_gray_dye_from_gray_white_dye shapeless 2 light_gray_dye <- 1*gray_dye 1*white_dye
+light_gray_dye_from_oxeye_daisy shapeless 1 light_gray_dye <- 1*oxeye_daisy
+light_gray_dye_from_white_tulip shapeless 1 light_gray_dye <- 1*white_tulip
+light_gray_harness shaped 1 light_gray_harness <- 3*leather 2*glass 1*light_gray_wool
+light_gray_stained_glass shaped 8 light_gray_stained_glass <- 8*glass 1*light_gray_dye
+light_gray_stained_glass_pane shaped 16 light_gray_stained_glass_pane <- 6*light_gray_stained_glass
+light_gray_stained_glass_pane_from_glass_pane shaped 8 light_gray_stained_glass_pane <- 8*glass_pane 1*light_gray_dye
+light_gray_terracotta shaped 8 light_gray_terracotta <- 8*terracotta 1*light_gray_dye
+light_weighted_pressure_plate shaped 1 light_weighted_pressure_plate <- 2*gold_ingot
+lightning_rod shaped 1 lightning_rod <- 3*copper_ingot
+lime_banner shaped 1 lime_banner <- 6*lime_wool 1*stick
+lime_bed shaped 1 lime_bed <- 3*lime_wool 3*#planks
+lime_candle shapeless 1 lime_candle <- 1*candle 1*lime_dye
+lime_carpet shaped 3 lime_carpet <- 2*lime_wool
+lime_concrete_powder shapeless 8 lime_concrete_powder <- 1*lime_dye 4*sand 4*gravel
+lime_dye shapeless 2 lime_dye <- 1*green_dye 1*white_dye
+lime_harness shaped 1 lime_harness <- 3*leather 2*glass 1*lime_wool
+lime_stained_glass shaped 8 lime_stained_glass <- 8*glass 1*lime_dye
+lime_stained_glass_pane shaped 16 lime_stained_glass_pane <- 6*lime_stained_glass
+lime_stained_glass_pane_from_glass_pane shaped 8 lime_stained_glass_pane <- 8*glass_pane 1*lime_dye
+lime_terracotta shaped 8 lime_terracotta <- 8*terracotta 1*lime_dye
+lodestone shaped 1 lodestone <- 8*chiseled_stone_bricks 1*iron_ingot
+loom shaped 1 loom <- 2*string 2*#planks
+mace shaped 1 mace <- 1*heavy_core 1*breeze_rod
+magenta_banner shaped 1 magenta_banner <- 6*magenta_wool 1*stick
+magenta_bed shaped 1 magenta_bed <- 3*magenta_wool 3*#planks
+magenta_candle shapeless 1 magenta_candle <- 1*candle 1*magenta_dye
+magenta_carpet shaped 3 magenta_carpet <- 2*magenta_wool
+magenta_concrete_powder shapeless 8 magenta_concrete_powder <- 1*magenta_dye 4*sand 4*gravel
+magenta_dye_from_allium shapeless 1 magenta_dye <- 1*allium
+magenta_dye_from_blue_red_pink shapeless 3 magenta_dye <- 1*blue_dye 1*red_dye 1*pink_dye
+magenta_dye_from_blue_red_white_dye shapeless 4 magenta_dye <- 1*blue_dye 2*red_dye 1*white_dye
+magenta_dye_from_lilac shapeless 2 magenta_dye <- 1*lilac
+magenta_dye_from_purple_and_pink shapeless 2 magenta_dye <- 1*purple_dye 1*pink_dye
+magenta_harness shaped 1 magenta_harness <- 3*leather 2*glass 1*magenta_wool
+magenta_stained_glass shaped 8 magenta_stained_glass <- 8*glass 1*magenta_dye
+magenta_stained_glass_pane shaped 16 magenta_stained_glass_pane <- 6*magenta_stained_glass
+magenta_stained_glass_pane_from_glass_pane shaped 8 magenta_stained_glass_pane <- 8*glass_pane 1*magenta_dye
+magenta_terracotta shaped 8 magenta_terracotta <- 8*terracotta 1*magenta_dye
+magma_block shaped 1 magma_block <- 4*magma_cream
+magma_cream shapeless 1 magma_cream <- 1*blaze_powder 1*slime_ball
+mangrove_boat shaped 1 mangrove_boat <- 5*mangrove_planks
+mangrove_button shapeless 1 mangrove_button <- 1*mangrove_planks
+mangrove_chest_boat shapeless 1 mangrove_chest_boat <- 1*chest 1*mangrove_boat
+mangrove_door shaped 3 mangrove_door <- 6*mangrove_planks
+mangrove_fence shaped 3 mangrove_fence <- 4*mangrove_planks 2*stick
+mangrove_fence_gate shaped 1 mangrove_fence_gate <- 4*stick 2*mangrove_planks
+mangrove_hanging_sign shaped 6 mangrove_hanging_sign <- 2*iron_chain 6*stripped_mangrove_log
+mangrove_planks shapeless 4 mangrove_planks <- 1*#mangrove_logs
+mangrove_pressure_plate shaped 1 mangrove_pressure_plate <- 2*mangrove_planks
+mangrove_shelf shaped 6 mangrove_shelf <- 6*stripped_mangrove_log
+mangrove_sign shaped 3 mangrove_sign <- 6*mangrove_planks 1*stick
+mangrove_slab shaped 6 mangrove_slab <- 3*mangrove_planks
+mangrove_stairs shaped 4 mangrove_stairs <- 6*mangrove_planks
+mangrove_trapdoor shaped 2 mangrove_trapdoor <- 6*mangrove_planks
+mangrove_wood shaped 3 mangrove_wood <- 4*mangrove_log
+map shaped 1 map <- 8*paper 1*compass
+melon shapeless 1 melon <- 9*melon_slice
+melon_seeds shapeless 1 melon_seeds <- 1*melon_slice
+minecart shaped 1 minecart <- 5*iron_ingot
+mojang_banner_pattern shapeless 1 mojang_banner_pattern <- 1*paper 1*enchanted_golden_apple
+moss_carpet shaped 3 moss_carpet <- 2*moss_block
+mossy_cobblestone_from_moss_block shapeless 1 mossy_cobblestone <- 1*cobblestone 1*moss_block
+mossy_cobblestone_from_vine shapeless 1 mossy_cobblestone <- 1*cobblestone 1*vine
+mossy_cobblestone_slab shaped 6 mossy_cobblestone_slab <- 3*mossy_cobblestone
+mossy_cobblestone_slab_from_mossy_cobblestone_stonecutting stonecutter 2 mossy_cobblestone_slab <- 1*mossy_cobblestone
+mossy_cobblestone_stairs shaped 4 mossy_cobblestone_stairs <- 6*mossy_cobblestone
+mossy_cobblestone_stairs_from_mossy_cobblestone_stonecutting stonecutter 1 mossy_cobblestone_stairs <- 1*mossy_cobblestone
+mossy_cobblestone_wall shaped 6 mossy_cobblestone_wall <- 6*mossy_cobblestone
+mossy_cobblestone_wall_from_mossy_cobblestone_stonecutting stonecutter 1 mossy_cobblestone_wall <- 1*mossy_cobblestone
+mossy_stone_brick_slab shaped 6 mossy_stone_brick_slab <- 3*mossy_stone_bricks
+mossy_stone_brick_slab_from_mossy_stone_bricks_stonecutting stonecutter 2 mossy_stone_brick_slab <- 1*mossy_stone_bricks
+mossy_stone_brick_stairs shaped 4 mossy_stone_brick_stairs <- 6*mossy_stone_bricks
+mossy_stone_brick_stairs_from_mossy_stone_bricks_stonecutting stonecutter 1 mossy_stone_brick_stairs <- 1*mossy_stone_bricks
+mossy_stone_brick_wall shaped 6 mossy_stone_brick_wall <- 6*mossy_stone_bricks
+mossy_stone_brick_wall_from_mossy_stone_bricks_stonecutting stonecutter 1 mossy_stone_brick_wall <- 1*mossy_stone_bricks
+mossy_stone_bricks_from_moss_block shapeless 1 mossy_stone_bricks <- 1*stone_bricks 1*moss_block
+mossy_stone_bricks_from_vine shapeless 1 mossy_stone_bricks <- 1*stone_bricks 1*vine
+mud_brick_slab shaped 6 mud_brick_slab <- 3*mud_bricks
+mud_brick_slab_from_mud_bricks_stonecutting stonecutter 2 mud_brick_slab <- 1*mud_bricks
+mud_brick_stairs shaped 4 mud_brick_stairs <- 6*mud_bricks
+mud_brick_stairs_from_mud_bricks_stonecutting stonecutter 1 mud_brick_stairs <- 1*mud_bricks
+mud_brick_wall shaped 6 mud_brick_wall <- 6*mud_bricks
+mud_brick_wall_from_mud_bricks_stonecutting stonecutter 1 mud_brick_wall <- 1*mud_bricks
+mud_bricks shaped 4 mud_bricks <- 4*packed_mud
+muddy_mangrove_roots shapeless 1 muddy_mangrove_roots <- 1*mud 1*mangrove_roots
+mushroom_stew shapeless 1 mushroom_stew <- 1*brown_mushroom 1*red_mushroom 1*bowl
+music_disc_5 shapeless 1 music_disc_5 <- 9*disc_fragment_5
+name_tag shaped 1 name_tag <- 1*#metal_nuggets 1*paper
+nether_brick_fence shaped 6 nether_brick_fence <- 4*nether_bricks 2*nether_brick
+nether_brick_slab shaped 6 nether_brick_slab <- 3*nether_bricks
+nether_brick_slab_from_nether_bricks_stonecutting stonecutter 2 nether_brick_slab <- 1*nether_bricks
+nether_brick_stairs shaped 4 nether_brick_stairs <- 6*nether_bricks
+nether_brick_stairs_from_nether_bricks_stonecutting stonecutter 1 nether_brick_stairs <- 1*nether_bricks
+nether_brick_wall shaped 6 nether_brick_wall <- 6*nether_bricks
+nether_brick_wall_from_nether_bricks_stonecutting stonecutter 1 nether_brick_wall <- 1*nether_bricks
+nether_bricks shaped 1 nether_bricks <- 4*nether_brick
+nether_wart_block shapeless 1 nether_wart_block <- 9*nether_wart
+netherite_block shaped 1 netherite_block <- 9*netherite_ingot
+netherite_ingot shapeless 1 netherite_ingot <- 4*netherite_scrap 4*gold_ingot
+netherite_ingot_from_netherite_block shapeless 9 netherite_ingot <- 1*netherite_block
+netherite_upgrade_smithing_template shaped 2 netherite_upgrade_smithing_template <- 7*diamond 1*netherite_upgrade_smithing_template 1*netherrack
+note_block shaped 1 note_block <- 8*#planks 1*redstone
+oak_boat shaped 1 oak_boat <- 5*oak_planks
+oak_button shapeless 1 oak_button <- 1*oak_planks
+oak_chest_boat shapeless 1 oak_chest_boat <- 1*chest 1*oak_boat
+oak_door shaped 3 oak_door <- 6*oak_planks
+oak_fence shaped 3 oak_fence <- 4*oak_planks 2*stick
+oak_fence_gate shaped 1 oak_fence_gate <- 4*stick 2*oak_planks
+oak_hanging_sign shaped 6 oak_hanging_sign <- 2*iron_chain 6*stripped_oak_log
+oak_planks shapeless 4 oak_planks <- 1*#oak_logs
+oak_pressure_plate shaped 1 oak_pressure_plate <- 2*oak_planks
+oak_shelf shaped 6 oak_shelf <- 6*stripped_oak_log
+oak_sign shaped 3 oak_sign <- 6*oak_planks 1*stick
+oak_slab shaped 6 oak_slab <- 3*oak_planks
+oak_stairs shaped 4 oak_stairs <- 6*oak_planks
+oak_trapdoor shaped 2 oak_trapdoor <- 6*oak_planks
+oak_wood shaped 3 oak_wood <- 4*oak_log
+observer shaped 1 observer <- 6*cobblestone 2*redstone 1*quartz
+orange_banner shaped 1 orange_banner <- 6*orange_wool 1*stick
+orange_bed shaped 1 orange_bed <- 3*orange_wool 3*#planks
+orange_candle shapeless 1 orange_candle <- 1*candle 1*orange_dye
+orange_carpet shaped 3 orange_carpet <- 2*orange_wool
+orange_concrete_powder shapeless 8 orange_concrete_powder <- 1*orange_dye 4*sand 4*gravel
+orange_dye_from_open_eyeblossom shapeless 1 orange_dye <- 1*open_eyeblossom
+orange_dye_from_orange_tulip shapeless 1 orange_dye <- 1*orange_tulip
+orange_dye_from_red_yellow shapeless 2 orange_dye <- 1*red_dye 1*yellow_dye
+orange_dye_from_torchflower shapeless 1 orange_dye <- 1*torchflower
+orange_harness shaped 1 orange_harness <- 3*leather 2*glass 1*orange_wool
+orange_stained_glass shaped 8 orange_stained_glass <- 8*glass 1*orange_dye
+orange_stained_glass_pane shaped 16 orange_stained_glass_pane <- 6*orange_stained_glass
+orange_stained_glass_pane_from_glass_pane shaped 8 orange_stained_glass_pane <- 8*glass_pane 1*orange_dye
+orange_terracotta shaped 8 orange_terracotta <- 8*terracotta 1*orange_dye
+oxidized_chiseled_copper shaped 1 oxidized_chiseled_copper <- 2*oxidized_cut_copper_slab
+oxidized_chiseled_copper_from_oxidized_copper_stonecutting stonecutter 4 oxidized_chiseled_copper <- 1*oxidized_copper
+oxidized_chiseled_copper_from_oxidized_cut_copper_stonecutting stonecutter 1 oxidized_chiseled_copper <- 1*oxidized_cut_copper
+oxidized_copper_bulb shaped 4 oxidized_copper_bulb <- 3*oxidized_copper 1*blaze_rod 1*redstone
+oxidized_copper_grate shaped 4 oxidized_copper_grate <- 4*oxidized_copper
+oxidized_copper_grate_from_oxidized_copper_stonecutting stonecutter 4 oxidized_copper_grate <- 1*oxidized_copper
+oxidized_cut_copper shaped 4 oxidized_cut_copper <- 4*oxidized_copper
+oxidized_cut_copper_from_oxidized_copper_stonecutting stonecutter 4 oxidized_cut_copper <- 1*oxidized_copper
+oxidized_cut_copper_slab shaped 6 oxidized_cut_copper_slab <- 3*oxidized_cut_copper
+oxidized_cut_copper_slab_from_oxidized_copper_stonecutting stonecutter 8 oxidized_cut_copper_slab <- 1*oxidized_copper
+oxidized_cut_copper_slab_from_oxidized_cut_copper_stonecutting stonecutter 2 oxidized_cut_copper_slab <- 1*oxidized_cut_copper
+oxidized_cut_copper_stairs shaped 4 oxidized_cut_copper_stairs <- 6*oxidized_cut_copper
+oxidized_cut_copper_stairs_from_oxidized_copper_stonecutting stonecutter 4 oxidized_cut_copper_stairs <- 1*oxidized_copper
+oxidized_cut_copper_stairs_from_oxidized_cut_copper_stonecutting stonecutter 1 oxidized_cut_copper_stairs <- 1*oxidized_cut_copper
+packed_ice shapeless 1 packed_ice <- 9*ice
+packed_mud shapeless 1 packed_mud <- 1*mud 1*wheat
+painting shaped 1 painting <- 8*stick 1*#wool
+pale_moss_carpet shaped 3 pale_moss_carpet <- 2*pale_moss_block
+pale_oak_boat shaped 1 pale_oak_boat <- 5*pale_oak_planks
+pale_oak_button shapeless 1 pale_oak_button <- 1*pale_oak_planks
+pale_oak_chest_boat shapeless 1 pale_oak_chest_boat <- 1*chest 1*pale_oak_boat
+pale_oak_door shaped 3 pale_oak_door <- 6*pale_oak_planks
+pale_oak_fence shaped 3 pale_oak_fence <- 4*pale_oak_planks 2*stick
+pale_oak_fence_gate shaped 1 pale_oak_fence_gate <- 4*stick 2*pale_oak_planks
+pale_oak_hanging_sign shaped 6 pale_oak_hanging_sign <- 2*iron_chain 6*stripped_pale_oak_log
+pale_oak_planks shapeless 4 pale_oak_planks <- 1*#pale_oak_logs
+pale_oak_pressure_plate shaped 1 pale_oak_pressure_plate <- 2*pale_oak_planks
+pale_oak_shelf shaped 6 pale_oak_shelf <- 6*stripped_pale_oak_log
+pale_oak_sign shaped 3 pale_oak_sign <- 6*pale_oak_planks 1*stick
+pale_oak_slab shaped 6 pale_oak_slab <- 3*pale_oak_planks
+pale_oak_stairs shaped 4 pale_oak_stairs <- 6*pale_oak_planks
+pale_oak_trapdoor shaped 2 pale_oak_trapdoor <- 6*pale_oak_planks
+pale_oak_wood shaped 3 pale_oak_wood <- 4*pale_oak_log
+paper shaped 3 paper <- 3*sugar_cane
+pink_banner shaped 1 pink_banner <- 6*pink_wool 1*stick
+pink_bed shaped 1 pink_bed <- 3*pink_wool 3*#planks
+pink_candle shapeless 1 pink_candle <- 1*candle 1*pink_dye
+pink_carpet shaped 3 pink_carpet <- 2*pink_wool
+pink_concrete_powder shapeless 8 pink_concrete_powder <- 1*pink_dye 4*sand 4*gravel
+pink_dye_from_cactus_flower shapeless 1 pink_dye <- 1*cactus_flower
+pink_dye_from_peony shapeless 2 pink_dye <- 1*peony
+pink_dye_from_pink_petals shapeless 1 pink_dye <- 1*pink_petals
+pink_dye_from_pink_tulip shapeless 1 pink_dye <- 1*pink_tulip
+pink_dye_from_red_white_dye shapeless 2 pink_dye <- 1*red_dye 1*white_dye
+pink_harness shaped 1 pink_harness <- 3*leather 2*glass 1*pink_wool
+pink_stained_glass shaped 8 pink_stained_glass <- 8*glass 1*pink_dye
+pink_stained_glass_pane shaped 16 pink_stained_glass_pane <- 6*pink_stained_glass
+pink_stained_glass_pane_from_glass_pane shaped 8 pink_stained_glass_pane <- 8*glass_pane 1*pink_dye
+pink_terracotta shaped 8 pink_terracotta <- 8*terracotta 1*pink_dye
+piston shaped 1 piston <- 3*#planks 4*cobblestone 1*iron_ingot 1*redstone
+polished_andesite shaped 4 polished_andesite <- 4*andesite
+polished_andesite_from_andesite_stonecutting stonecutter 1 polished_andesite <- 1*andesite
+polished_andesite_slab shaped 6 polished_andesite_slab <- 3*polished_andesite
+polished_andesite_slab_from_andesite_stonecutting stonecutter 2 polished_andesite_slab <- 1*andesite
+polished_andesite_slab_from_polished_andesite_stonecutting stonecutter 2 polished_andesite_slab <- 1*polished_andesite
+polished_andesite_stairs shaped 4 polished_andesite_stairs <- 6*polished_andesite
+polished_andesite_stairs_from_andesite_stonecutting stonecutter 1 polished_andesite_stairs <- 1*andesite
+polished_andesite_stairs_from_polished_andesite_stonecutting stonecutter 1 polished_andesite_stairs <- 1*polished_andesite
+polished_basalt shaped 4 polished_basalt <- 4*basalt
+polished_basalt_from_basalt_stonecutting stonecutter 1 polished_basalt <- 1*basalt
+polished_blackstone shaped 4 polished_blackstone <- 4*blackstone
+polished_blackstone_brick_slab shaped 6 polished_blackstone_brick_slab <- 3*polished_blackstone_bricks
+polished_blackstone_brick_slab_from_blackstone_stonecutting stonecutter 2 polished_blackstone_brick_slab <- 1*blackstone
+polished_blackstone_brick_slab_from_polished_blackstone_bricks_stonecutting stonecutter 2 polished_blackstone_brick_slab <- 1*polished_blackstone_bricks
+polished_blackstone_brick_slab_from_polished_blackstone_stonecutting stonecutter 2 polished_blackstone_brick_slab <- 1*polished_blackstone
+polished_blackstone_brick_stairs shaped 4 polished_blackstone_brick_stairs <- 6*polished_blackstone_bricks
+polished_blackstone_brick_stairs_from_blackstone_stonecutting stonecutter 1 polished_blackstone_brick_stairs <- 1*blackstone
+polished_blackstone_brick_stairs_from_polished_blackstone_bricks_stonecutting stonecutter 1 polished_blackstone_brick_stairs <- 1*polished_blackstone_bricks
+polished_blackstone_brick_stairs_from_polished_blackstone_stonecutting stonecutter 1 polished_blackstone_brick_stairs <- 1*polished_blackstone
+polished_blackstone_brick_wall shaped 6 polished_blackstone_brick_wall <- 6*polished_blackstone_bricks
+polished_blackstone_brick_wall_from_blackstone_stonecutting stonecutter 1 polished_blackstone_brick_wall <- 1*blackstone
+polished_blackstone_brick_wall_from_polished_blackstone_bricks_stonecutting stonecutter 1 polished_blackstone_brick_wall <- 1*polished_blackstone_bricks
+polished_blackstone_brick_wall_from_polished_blackstone_stonecutting stonecutter 1 polished_blackstone_brick_wall <- 1*polished_blackstone
+polished_blackstone_bricks shaped 4 polished_blackstone_bricks <- 4*polished_blackstone
+polished_blackstone_bricks_from_blackstone_stonecutting stonecutter 1 polished_blackstone_bricks <- 1*blackstone
+polished_blackstone_bricks_from_polished_blackstone_stonecutting stonecutter 1 polished_blackstone_bricks <- 1*polished_blackstone
+polished_blackstone_button shapeless 1 polished_blackstone_button <- 1*polished_blackstone
+polished_blackstone_from_blackstone_stonecutting stonecutter 1 polished_blackstone <- 1*blackstone
+polished_blackstone_pressure_plate shaped 1 polished_blackstone_pressure_plate <- 2*polished_blackstone
+polished_blackstone_slab shaped 6 polished_blackstone_slab <- 3*polished_blackstone
+polished_blackstone_slab_from_blackstone_stonecutting stonecutter 2 polished_blackstone_slab <- 1*blackstone
+polished_blackstone_slab_from_polished_blackstone_stonecutting stonecutter 2 polished_blackstone_slab <- 1*polished_blackstone
+polished_blackstone_stairs shaped 4 polished_blackstone_stairs <- 6*polished_blackstone
+polished_blackstone_stairs_from_blackstone_stonecutting stonecutter 1 polished_blackstone_stairs <- 1*blackstone
+polished_blackstone_stairs_from_polished_blackstone_stonecutting stonecutter 1 polished_blackstone_stairs <- 1*polished_blackstone
+polished_blackstone_wall shaped 6 polished_blackstone_wall <- 6*polished_blackstone
+polished_blackstone_wall_from_blackstone_stonecutting stonecutter 1 polished_blackstone_wall <- 1*blackstone
+polished_blackstone_wall_from_polished_blackstone_stonecutting stonecutter 1 polished_blackstone_wall <- 1*polished_blackstone
+polished_cinnabar shaped 4 polished_cinnabar <- 4*cinnabar
+polished_cinnabar_from_cinnabar_stonecutting stonecutter 1 polished_cinnabar <- 1*cinnabar
+polished_cinnabar_slab shaped 6 polished_cinnabar_slab <- 3*polished_cinnabar
+polished_cinnabar_slab_from_cinnabar_stonecutting stonecutter 2 polished_cinnabar_slab <- 1*cinnabar
+polished_cinnabar_slab_from_polished_cinnabar_stonecutting stonecutter 2 polished_cinnabar_slab <- 1*polished_cinnabar
+polished_cinnabar_stairs shaped 4 polished_cinnabar_stairs <- 6*polished_cinnabar
+polished_cinnabar_stairs_from_cinnabar_stonecutting stonecutter 1 polished_cinnabar_stairs <- 1*cinnabar
+polished_cinnabar_stairs_from_polished_cinnabar_stonecutting stonecutter 1 polished_cinnabar_stairs <- 1*polished_cinnabar
+polished_cinnabar_wall shaped 6 polished_cinnabar_wall <- 6*polished_cinnabar
+polished_cinnabar_wall_from_cinnabar_stonecutting stonecutter 1 polished_cinnabar_wall <- 1*cinnabar
+polished_cinnabar_wall_from_polished_cinnabar_stonecutting stonecutter 1 polished_cinnabar_wall <- 1*polished_cinnabar
+polished_deepslate shaped 4 polished_deepslate <- 4*cobbled_deepslate
+polished_deepslate_from_cobbled_deepslate_stonecutting stonecutter 1 polished_deepslate <- 1*cobbled_deepslate
+polished_deepslate_from_deepslate_stonecutting stonecutter 1 polished_deepslate <- 1*deepslate
+polished_deepslate_slab shaped 6 polished_deepslate_slab <- 3*polished_deepslate
+polished_deepslate_slab_from_cobbled_deepslate_stonecutting stonecutter 2 polished_deepslate_slab <- 1*cobbled_deepslate
+polished_deepslate_slab_from_deepslate_stonecutting stonecutter 2 polished_deepslate_slab <- 1*deepslate
+polished_deepslate_slab_from_polished_deepslate_stonecutting stonecutter 2 polished_deepslate_slab <- 1*polished_deepslate
+polished_deepslate_stairs shaped 4 polished_deepslate_stairs <- 6*polished_deepslate
+polished_deepslate_stairs_from_cobbled_deepslate_stonecutting stonecutter 1 polished_deepslate_stairs <- 1*cobbled_deepslate
+polished_deepslate_stairs_from_deepslate_stonecutting stonecutter 1 polished_deepslate_stairs <- 1*deepslate
+polished_deepslate_stairs_from_polished_deepslate_stonecutting stonecutter 1 polished_deepslate_stairs <- 1*polished_deepslate
+polished_deepslate_wall shaped 6 polished_deepslate_wall <- 6*polished_deepslate
+polished_deepslate_wall_from_cobbled_deepslate_stonecutting stonecutter 1 polished_deepslate_wall <- 1*cobbled_deepslate
+polished_deepslate_wall_from_deepslate_stonecutting stonecutter 1 polished_deepslate_wall <- 1*deepslate
+polished_deepslate_wall_from_polished_deepslate_stonecutting stonecutter 1 polished_deepslate_wall <- 1*polished_deepslate
+polished_diorite shaped 4 polished_diorite <- 4*diorite
+polished_diorite_from_diorite_stonecutting stonecutter 1 polished_diorite <- 1*diorite
+polished_diorite_slab shaped 6 polished_diorite_slab <- 3*polished_diorite
+polished_diorite_slab_from_diorite_stonecutting stonecutter 2 polished_diorite_slab <- 1*diorite
+polished_diorite_slab_from_polished_diorite_stonecutting stonecutter 2 polished_diorite_slab <- 1*polished_diorite
+polished_diorite_stairs shaped 4 polished_diorite_stairs <- 6*polished_diorite
+polished_diorite_stairs_from_diorite_stonecutting stonecutter 1 polished_diorite_stairs <- 1*diorite
+polished_diorite_stairs_from_polished_diorite_stonecutting stonecutter 1 polished_diorite_stairs <- 1*polished_diorite
+polished_granite shaped 4 polished_granite <- 4*granite
+polished_granite_from_granite_stonecutting stonecutter 1 polished_granite <- 1*granite
+polished_granite_slab shaped 6 polished_granite_slab <- 3*polished_granite
+polished_granite_slab_from_granite_stonecutting stonecutter 2 polished_granite_slab <- 1*granite
+polished_granite_slab_from_polished_granite_stonecutting stonecutter 2 polished_granite_slab <- 1*polished_granite
+polished_granite_stairs shaped 4 polished_granite_stairs <- 6*polished_granite
+polished_granite_stairs_from_granite_stonecutting stonecutter 1 polished_granite_stairs <- 1*granite
+polished_granite_stairs_from_polished_granite_stonecutting stonecutter 1 polished_granite_stairs <- 1*polished_granite
+polished_sulfur shaped 4 polished_sulfur <- 4*sulfur
+polished_sulfur_from_sulfur_stonecutting stonecutter 1 polished_sulfur <- 1*sulfur
+polished_sulfur_slab shaped 6 polished_sulfur_slab <- 3*polished_sulfur
+polished_sulfur_slab_from_polished_sulfur_stonecutting stonecutter 2 polished_sulfur_slab <- 1*polished_sulfur
+polished_sulfur_slab_from_sulfur_stonecutting stonecutter 2 polished_sulfur_slab <- 1*sulfur
+polished_sulfur_stairs shaped 4 polished_sulfur_stairs <- 6*polished_sulfur
+polished_sulfur_stairs_from_polished_sulfur_stonecutting stonecutter 1 polished_sulfur_stairs <- 1*polished_sulfur
+polished_sulfur_stairs_from_sulfur_stonecutting stonecutter 1 polished_sulfur_stairs <- 1*sulfur
+polished_sulfur_wall shaped 6 polished_sulfur_wall <- 6*polished_sulfur
+polished_sulfur_wall_from_polished_sulfur_stonecutting stonecutter 1 polished_sulfur_wall <- 1*polished_sulfur
+polished_sulfur_wall_from_sulfur_stonecutting stonecutter 1 polished_sulfur_wall <- 1*sulfur
+polished_tuff shaped 4 polished_tuff <- 4*tuff
+polished_tuff_from_tuff_stonecutting stonecutter 1 polished_tuff <- 1*tuff
+polished_tuff_slab shaped 6 polished_tuff_slab <- 3*polished_tuff
+polished_tuff_slab_from_polished_tuff_stonecutting stonecutter 2 polished_tuff_slab <- 1*polished_tuff
+polished_tuff_slab_from_tuff_stonecutting stonecutter 2 polished_tuff_slab <- 1*tuff
+polished_tuff_stairs shaped 4 polished_tuff_stairs <- 6*polished_tuff
+polished_tuff_stairs_from_polished_tuff_stonecutting stonecutter 1 polished_tuff_stairs <- 1*polished_tuff
+polished_tuff_stairs_from_tuff_stonecutting stonecutter 1 polished_tuff_stairs <- 1*tuff
+polished_tuff_wall shaped 6 polished_tuff_wall <- 6*polished_tuff
+polished_tuff_wall_from_polished_tuff_stonecutting stonecutter 1 polished_tuff_wall <- 1*polished_tuff
+polished_tuff_wall_from_tuff_stonecutting stonecutter 1 polished_tuff_wall <- 1*tuff
+potent_sulfur shapeless 1 potent_sulfur <- 9*sulfur
+powered_rail shaped 6 powered_rail <- 6*gold_ingot 1*stick 1*redstone
+prismarine shaped 1 prismarine <- 4*prismarine_shard
+prismarine_brick_slab shaped 6 prismarine_brick_slab <- 3*prismarine_bricks
+prismarine_brick_slab_from_prismarine_bricks_stonecutting stonecutter 2 prismarine_brick_slab <- 1*prismarine_bricks
+prismarine_brick_stairs shaped 4 prismarine_brick_stairs <- 6*prismarine_bricks
+prismarine_brick_stairs_from_prismarine_bricks_stonecutting stonecutter 1 prismarine_brick_stairs <- 1*prismarine_bricks
+prismarine_bricks shapeless 1 prismarine_bricks <- 9*prismarine_shard
+prismarine_slab shaped 6 prismarine_slab <- 3*prismarine
+prismarine_slab_from_prismarine_stonecutting stonecutter 2 prismarine_slab <- 1*prismarine
+prismarine_stairs shaped 4 prismarine_stairs <- 6*prismarine
+prismarine_stairs_from_prismarine_stonecutting stonecutter 1 prismarine_stairs <- 1*prismarine
+prismarine_wall shaped 6 prismarine_wall <- 6*prismarine
+prismarine_wall_from_prismarine_stonecutting stonecutter 1 prismarine_wall <- 1*prismarine
+pumpkin_pie shapeless 1 pumpkin_pie <- 1*pumpkin 1*sugar 1*#eggs
+pumpkin_seeds shapeless 4 pumpkin_seeds <- 1*pumpkin
+purple_banner shaped 1 purple_banner <- 6*purple_wool 1*stick
+purple_bed shaped 1 purple_bed <- 3*purple_wool 3*#planks
+purple_candle shapeless 1 purple_candle <- 1*candle 1*purple_dye
+purple_carpet shaped 3 purple_carpet <- 2*purple_wool
+purple_concrete_powder shapeless 8 purple_concrete_powder <- 1*purple_dye 4*sand 4*gravel
+purple_dye shapeless 2 purple_dye <- 1*blue_dye 1*red_dye
+purple_harness shaped 1 purple_harness <- 3*leather 2*glass 1*purple_wool
+purple_stained_glass shaped 8 purple_stained_glass <- 8*glass 1*purple_dye
+purple_stained_glass_pane shaped 16 purple_stained_glass_pane <- 6*purple_stained_glass
+purple_stained_glass_pane_from_glass_pane shaped 8 purple_stained_glass_pane <- 8*glass_pane 1*purple_dye
+purple_terracotta shaped 8 purple_terracotta <- 8*terracotta 1*purple_dye
+purpur_block shaped 4 purpur_block <- 4*popped_chorus_fruit
+purpur_pillar shaped 1 purpur_pillar <- 2*purpur_slab
+purpur_pillar_from_purpur_block_stonecutting stonecutter 1 purpur_pillar <- 1*purpur_block
+purpur_slab shaped 6 purpur_slab <- 3*purpur_block|purpur_pillar
+purpur_slab_from_purpur_block_stonecutting stonecutter 2 purpur_slab <- 1*purpur_block
+purpur_stairs shaped 4 purpur_stairs <- 6*purpur_block|purpur_pillar
+purpur_stairs_from_purpur_block_stonecutting stonecutter 1 purpur_stairs <- 1*purpur_block
+quartz_block shaped 1 quartz_block <- 4*quartz
+quartz_bricks shaped 4 quartz_bricks <- 4*quartz_block
+quartz_bricks_from_quartz_block_stonecutting stonecutter 1 quartz_bricks <- 1*quartz_block
+quartz_pillar shaped 2 quartz_pillar <- 2*quartz_block
+quartz_pillar_from_quartz_block_stonecutting stonecutter 1 quartz_pillar <- 1*quartz_block
+quartz_slab shaped 6 quartz_slab <- 3*chiseled_quartz_block|quartz_block|quartz_pillar
+quartz_slab_from_quartz_block_stonecutting stonecutter 2 quartz_slab <- 1*quartz_block
+quartz_stairs shaped 4 quartz_stairs <- 6*chiseled_quartz_block|quartz_block|quartz_pillar
+quartz_stairs_from_quartz_block_stonecutting stonecutter 1 quartz_stairs <- 1*quartz_block
+rabbit_stew_from_brown_mushroom shapeless 1 rabbit_stew <- 1*baked_potato 1*cooked_rabbit 1*bowl 1*carrot 1*brown_mushroom
+rabbit_stew_from_red_mushroom shapeless 1 rabbit_stew <- 1*baked_potato 1*cooked_rabbit 1*bowl 1*carrot 1*red_mushroom
+rail shaped 16 rail <- 6*iron_ingot 1*stick
+raiser_armor_trim_smithing_template shaped 2 raiser_armor_trim_smithing_template <- 7*diamond 1*raiser_armor_trim_smithing_template 1*terracotta
+raw_copper shapeless 9 raw_copper <- 1*raw_copper_block
+raw_copper_block shaped 1 raw_copper_block <- 9*raw_copper
+raw_gold shapeless 9 raw_gold <- 1*raw_gold_block
+raw_gold_block shaped 1 raw_gold_block <- 9*raw_gold
+raw_iron shapeless 9 raw_iron <- 1*raw_iron_block
+raw_iron_block shaped 1 raw_iron_block <- 9*raw_iron
+recovery_compass shaped 1 recovery_compass <- 8*echo_shard 1*compass
+red_banner shaped 1 red_banner <- 6*red_wool 1*stick
+red_bed shaped 1 red_bed <- 3*red_wool 3*#planks
+red_candle shapeless 1 red_candle <- 1*candle 1*red_dye
+red_carpet shaped 3 red_carpet <- 2*red_wool
+red_concrete_powder shapeless 8 red_concrete_powder <- 1*red_dye 4*sand 4*gravel
+red_dye_from_beetroot shapeless 1 red_dye <- 1*beetroot
+red_dye_from_poppy shapeless 1 red_dye <- 1*poppy
+red_dye_from_rose_bush shapeless 2 red_dye <- 1*rose_bush
+red_dye_from_tulip shapeless 1 red_dye <- 1*red_tulip
+red_harness shaped 1 red_harness <- 3*leather 2*glass 1*red_wool
+red_nether_brick_slab shaped 6 red_nether_brick_slab <- 3*red_nether_bricks
+red_nether_brick_slab_from_red_nether_bricks_stonecutting stonecutter 2 red_nether_brick_slab <- 1*red_nether_bricks
+red_nether_brick_stairs shaped 4 red_nether_brick_stairs <- 6*red_nether_bricks
+red_nether_brick_stairs_from_red_nether_bricks_stonecutting stonecutter 1 red_nether_brick_stairs <- 1*red_nether_bricks
+red_nether_brick_wall shaped 6 red_nether_brick_wall <- 6*red_nether_bricks
+red_nether_brick_wall_from_red_nether_bricks_stonecutting stonecutter 1 red_nether_brick_wall <- 1*red_nether_bricks
+red_nether_bricks shaped 1 red_nether_bricks <- 2*nether_brick 2*nether_wart
+red_sandstone shaped 1 red_sandstone <- 4*red_sand
+red_sandstone_slab shaped 6 red_sandstone_slab <- 3*red_sandstone|chiseled_red_sandstone
+red_sandstone_slab_from_red_sandstone_stonecutting stonecutter 2 red_sandstone_slab <- 1*red_sandstone
+red_sandstone_stairs shaped 4 red_sandstone_stairs <- 6*red_sandstone|chiseled_red_sandstone|cut_red_sandstone
+red_sandstone_stairs_from_red_sandstone_stonecutting stonecutter 1 red_sandstone_stairs <- 1*red_sandstone
+red_sandstone_wall shaped 6 red_sandstone_wall <- 6*red_sandstone
+red_sandstone_wall_from_red_sandstone_stonecutting stonecutter 1 red_sandstone_wall <- 1*red_sandstone
+red_stained_glass shaped 8 red_stained_glass <- 8*glass 1*red_dye
+red_stained_glass_pane shaped 16 red_stained_glass_pane <- 6*red_stained_glass
+red_stained_glass_pane_from_glass_pane shaped 8 red_stained_glass_pane <- 8*glass_pane 1*red_dye
+red_terracotta shaped 8 red_terracotta <- 8*terracotta 1*red_dye
+redstone shapeless 9 redstone <- 1*redstone_block
+redstone_block shaped 1 redstone_block <- 9*redstone
+redstone_lamp shaped 1 redstone_lamp <- 4*redstone 1*glowstone
+redstone_torch shaped 1 redstone_torch <- 1*redstone 1*stick
+repeater shaped 1 repeater <- 2*redstone_torch 1*redstone 3*stone
+resin_block shaped 1 resin_block <- 9*resin_clump
+resin_brick_slab shaped 6 resin_brick_slab <- 3*resin_bricks
+resin_brick_slab_from_resin_bricks_stonecutting stonecutter 2 resin_brick_slab <- 1*resin_bricks
+resin_brick_stairs shaped 4 resin_brick_stairs <- 6*resin_bricks
+resin_brick_stairs_from_resin_bricks_stonecutting stonecutter 1 resin_brick_stairs <- 1*resin_bricks
+resin_brick_wall shaped 6 resin_brick_wall <- 6*resin_bricks
+resin_brick_wall_from_resin_bricks_stonecutting stonecutter 1 resin_brick_wall <- 1*resin_bricks
+resin_bricks shaped 1 resin_bricks <- 4*resin_brick
+resin_clump shapeless 9 resin_clump <- 1*resin_block
+respawn_anchor shaped 1 respawn_anchor <- 6*crying_obsidian 3*glowstone
+rib_armor_trim_smithing_template shaped 2 rib_armor_trim_smithing_template <- 7*diamond 1*rib_armor_trim_smithing_template 1*netherrack
+saddle shaped 1 saddle <- 3*leather 1*iron_ingot
+sandstone shaped 1 sandstone <- 4*sand
+sandstone_slab shaped 6 sandstone_slab <- 3*sandstone|chiseled_sandstone
+sandstone_slab_from_sandstone_stonecutting stonecutter 2 sandstone_slab <- 1*sandstone
+sandstone_stairs shaped 4 sandstone_stairs <- 6*sandstone|chiseled_sandstone|cut_sandstone
+sandstone_stairs_from_sandstone_stonecutting stonecutter 1 sandstone_stairs <- 1*sandstone
+sandstone_wall shaped 6 sandstone_wall <- 6*sandstone
+sandstone_wall_from_sandstone_stonecutting stonecutter 1 sandstone_wall <- 1*sandstone
+scaffolding shaped 6 scaffolding <- 6*bamboo 1*string
+sea_lantern shaped 1 sea_lantern <- 4*prismarine_shard 5*prismarine_crystals
+sentry_armor_trim_smithing_template shaped 2 sentry_armor_trim_smithing_template <- 7*diamond 1*sentry_armor_trim_smithing_template 1*cobblestone
+shaper_armor_trim_smithing_template shaped 2 shaper_armor_trim_smithing_template <- 7*diamond 1*shaper_armor_trim_smithing_template 1*terracotta
+shears shaped 1 shears <- 2*iron_ingot
+shield shaped 1 shield <- 6*#wooden_tool_materials 1*iron_ingot
+shulker_box shaped 1 shulker_box <- 2*shulker_shell 1*chest
+silence_armor_trim_smithing_template shaped 2 silence_armor_trim_smithing_template <- 7*diamond 1*silence_armor_trim_smithing_template 1*cobbled_deepslate
+skull_banner_pattern shapeless 1 skull_banner_pattern <- 1*paper 1*wither_skeleton_skull
+slime_ball shapeless 9 slime_ball <- 1*slime_block
+slime_block shaped 1 slime_block <- 9*slime_ball
+smithing_table shaped 1 smithing_table <- 2*iron_ingot 4*#planks
+smoker shaped 1 smoker <- 4*#logs 1*furnace
+smooth_quartz_slab shaped 6 smooth_quartz_slab <- 3*smooth_quartz
+smooth_quartz_slab_from_smooth_quartz_stonecutting stonecutter 2 smooth_quartz_slab <- 1*smooth_quartz
+smooth_quartz_stairs shaped 4 smooth_quartz_stairs <- 6*smooth_quartz
+smooth_quartz_stairs_from_smooth_quartz_stonecutting stonecutter 1 smooth_quartz_stairs <- 1*smooth_quartz
+smooth_red_sandstone_slab shaped 6 smooth_red_sandstone_slab <- 3*smooth_red_sandstone
+smooth_red_sandstone_slab_from_smooth_red_sandstone_stonecutting stonecutter 2 smooth_red_sandstone_slab <- 1*smooth_red_sandstone
+smooth_red_sandstone_stairs shaped 4 smooth_red_sandstone_stairs <- 6*smooth_red_sandstone
+smooth_red_sandstone_stairs_from_smooth_red_sandstone_stonecutting stonecutter 1 smooth_red_sandstone_stairs <- 1*smooth_red_sandstone
+smooth_sandstone_slab shaped 6 smooth_sandstone_slab <- 3*smooth_sandstone
+smooth_sandstone_slab_from_smooth_sandstone_stonecutting stonecutter 2 smooth_sandstone_slab <- 1*smooth_sandstone
+smooth_sandstone_stairs shaped 4 smooth_sandstone_stairs <- 6*smooth_sandstone
+smooth_sandstone_stairs_from_smooth_sandstone_stonecutting stonecutter 1 smooth_sandstone_stairs <- 1*smooth_sandstone
+smooth_stone_slab shaped 6 smooth_stone_slab <- 3*smooth_stone
+smooth_stone_slab_from_smooth_stone_stonecutting stonecutter 2 smooth_stone_slab <- 1*smooth_stone
+snout_armor_trim_smithing_template shaped 2 snout_armor_trim_smithing_template <- 7*diamond 1*snout_armor_trim_smithing_template 1*blackstone
+snow shaped 6 snow <- 3*snow_block
+snow_block shaped 1 snow_block <- 4*snowball
+soul_campfire shaped 1 soul_campfire <- 3*stick 1*#soul_fire_base_blocks 3*#logs
+soul_lantern shaped 1 soul_lantern <- 8*iron_nugget 1*soul_torch
+soul_torch shaped 4 soul_torch <- 1*coal|charcoal 1*stick 1*#soul_fire_base_blocks
+spectral_arrow shaped 2 spectral_arrow <- 4*glowstone_dust 1*arrow
+spire_armor_trim_smithing_template shaped 2 spire_armor_trim_smithing_template <- 7*diamond 1*spire_armor_trim_smithing_template 1*purpur_block
+spruce_boat shaped 1 spruce_boat <- 5*spruce_planks
+spruce_button shapeless 1 spruce_button <- 1*spruce_planks
+spruce_chest_boat shapeless 1 spruce_chest_boat <- 1*chest 1*spruce_boat
+spruce_door shaped 3 spruce_door <- 6*spruce_planks
+spruce_fence shaped 3 spruce_fence <- 4*spruce_planks 2*stick
+spruce_fence_gate shaped 1 spruce_fence_gate <- 4*stick 2*spruce_planks
+spruce_hanging_sign shaped 6 spruce_hanging_sign <- 2*iron_chain 6*stripped_spruce_log
+spruce_planks shapeless 4 spruce_planks <- 1*#spruce_logs
+spruce_pressure_plate shaped 1 spruce_pressure_plate <- 2*spruce_planks
+spruce_shelf shaped 6 spruce_shelf <- 6*stripped_spruce_log
+spruce_sign shaped 3 spruce_sign <- 6*spruce_planks 1*stick
+spruce_slab shaped 6 spruce_slab <- 3*spruce_planks
+spruce_stairs shaped 4 spruce_stairs <- 6*spruce_planks
+spruce_trapdoor shaped 2 spruce_trapdoor <- 6*spruce_planks
+spruce_wood shaped 3 spruce_wood <- 4*spruce_log
+spyglass shaped 1 spyglass <- 1*amethyst_shard 2*copper_ingot
+stick shaped 4 stick <- 2*#planks
+stick_from_bamboo_item shaped 1 stick <- 2*bamboo
+sticky_piston shaped 1 sticky_piston <- 1*slime_ball 1*piston
+stone_axe shaped 1 stone_axe <- 3*#stone_tool_materials 2*stick
+stone_brick_slab shaped 6 stone_brick_slab <- 3*stone_bricks
+stone_brick_slab_from_stone_bricks_stonecutting stonecutter 2 stone_brick_slab <- 1*stone_bricks
+stone_brick_slab_from_stone_stonecutting stonecutter 2 stone_brick_slab <- 1*stone
+stone_brick_stairs shaped 4 stone_brick_stairs <- 6*stone_bricks
+stone_brick_stairs_from_stone_bricks_stonecutting stonecutter 1 stone_brick_stairs <- 1*stone_bricks
+stone_brick_stairs_from_stone_stonecutting stonecutter 1 stone_brick_stairs <- 1*stone
+stone_brick_wall shaped 6 stone_brick_wall <- 6*stone_bricks
+stone_brick_wall_from_stone_bricks_stonecutting stonecutter 1 stone_brick_wall <- 1*stone_bricks
+stone_brick_wall_from_stone_stonecutting stonecutter 1 stone_brick_wall <- 1*stone
+stone_bricks shaped 4 stone_bricks <- 4*stone
+stone_bricks_from_stone_stonecutting stonecutter 1 stone_bricks <- 1*stone
+stone_button shapeless 1 stone_button <- 1*stone
+stone_hoe shaped 1 stone_hoe <- 2*#stone_tool_materials 2*stick
+stone_pickaxe shaped 1 stone_pickaxe <- 3*#stone_tool_materials 2*stick
+stone_pressure_plate shaped 1 stone_pressure_plate <- 2*stone
+stone_shovel shaped 1 stone_shovel <- 1*#stone_tool_materials 2*stick
+stone_slab shaped 6 stone_slab <- 3*stone
+stone_slab_from_stone_stonecutting stonecutter 2 stone_slab <- 1*stone
+stone_spear shaped 1 stone_spear <- 1*#stone_tool_materials 2*stick
+stone_stairs shaped 4 stone_stairs <- 6*stone
+stone_stairs_from_stone_stonecutting stonecutter 1 stone_stairs <- 1*stone
+stone_sword shaped 1 stone_sword <- 2*#stone_tool_materials 1*stick
+stonecutter shaped 1 stonecutter <- 1*iron_ingot 3*stone
+stripped_acacia_wood shaped 3 stripped_acacia_wood <- 4*stripped_acacia_log
+stripped_birch_wood shaped 3 stripped_birch_wood <- 4*stripped_birch_log
+stripped_cherry_wood shaped 3 stripped_cherry_wood <- 4*stripped_cherry_log
+stripped_crimson_hyphae shaped 3 stripped_crimson_hyphae <- 4*stripped_crimson_stem
+stripped_dark_oak_wood shaped 3 stripped_dark_oak_wood <- 4*stripped_dark_oak_log
+stripped_jungle_wood shaped 3 stripped_jungle_wood <- 4*stripped_jungle_log
+stripped_mangrove_wood shaped 3 stripped_mangrove_wood <- 4*stripped_mangrove_log
+stripped_oak_wood shaped 3 stripped_oak_wood <- 4*stripped_oak_log
+stripped_pale_oak_wood shaped 3 stripped_pale_oak_wood <- 4*stripped_pale_oak_log
+stripped_spruce_wood shaped 3 stripped_spruce_wood <- 4*stripped_spruce_log
+stripped_warped_hyphae shaped 3 stripped_warped_hyphae <- 4*stripped_warped_stem
+sugar_from_honey_bottle shapeless 3 sugar <- 1*honey_bottle
+sugar_from_sugar_cane shapeless 1 sugar <- 1*sugar_cane
+sulfur_brick_slab shaped 6 sulfur_brick_slab <- 3*sulfur_bricks
+sulfur_brick_slab_from_polished_sulfur_stonecutting stonecutter 2 sulfur_brick_slab <- 1*polished_sulfur
+sulfur_brick_slab_from_sulfur_bricks_stonecutting stonecutter 2 sulfur_brick_slab <- 1*sulfur_bricks
+sulfur_brick_slab_from_sulfur_stonecutting stonecutter 2 sulfur_brick_slab <- 1*sulfur
+sulfur_brick_stairs shaped 4 sulfur_brick_stairs <- 6*sulfur_bricks
+sulfur_brick_stairs_from_polished_sulfur_stonecutting stonecutter 1 sulfur_brick_stairs <- 1*polished_sulfur
+sulfur_brick_stairs_from_sulfur_bricks_stonecutting stonecutter 1 sulfur_brick_stairs <- 1*sulfur_bricks
+sulfur_brick_stairs_from_sulfur_stonecutting stonecutter 1 sulfur_brick_stairs <- 1*sulfur
+sulfur_brick_wall shaped 6 sulfur_brick_wall <- 6*sulfur_bricks
+sulfur_brick_wall_from_polished_sulfur_stonecutting stonecutter 1 sulfur_brick_wall <- 1*polished_sulfur
+sulfur_brick_wall_from_sulfur_bricks_stonecutting stonecutter 1 sulfur_brick_wall <- 1*sulfur_bricks
+sulfur_brick_wall_from_sulfur_stonecutting stonecutter 1 sulfur_brick_wall <- 1*sulfur
+sulfur_bricks shaped 4 sulfur_bricks <- 4*polished_sulfur
+sulfur_bricks_from_polished_sulfur_stonecutting stonecutter 1 sulfur_bricks <- 1*polished_sulfur
+sulfur_bricks_from_sulfur_stonecutting stonecutter 1 sulfur_bricks <- 1*sulfur
+sulfur_from_sulfur_spikes shaped 1 sulfur <- 4*sulfur_spike
+sulfur_slab shaped 6 sulfur_slab <- 3*sulfur
+sulfur_slab_from_sulfur_stonecutting stonecutter 2 sulfur_slab <- 1*sulfur
+sulfur_stairs shaped 4 sulfur_stairs <- 6*sulfur
+sulfur_stairs_from_sulfur_stonecutting stonecutter 1 sulfur_stairs <- 1*sulfur
+sulfur_wall shaped 6 sulfur_wall <- 6*sulfur
+sulfur_wall_from_sulfur_stonecutting stonecutter 1 sulfur_wall <- 1*sulfur
+suspicious_stew_from_allium shapeless 1 suspicious_stew <- 1*bowl 1*brown_mushroom 1*red_mushroom 1*allium
+suspicious_stew_from_azure_bluet shapeless 1 suspicious_stew <- 1*bowl 1*brown_mushroom 1*red_mushroom 1*azure_bluet
+suspicious_stew_from_blue_orchid shapeless 1 suspicious_stew <- 1*bowl 1*brown_mushroom 1*red_mushroom 1*blue_orchid
+suspicious_stew_from_closed_eyeblossom shapeless 1 suspicious_stew <- 1*bowl 1*brown_mushroom 1*red_mushroom 1*closed_eyeblossom
+suspicious_stew_from_cornflower shapeless 1 suspicious_stew <- 1*bowl 1*brown_mushroom 1*red_mushroom 1*cornflower
+suspicious_stew_from_dandelion shapeless 1 suspicious_stew <- 1*bowl 1*brown_mushroom 1*red_mushroom 1*dandelion
+suspicious_stew_from_golden_dandelion shapeless 1 suspicious_stew <- 1*bowl 1*brown_mushroom 1*red_mushroom 1*golden_dandelion
+suspicious_stew_from_lily_of_the_valley shapeless 1 suspicious_stew <- 1*bowl 1*brown_mushroom 1*red_mushroom 1*lily_of_the_valley
+suspicious_stew_from_open_eyeblossom shapeless 1 suspicious_stew <- 1*bowl 1*brown_mushroom 1*red_mushroom 1*open_eyeblossom
+suspicious_stew_from_orange_tulip shapeless 1 suspicious_stew <- 1*bowl 1*brown_mushroom 1*red_mushroom 1*orange_tulip
+suspicious_stew_from_oxeye_daisy shapeless 1 suspicious_stew <- 1*bowl 1*brown_mushroom 1*red_mushroom 1*oxeye_daisy
+suspicious_stew_from_pink_tulip shapeless 1 suspicious_stew <- 1*bowl 1*brown_mushroom 1*red_mushroom 1*pink_tulip
+suspicious_stew_from_poppy shapeless 1 suspicious_stew <- 1*bowl 1*brown_mushroom 1*red_mushroom 1*poppy
+suspicious_stew_from_red_tulip shapeless 1 suspicious_stew <- 1*bowl 1*brown_mushroom 1*red_mushroom 1*red_tulip
+suspicious_stew_from_torchflower shapeless 1 suspicious_stew <- 1*bowl 1*brown_mushroom 1*red_mushroom 1*torchflower
+suspicious_stew_from_white_tulip shapeless 1 suspicious_stew <- 1*bowl 1*brown_mushroom 1*red_mushroom 1*white_tulip
+suspicious_stew_from_wither_rose shapeless 1 suspicious_stew <- 1*bowl 1*brown_mushroom 1*red_mushroom 1*wither_rose
+target shaped 1 target <- 4*redstone 1*hay_block
+tide_armor_trim_smithing_template shaped 2 tide_armor_trim_smithing_template <- 7*diamond 1*tide_armor_trim_smithing_template 1*prismarine
+tinted_glass shaped 2 tinted_glass <- 4*amethyst_shard 1*glass
+tnt shaped 1 tnt <- 5*gunpowder 4*sand|red_sand
+tnt_minecart shapeless 1 tnt_minecart <- 1*tnt 1*minecart
+torch shaped 4 torch <- 1*coal|charcoal 1*stick
+trapped_chest shapeless 1 trapped_chest <- 1*chest 1*tripwire_hook
+tripwire_hook shaped 2 tripwire_hook <- 1*iron_ingot 1*stick 1*#planks
+tuff_brick_slab shaped 6 tuff_brick_slab <- 3*tuff_bricks
+tuff_brick_slab_from_polished_tuff_stonecutting stonecutter 2 tuff_brick_slab <- 1*polished_tuff
+tuff_brick_slab_from_tuff_bricks_stonecutting stonecutter 2 tuff_brick_slab <- 1*tuff_bricks
+tuff_brick_slab_from_tuff_stonecutting stonecutter 2 tuff_brick_slab <- 1*tuff
+tuff_brick_stairs shaped 4 tuff_brick_stairs <- 6*tuff_bricks
+tuff_brick_stairs_from_polished_tuff_stonecutting stonecutter 1 tuff_brick_stairs <- 1*polished_tuff
+tuff_brick_stairs_from_tuff_bricks_stonecutting stonecutter 1 tuff_brick_stairs <- 1*tuff_bricks
+tuff_brick_stairs_from_tuff_stonecutting stonecutter 1 tuff_brick_stairs <- 1*tuff
+tuff_brick_wall shaped 6 tuff_brick_wall <- 6*tuff_bricks
+tuff_brick_wall_from_polished_tuff_stonecutting stonecutter 1 tuff_brick_wall <- 1*polished_tuff
+tuff_brick_wall_from_tuff_bricks_stonecutting stonecutter 1 tuff_brick_wall <- 1*tuff_bricks
+tuff_brick_wall_from_tuff_stonecutting stonecutter 1 tuff_brick_wall <- 1*tuff
+tuff_bricks shaped 4 tuff_bricks <- 4*polished_tuff
+tuff_bricks_from_polished_tuff_stonecutting stonecutter 1 tuff_bricks <- 1*polished_tuff
+tuff_bricks_from_tuff_stonecutting stonecutter 1 tuff_bricks <- 1*tuff
+tuff_slab shaped 6 tuff_slab <- 3*tuff
+tuff_slab_from_tuff_stonecutting stonecutter 2 tuff_slab <- 1*tuff
+tuff_stairs shaped 4 tuff_stairs <- 6*tuff
+tuff_stairs_from_tuff_stonecutting stonecutter 1 tuff_stairs <- 1*tuff
+tuff_wall shaped 6 tuff_wall <- 6*tuff
+tuff_wall_from_tuff_stonecutting stonecutter 1 tuff_wall <- 1*tuff
+turtle_helmet shaped 1 turtle_helmet <- 5*turtle_scute
+vex_armor_trim_smithing_template shaped 2 vex_armor_trim_smithing_template <- 7*diamond 1*vex_armor_trim_smithing_template 1*cobblestone
+ward_armor_trim_smithing_template shaped 2 ward_armor_trim_smithing_template <- 7*diamond 1*ward_armor_trim_smithing_template 1*cobbled_deepslate
+warped_button shapeless 1 warped_button <- 1*warped_planks
+warped_door shaped 3 warped_door <- 6*warped_planks
+warped_fence shaped 3 warped_fence <- 4*warped_planks 2*stick
+warped_fence_gate shaped 1 warped_fence_gate <- 4*stick 2*warped_planks
+warped_fungus_on_a_stick shaped 1 warped_fungus_on_a_stick <- 1*fishing_rod 1*warped_fungus
+warped_hanging_sign shaped 6 warped_hanging_sign <- 2*iron_chain 6*stripped_warped_stem
+warped_hyphae shaped 3 warped_hyphae <- 4*warped_stem
+warped_planks shapeless 4 warped_planks <- 1*#warped_stems
+warped_pressure_plate shaped 1 warped_pressure_plate <- 2*warped_planks
+warped_shelf shaped 6 warped_shelf <- 6*stripped_warped_stem
+warped_sign shaped 3 warped_sign <- 6*warped_planks 1*stick
+warped_slab shaped 6 warped_slab <- 3*warped_planks
+warped_stairs shaped 4 warped_stairs <- 6*warped_planks
+warped_trapdoor shaped 2 warped_trapdoor <- 6*warped_planks
+waxed_chiseled_copper shaped 1 waxed_chiseled_copper <- 2*waxed_cut_copper_slab
+waxed_chiseled_copper_from_honeycomb shapeless 1 waxed_chiseled_copper <- 1*chiseled_copper 1*honeycomb
+waxed_chiseled_copper_from_waxed_copper_block_stonecutting stonecutter 4 waxed_chiseled_copper <- 1*waxed_copper_block
+waxed_chiseled_copper_from_waxed_cut_copper_stonecutting stonecutter 1 waxed_chiseled_copper <- 1*waxed_cut_copper
+waxed_copper_bars_from_honeycomb shapeless 1 waxed_copper_bars <- 1*copper_bars 1*honeycomb
+waxed_copper_block_from_honeycomb shapeless 1 waxed_copper_block <- 1*copper_block 1*honeycomb
+waxed_copper_bulb shaped 4 waxed_copper_bulb <- 3*waxed_copper_block 1*blaze_rod 1*redstone
+waxed_copper_bulb_from_honeycomb shapeless 1 waxed_copper_bulb <- 1*copper_bulb 1*honeycomb
+waxed_copper_chain_from_honeycomb shapeless 1 waxed_copper_chain <- 1*copper_chain 1*honeycomb
+waxed_copper_chest_from_honeycomb shapeless 1 waxed_copper_chest <- 1*copper_chest 1*honeycomb
+waxed_copper_door_from_honeycomb shapeless 1 waxed_copper_door <- 1*copper_door 1*honeycomb
+waxed_copper_golem_statue_from_honeycomb shapeless 1 waxed_copper_golem_statue <- 1*copper_golem_statue 1*honeycomb
+waxed_copper_grate shaped 4 waxed_copper_grate <- 4*waxed_copper_block
+waxed_copper_grate_from_honeycomb shapeless 1 waxed_copper_grate <- 1*copper_grate 1*honeycomb
+waxed_copper_grate_from_waxed_copper_block_stonecutting stonecutter 4 waxed_copper_grate <- 1*waxed_copper_block
+waxed_copper_lantern_from_honeycomb shapeless 1 waxed_copper_lantern <- 1*copper_lantern 1*honeycomb
+waxed_copper_trapdoor_from_honeycomb shapeless 1 waxed_copper_trapdoor <- 1*copper_trapdoor 1*honeycomb
+waxed_cut_copper shaped 4 waxed_cut_copper <- 4*waxed_copper_block
+waxed_cut_copper_from_honeycomb shapeless 1 waxed_cut_copper <- 1*cut_copper 1*honeycomb
+waxed_cut_copper_from_waxed_copper_block_stonecutting stonecutter 4 waxed_cut_copper <- 1*waxed_copper_block
+waxed_cut_copper_slab shaped 6 waxed_cut_copper_slab <- 3*waxed_cut_copper
+waxed_cut_copper_slab_from_honeycomb shapeless 1 waxed_cut_copper_slab <- 1*cut_copper_slab 1*honeycomb
+waxed_cut_copper_slab_from_waxed_copper_block_stonecutting stonecutter 8 waxed_cut_copper_slab <- 1*waxed_copper_block
+waxed_cut_copper_slab_from_waxed_cut_copper_stonecutting stonecutter 2 waxed_cut_copper_slab <- 1*waxed_cut_copper
+waxed_cut_copper_stairs shaped 4 waxed_cut_copper_stairs <- 6*waxed_cut_copper
+waxed_cut_copper_stairs_from_honeycomb shapeless 1 waxed_cut_copper_stairs <- 1*cut_copper_stairs 1*honeycomb
+waxed_cut_copper_stairs_from_waxed_copper_block_stonecutting stonecutter 4 waxed_cut_copper_stairs <- 1*waxed_copper_block
+waxed_cut_copper_stairs_from_waxed_cut_copper_stonecutting stonecutter 1 waxed_cut_copper_stairs <- 1*waxed_cut_copper
+waxed_exposed_chiseled_copper shaped 1 waxed_exposed_chiseled_copper <- 2*waxed_exposed_cut_copper_slab
+waxed_exposed_chiseled_copper_from_honeycomb shapeless 1 waxed_exposed_chiseled_copper <- 1*exposed_chiseled_copper 1*honeycomb
+waxed_exposed_chiseled_copper_from_waxed_exposed_copper_stonecutting stonecutter 4 waxed_exposed_chiseled_copper <- 1*waxed_exposed_copper
+waxed_exposed_chiseled_copper_from_waxed_exposed_cut_copper_stonecutting stonecutter 1 waxed_exposed_chiseled_copper <- 1*waxed_exposed_cut_copper
+waxed_exposed_copper_bars_from_honeycomb shapeless 1 waxed_exposed_copper_bars <- 1*exposed_copper_bars 1*honeycomb
+waxed_exposed_copper_bulb shaped 4 waxed_exposed_copper_bulb <- 3*waxed_exposed_copper 1*blaze_rod 1*redstone
+waxed_exposed_copper_bulb_from_honeycomb shapeless 1 waxed_exposed_copper_bulb <- 1*exposed_copper_bulb 1*honeycomb
+waxed_exposed_copper_chain_from_honeycomb shapeless 1 waxed_exposed_copper_chain <- 1*exposed_copper_chain 1*honeycomb
+waxed_exposed_copper_chest_from_honeycomb shapeless 1 waxed_exposed_copper_chest <- 1*exposed_copper_chest 1*honeycomb
+waxed_exposed_copper_door_from_honeycomb shapeless 1 waxed_exposed_copper_door <- 1*exposed_copper_door 1*honeycomb
+waxed_exposed_copper_from_honeycomb shapeless 1 waxed_exposed_copper <- 1*exposed_copper 1*honeycomb
+waxed_exposed_copper_golem_statue_from_honeycomb shapeless 1 waxed_exposed_copper_golem_statue <- 1*exposed_copper_golem_statue 1*honeycomb
+waxed_exposed_copper_grate shaped 4 waxed_exposed_copper_grate <- 4*waxed_exposed_copper
+waxed_exposed_copper_grate_from_honeycomb shapeless 1 waxed_exposed_copper_grate <- 1*exposed_copper_grate 1*honeycomb
+waxed_exposed_copper_grate_from_waxed_exposed_copper_stonecutting stonecutter 4 waxed_exposed_copper_grate <- 1*waxed_exposed_copper
+waxed_exposed_copper_lantern_from_honeycomb shapeless 1 waxed_exposed_copper_lantern <- 1*exposed_copper_lantern 1*honeycomb
+waxed_exposed_copper_trapdoor_from_honeycomb shapeless 1 waxed_exposed_copper_trapdoor <- 1*exposed_copper_trapdoor 1*honeycomb
+waxed_exposed_cut_copper shaped 4 waxed_exposed_cut_copper <- 4*waxed_exposed_copper
+waxed_exposed_cut_copper_from_honeycomb shapeless 1 waxed_exposed_cut_copper <- 1*exposed_cut_copper 1*honeycomb
+waxed_exposed_cut_copper_from_waxed_exposed_copper_stonecutting stonecutter 4 waxed_exposed_cut_copper <- 1*waxed_exposed_copper
+waxed_exposed_cut_copper_slab shaped 6 waxed_exposed_cut_copper_slab <- 3*waxed_exposed_cut_copper
+waxed_exposed_cut_copper_slab_from_honeycomb shapeless 1 waxed_exposed_cut_copper_slab <- 1*exposed_cut_copper_slab 1*honeycomb
+waxed_exposed_cut_copper_slab_from_waxed_exposed_copper_stonecutting stonecutter 8 waxed_exposed_cut_copper_slab <- 1*waxed_exposed_copper
+waxed_exposed_cut_copper_slab_from_waxed_exposed_cut_copper_stonecutting stonecutter 2 waxed_exposed_cut_copper_slab <- 1*waxed_exposed_cut_copper
+waxed_exposed_cut_copper_stairs shaped 4 waxed_exposed_cut_copper_stairs <- 6*waxed_exposed_cut_copper
+waxed_exposed_cut_copper_stairs_from_honeycomb shapeless 1 waxed_exposed_cut_copper_stairs <- 1*exposed_cut_copper_stairs 1*honeycomb
+waxed_exposed_cut_copper_stairs_from_waxed_exposed_copper_stonecutting stonecutter 4 waxed_exposed_cut_copper_stairs <- 1*waxed_exposed_copper
+waxed_exposed_cut_copper_stairs_from_waxed_exposed_cut_copper_stonecutting stonecutter 1 waxed_exposed_cut_copper_stairs <- 1*waxed_exposed_cut_copper
+waxed_exposed_lightning_rod_from_honeycomb shapeless 1 waxed_exposed_lightning_rod <- 1*exposed_lightning_rod 1*honeycomb
+waxed_lightning_rod_from_honeycomb shapeless 1 waxed_lightning_rod <- 1*lightning_rod 1*honeycomb
+waxed_oxidized_chiseled_copper shaped 1 waxed_oxidized_chiseled_copper <- 2*waxed_oxidized_cut_copper_slab
+waxed_oxidized_chiseled_copper_from_honeycomb shapeless 1 waxed_oxidized_chiseled_copper <- 1*oxidized_chiseled_copper 1*honeycomb
+waxed_oxidized_chiseled_copper_from_waxed_oxidized_copper_stonecutting stonecutter 4 waxed_oxidized_chiseled_copper <- 1*waxed_oxidized_copper
+waxed_oxidized_chiseled_copper_from_waxed_oxidized_cut_copper_stonecutting stonecutter 1 waxed_oxidized_chiseled_copper <- 1*waxed_oxidized_cut_copper
+waxed_oxidized_copper_bars_from_honeycomb shapeless 1 waxed_oxidized_copper_bars <- 1*oxidized_copper_bars 1*honeycomb
+waxed_oxidized_copper_bulb shaped 4 waxed_oxidized_copper_bulb <- 3*waxed_oxidized_copper 1*blaze_rod 1*redstone
+waxed_oxidized_copper_bulb_from_honeycomb shapeless 1 waxed_oxidized_copper_bulb <- 1*oxidized_copper_bulb 1*honeycomb
+waxed_oxidized_copper_chain_from_honeycomb shapeless 1 waxed_oxidized_copper_chain <- 1*oxidized_copper_chain 1*honeycomb
+waxed_oxidized_copper_chest_from_honeycomb shapeless 1 waxed_oxidized_copper_chest <- 1*oxidized_copper_chest 1*honeycomb
+waxed_oxidized_copper_door_from_honeycomb shapeless 1 waxed_oxidized_copper_door <- 1*oxidized_copper_door 1*honeycomb
+waxed_oxidized_copper_from_honeycomb shapeless 1 waxed_oxidized_copper <- 1*oxidized_copper 1*honeycomb
+waxed_oxidized_copper_golem_statue_from_honeycomb shapeless 1 waxed_oxidized_copper_golem_statue <- 1*oxidized_copper_golem_statue 1*honeycomb
+waxed_oxidized_copper_grate shaped 4 waxed_oxidized_copper_grate <- 4*waxed_oxidized_copper
+waxed_oxidized_copper_grate_from_honeycomb shapeless 1 waxed_oxidized_copper_grate <- 1*oxidized_copper_grate 1*honeycomb
+waxed_oxidized_copper_grate_from_waxed_oxidized_copper_stonecutting stonecutter 4 waxed_oxidized_copper_grate <- 1*waxed_oxidized_copper
+waxed_oxidized_copper_lantern_from_honeycomb shapeless 1 waxed_oxidized_copper_lantern <- 1*oxidized_copper_lantern 1*honeycomb
+waxed_oxidized_copper_trapdoor_from_honeycomb shapeless 1 waxed_oxidized_copper_trapdoor <- 1*oxidized_copper_trapdoor 1*honeycomb
+waxed_oxidized_cut_copper shaped 4 waxed_oxidized_cut_copper <- 4*waxed_oxidized_copper
+waxed_oxidized_cut_copper_from_honeycomb shapeless 1 waxed_oxidized_cut_copper <- 1*oxidized_cut_copper 1*honeycomb
+waxed_oxidized_cut_copper_from_waxed_oxidized_copper_stonecutting stonecutter 4 waxed_oxidized_cut_copper <- 1*waxed_oxidized_copper
+waxed_oxidized_cut_copper_slab shaped 6 waxed_oxidized_cut_copper_slab <- 3*waxed_oxidized_cut_copper
+waxed_oxidized_cut_copper_slab_from_honeycomb shapeless 1 waxed_oxidized_cut_copper_slab <- 1*oxidized_cut_copper_slab 1*honeycomb
+waxed_oxidized_cut_copper_slab_from_waxed_oxidized_copper_stonecutting stonecutter 8 waxed_oxidized_cut_copper_slab <- 1*waxed_oxidized_copper
+waxed_oxidized_cut_copper_slab_from_waxed_oxidized_cut_copper_stonecutting stonecutter 2 waxed_oxidized_cut_copper_slab <- 1*waxed_oxidized_cut_copper
+waxed_oxidized_cut_copper_stairs shaped 4 waxed_oxidized_cut_copper_stairs <- 6*waxed_oxidized_cut_copper
+waxed_oxidized_cut_copper_stairs_from_honeycomb shapeless 1 waxed_oxidized_cut_copper_stairs <- 1*oxidized_cut_copper_stairs 1*honeycomb
+waxed_oxidized_cut_copper_stairs_from_waxed_oxidized_copper_stonecutting stonecutter 4 waxed_oxidized_cut_copper_stairs <- 1*waxed_oxidized_copper
+waxed_oxidized_cut_copper_stairs_from_waxed_oxidized_cut_copper_stonecutting stonecutter 1 waxed_oxidized_cut_copper_stairs <- 1*waxed_oxidized_cut_copper
+waxed_oxidized_lightning_rod_from_honeycomb shapeless 1 waxed_oxidized_lightning_rod <- 1*oxidized_lightning_rod 1*honeycomb
+waxed_weathered_chiseled_copper shaped 1 waxed_weathered_chiseled_copper <- 2*waxed_weathered_cut_copper_slab
+waxed_weathered_chiseled_copper_from_honeycomb shapeless 1 waxed_weathered_chiseled_copper <- 1*weathered_chiseled_copper 1*honeycomb
+waxed_weathered_chiseled_copper_from_waxed_weathered_copper_stonecutting stonecutter 4 waxed_weathered_chiseled_copper <- 1*waxed_weathered_copper
+waxed_weathered_chiseled_copper_from_waxed_weathered_cut_copper_stonecutting stonecutter 1 waxed_weathered_chiseled_copper <- 1*waxed_weathered_cut_copper
+waxed_weathered_copper_bars_from_honeycomb shapeless 1 waxed_weathered_copper_bars <- 1*weathered_copper_bars 1*honeycomb
+waxed_weathered_copper_bulb shaped 4 waxed_weathered_copper_bulb <- 3*waxed_weathered_copper 1*blaze_rod 1*redstone
+waxed_weathered_copper_bulb_from_honeycomb shapeless 1 waxed_weathered_copper_bulb <- 1*weathered_copper_bulb 1*honeycomb
+waxed_weathered_copper_chain_from_honeycomb shapeless 1 waxed_weathered_copper_chain <- 1*weathered_copper_chain 1*honeycomb
+waxed_weathered_copper_chest_from_honeycomb shapeless 1 waxed_weathered_copper_chest <- 1*weathered_copper_chest 1*honeycomb
+waxed_weathered_copper_door_from_honeycomb shapeless 1 waxed_weathered_copper_door <- 1*weathered_copper_door 1*honeycomb
+waxed_weathered_copper_from_honeycomb shapeless 1 waxed_weathered_copper <- 1*weathered_copper 1*honeycomb
+waxed_weathered_copper_golem_statue_from_honeycomb shapeless 1 waxed_weathered_copper_golem_statue <- 1*weathered_copper_golem_statue 1*honeycomb
+waxed_weathered_copper_grate shaped 4 waxed_weathered_copper_grate <- 4*waxed_weathered_copper
+waxed_weathered_copper_grate_from_honeycomb shapeless 1 waxed_weathered_copper_grate <- 1*weathered_copper_grate 1*honeycomb
+waxed_weathered_copper_grate_from_waxed_weathered_copper_stonecutting stonecutter 4 waxed_weathered_copper_grate <- 1*waxed_weathered_copper
+waxed_weathered_copper_lantern_from_honeycomb shapeless 1 waxed_weathered_copper_lantern <- 1*weathered_copper_lantern 1*honeycomb
+waxed_weathered_copper_trapdoor_from_honeycomb shapeless 1 waxed_weathered_copper_trapdoor <- 1*weathered_copper_trapdoor 1*honeycomb
+waxed_weathered_cut_copper shaped 4 waxed_weathered_cut_copper <- 4*waxed_weathered_copper
+waxed_weathered_cut_copper_from_honeycomb shapeless 1 waxed_weathered_cut_copper <- 1*weathered_cut_copper 1*honeycomb
+waxed_weathered_cut_copper_from_waxed_weathered_copper_stonecutting stonecutter 4 waxed_weathered_cut_copper <- 1*waxed_weathered_copper
+waxed_weathered_cut_copper_slab shaped 6 waxed_weathered_cut_copper_slab <- 3*waxed_weathered_cut_copper
+waxed_weathered_cut_copper_slab_from_honeycomb shapeless 1 waxed_weathered_cut_copper_slab <- 1*weathered_cut_copper_slab 1*honeycomb
+waxed_weathered_cut_copper_slab_from_waxed_weathered_copper_stonecutting stonecutter 8 waxed_weathered_cut_copper_slab <- 1*waxed_weathered_copper
+waxed_weathered_cut_copper_slab_from_waxed_weathered_cut_copper_stonecutting stonecutter 2 waxed_weathered_cut_copper_slab <- 1*waxed_weathered_cut_copper
+waxed_weathered_cut_copper_stairs shaped 4 waxed_weathered_cut_copper_stairs <- 6*waxed_weathered_cut_copper
+waxed_weathered_cut_copper_stairs_from_honeycomb shapeless 1 waxed_weathered_cut_copper_stairs <- 1*weathered_cut_copper_stairs 1*honeycomb
+waxed_weathered_cut_copper_stairs_from_waxed_weathered_copper_stonecutting stonecutter 4 waxed_weathered_cut_copper_stairs <- 1*waxed_weathered_copper
+waxed_weathered_cut_copper_stairs_from_waxed_weathered_cut_copper_stonecutting stonecutter 1 waxed_weathered_cut_copper_stairs <- 1*waxed_weathered_cut_copper
+waxed_weathered_lightning_rod_from_honeycomb shapeless 1 waxed_weathered_lightning_rod <- 1*weathered_lightning_rod 1*honeycomb
+wayfinder_armor_trim_smithing_template shaped 2 wayfinder_armor_trim_smithing_template <- 7*diamond 1*wayfinder_armor_trim_smithing_template 1*terracotta
+weathered_chiseled_copper shaped 1 weathered_chiseled_copper <- 2*weathered_cut_copper_slab
+weathered_chiseled_copper_from_weathered_copper_stonecutting stonecutter 4 weathered_chiseled_copper <- 1*weathered_copper
+weathered_chiseled_copper_from_weathered_cut_copper_stonecutting stonecutter 1 weathered_chiseled_copper <- 1*weathered_cut_copper
+weathered_copper_bulb shaped 4 weathered_copper_bulb <- 3*weathered_copper 1*blaze_rod 1*redstone
+weathered_copper_grate shaped 4 weathered_copper_grate <- 4*weathered_copper
+weathered_copper_grate_from_weathered_copper_stonecutting stonecutter 4 weathered_copper_grate <- 1*weathered_copper
+weathered_cut_copper shaped 4 weathered_cut_copper <- 4*weathered_copper
+weathered_cut_copper_from_weathered_copper_stonecutting stonecutter 4 weathered_cut_copper <- 1*weathered_copper
+weathered_cut_copper_slab shaped 6 weathered_cut_copper_slab <- 3*weathered_cut_copper
+weathered_cut_copper_slab_from_weathered_copper_stonecutting stonecutter 8 weathered_cut_copper_slab <- 1*weathered_copper
+weathered_cut_copper_slab_from_weathered_cut_copper_stonecutting stonecutter 2 weathered_cut_copper_slab <- 1*weathered_cut_copper
+weathered_cut_copper_stairs shaped 4 weathered_cut_copper_stairs <- 6*weathered_cut_copper
+weathered_cut_copper_stairs_from_weathered_copper_stonecutting stonecutter 4 weathered_cut_copper_stairs <- 1*weathered_copper
+weathered_cut_copper_stairs_from_weathered_cut_copper_stonecutting stonecutter 1 weathered_cut_copper_stairs <- 1*weathered_cut_copper
+wheat shapeless 9 wheat <- 1*hay_block
+white_banner shaped 1 white_banner <- 6*white_wool 1*stick
+white_bed shaped 1 white_bed <- 3*white_wool 3*#planks
+white_candle shapeless 1 white_candle <- 1*candle 1*white_dye
+white_carpet shaped 3 white_carpet <- 2*white_wool
+white_concrete_powder shapeless 8 white_concrete_powder <- 1*white_dye 4*sand 4*gravel
+white_dye shapeless 1 white_dye <- 1*bone_meal
+white_dye_from_lily_of_the_valley shapeless 1 white_dye <- 1*lily_of_the_valley
+white_harness shaped 1 white_harness <- 3*leather 2*glass 1*white_wool
+white_stained_glass shaped 8 white_stained_glass <- 8*glass 1*white_dye
+white_stained_glass_pane shaped 16 white_stained_glass_pane <- 6*white_stained_glass
+white_stained_glass_pane_from_glass_pane shaped 8 white_stained_glass_pane <- 8*glass_pane 1*white_dye
+white_terracotta shaped 8 white_terracotta <- 8*terracotta 1*white_dye
+white_wool_from_string shaped 1 white_wool <- 4*string
+wild_armor_trim_smithing_template shaped 2 wild_armor_trim_smithing_template <- 7*diamond 1*wild_armor_trim_smithing_template 1*mossy_cobblestone
+wind_charge shapeless 4 wind_charge <- 1*breeze_rod
+wolf_armor shaped 1 wolf_armor <- 6*armadillo_scute
+wooden_axe shaped 1 wooden_axe <- 3*#wooden_tool_materials 2*stick
+wooden_hoe shaped 1 wooden_hoe <- 2*#wooden_tool_materials 2*stick
+wooden_pickaxe shaped 1 wooden_pickaxe <- 3*#wooden_tool_materials 2*stick
+wooden_shovel shaped 1 wooden_shovel <- 1*#wooden_tool_materials 2*stick
+wooden_spear shaped 1 wooden_spear <- 1*#wooden_tool_materials 2*stick
+wooden_sword shaped 1 wooden_sword <- 2*#wooden_tool_materials 1*stick
+writable_book shapeless 1 writable_book <- 1*book 1*ink_sac 1*feather
+yellow_banner shaped 1 yellow_banner <- 6*yellow_wool 1*stick
+yellow_bed shaped 1 yellow_bed <- 3*yellow_wool 3*#planks
+yellow_candle shapeless 1 yellow_candle <- 1*candle 1*yellow_dye
+yellow_carpet shaped 3 yellow_carpet <- 2*yellow_wool
+yellow_concrete_powder shapeless 8 yellow_concrete_powder <- 1*yellow_dye 4*sand 4*gravel
+yellow_dye_from_dandelion shapeless 1 yellow_dye <- 1*dandelion
+yellow_dye_from_golden_dandelion shapeless 1 yellow_dye <- 1*golden_dandelion
+yellow_dye_from_sunflower shapeless 2 yellow_dye <- 1*sunflower
+yellow_dye_from_wildflowers shapeless 1 yellow_dye <- 1*wildflowers
+yellow_harness shaped 1 yellow_harness <- 3*leather 2*glass 1*yellow_wool
+yellow_stained_glass shaped 8 yellow_stained_glass <- 8*glass 1*yellow_dye
+yellow_stained_glass_pane shaped 16 yellow_stained_glass_pane <- 6*yellow_stained_glass
+yellow_stained_glass_pane_from_glass_pane shaped 8 yellow_stained_glass_pane <- 8*glass_pane 1*yellow_dye
+yellow_terracotta shaped 8 yellow_terracotta <- 8*terracotta 1*yellow_dye

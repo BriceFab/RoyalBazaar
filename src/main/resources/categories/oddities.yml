@@ -61,7 +61,7 @@ items:
   nether_bricks:
     item: "minecraft:nether_bricks"
     group: nether
-    base_price: 7.0       # 4 nether bricks
+    base_price: 6.25      # 4 nether bricks
 
   # Netherite
   ancient_debris:
@@ -91,7 +91,7 @@ items:
   netherite_upgrade_smithing_template:
     item: "minecraft:netherite_upgrade_smithing_template"
     group: netherite
-    base_price: 1200.0    # duplicating one costs 7 diamonds (840), must stay above that
+    base_price: 924.0     # 1 template + 7 diamonds (840) make 2, so above about 930 duplicating pays
     ceiling_pct: 4.0
     elasticity: 5000
 
@@ -99,7 +99,7 @@ items:
   end_stone_bricks:
     item: "minecraft:end_stone_bricks"
     group: end
-    base_price: 6.0       # 4 end stone yields 4, cannot exceed the input
+    base_price: 3.0       # 4 end stone yields 4, cannot exceed the input
   chorus_fruit:
     item: "minecraft:chorus_fruit"
     group: end
@@ -119,7 +119,7 @@ items:
   ender_chest:
     item: "minecraft:ender_chest"
     group: end
-    base_price: 420.0     # 8 obsidian (320) + eye of ender (72)
+    base_price: 408.0     # 8 obsidian (320) + eye of ender (72)
   end_rod:
     item: "minecraft:end_rod"
     group: end
@@ -139,7 +139,7 @@ items:
   end_crystal:
     item: "minecraft:end_crystal"
     group: end
-    base_price: 230.0     # 7 glass + eye of ender + ghast tear
+    base_price: 221.0     # 7 glass + eye of ender + ghast tear
 
   # Amethyst
   amethyst_shard:
@@ -157,7 +157,7 @@ items:
   spyglass:
     item: "minecraft:spyglass"
     group: amethyst
-    base_price: 40.0      # 2 copper ingots + amethyst shard
+    base_price: 36.6      # 2 copper ingots + amethyst shard
 
   # Deep Dark
   echo_shard:
@@ -169,7 +169,7 @@ items:
   recovery_compass:
     item: "minecraft:recovery_compass"
     group: deep_dark
-    base_price: 2200.0    # 8 echo shards (2000) + compass
+    base_price: 2150.0    # 8 echo shards (2000) + compass
     ceiling_pct: 4.0
     elasticity: 2000
   disc_fragment_5:
@@ -199,11 +199,11 @@ items:
   cauldron:
     item: "minecraft:cauldron"
     group: brewing
-    base_price: 92.0      # 7 iron ingots (84)
+    base_price: 87.9      # 7 iron ingots (84)
   compass:
     item: "minecraft:compass"
     group: brewing
-    base_price: 60.0      # 4 iron + redstone
+    base_price: 56.5      # 4 iron + redstone
   clock:
     item: "minecraft:clock"
     group: brewing
@@ -211,13 +211,13 @@ items:
   flint_and_steel:
     item: "minecraft:flint_and_steel"
     group: brewing
-    base_price: 20.0      # flint + iron ingot
+    base_price: 15.7      # flint + iron ingot
 
   # Archaeology
   brush:
     item: "minecraft:brush"
     group: archaeology
-    base_price: 12.0      # feather + copper ingot + stick
+    base_price: 9.9       # feather + copper ingot + stick
   skull_pottery_sherd:
     item: "minecraft:skull_pottery_sherd"
     group: archaeology
@@ -226,7 +226,7 @@ items:
   decorated_pot:
     item: "minecraft:decorated_pot"
     group: archaeology
-    base_price: 20.0      # 4 bricks; sherds are optional, so price it off bricks
+    base_price: 17.0      # 4 bricks; sherds are optional, so price it off bricks
   torchflower_seeds:
     item: "minecraft:torchflower_seeds"
     group: archaeology
@@ -245,19 +245,19 @@ items:
   beacon:
     item: "minecraft:beacon"
     group: valuables
-    base_price: 8600.0    # nether star (8000) + 3 obsidian + 5 glass
+    base_price: 8515.0    # nether star (8000) + 3 obsidian + 5 glass
     ceiling_pct: 4.0
     elasticity: 800
   conduit:
     item: "minecraft:conduit"
     group: valuables
-    base_price: 2200.0    # 8 nautilus shells (1200) + heart of the sea (800)
+    base_price: 2090.0    # 8 nautilus shells (1200) + heart of the sea (800)
     ceiling_pct: 4.0
     elasticity: 2000
   mace:
     item: "minecraft:mace"
     group: valuables
-    base_price: 2400.0    # heavy core (2000) + breeze rod (150)
+    base_price: 2250.0    # heavy core (2000) + breeze rod (153)
     ceiling_pct: 4.0
     elasticity: 2000
   enchanted_book:
@@ -272,12 +272,12 @@ items:
   silence_armor_trim_smithing_template:
     item: "minecraft:silence_armor_trim_smithing_template"
     group: valuables
-    base_price: 1400.0
+    base_price: 925.0
     ceiling_pct: 4.0
   respawn_anchor:
     item: "minecraft:respawn_anchor"
     group: valuables
-    base_price: 600.0     # 6 crying obsidian (480) + 3 glowstone (78)
+    base_price: 584.0     # 6 crying obsidian (480) + 3 glowstone (78)
 
   # Optional example: custom EcoItems entries. Note the 'ecoitems:' (plural) namespace. Uncomment only
   # if EcoItems defines that id, otherwise the entry is skipped with a warning on every startup.

@@ -12,6 +12,7 @@ These are **offline authoring tools**, not part of the plugin. Nothing here ship
 | `gen_hypixel.py` | Prices that layout and writes `out/categories/*.yml`. |
 | `gen_newitems.py` | Writes EcoItems configs for items the pack is missing. |
 | `verify_bazaar.py` | **Audits the bazaar for money printers. Run after every price change.** |
+| `vanilla_recipes.txt` | Vanilla crafting and stonecutting recipes, read by `verify_bazaar.py crafting` and the build. |
 | `audit_recipes.py` | **Audits EcoShop against the real vanilla recipe graph.** Run after any NPC price change. |
 | `repricer.py` | Syncs EcoItems `shop-pricing` + lore to the generated prices. |
 
@@ -119,3 +120,33 @@ break-even isn't safe, it's one price tweak from being a printer.
 **The rule that keeps this clean: a crafted item must sell for less than its ingredients cost to
 buy.** Every printer found so far broke exactly that — blocks priced at a 50% sell ratio while their
 parts used 25%, and a diamond sword worth more than two diamonds.
+
+## Crafting arbitrage in the shipped categories
+
+The categories in `src/main/resources/categories` are what a fresh server gets, so they are checked on
+their own, against vanilla recipes instead of EcoShop:
+
+```bash
+python3 tools/verify_bazaar.py crafting     # must print: PASS: no crafting arbitrage
+```
+
+For every crafting or stonecutting recipe whose output and inputs are all listed, the bazaar must not
+pay more for the output than the inputs cost to buy on the bazaar. It is checked twice: with every item
+at its `base_price`, and with every item at its floor (`base_price x floor_pct`), using each item's own
+spread. A remainder (the glass bottle back from honey) counts at what the bazaar pays for it. The rule is
+the same one as above: **a crafted item must sell for no more than its ingredients cost to buy.**
+
+`mvn test` runs the same rule (`CategoryPricesCraftingTest`), so a price edit that opens a loop fails the
+build. When a crafted item has a lower `floor_pct` input (farm crops use 0.25), the output needs the
+same lower floor or a lower base price, or the loop opens once both markets bottom out.
+
+The recipes come from `vanilla_recipes.txt`, generated from the server jar (Minecraft 26.2). After a
+Minecraft update, unpack the recipes as shown above and regenerate it:
+
+```bash
+python3 tools/verify_bazaar.py extract-recipes /tmp/rx    # /tmp/rx/data/minecraft/recipe, .../tags/item
+```
+
+Remainders are not in the recipe data; they are kept by hand in `REMAINDERS` in `verify_bazaar.py`.
+Smelting is not checked yet. It costs fuel and furnace time, so it is slow, but several shipped pairs
+(raw iron to iron ingot, cooked meats, cobblestone to stone) still pay a little more than input plus fuel.

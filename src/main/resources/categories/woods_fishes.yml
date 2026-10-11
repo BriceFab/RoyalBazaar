@@ -141,11 +141,11 @@ items:
   chest:
     item: "minecraft:chest"
     group: planks
-    base_price: 20.0      # 8 planks
+    base_price: 8.0       # 8 planks
   crafting_table:
     item: "minecraft:crafting_table"
     group: planks
-    base_price: 8.0
+    base_price: 4.0
   barrel:
     item: "minecraft:barrel"
     group: planks
@@ -157,7 +157,7 @@ items:
   torch:
     item: "minecraft:torch"
     group: planks
-    base_price: 1.25      # coal + stick (5.5) yields 4
+    base_price: 1.15      # coal + stick (5.5) yields 4
 
   # Saplings & Leaves
   oak_sapling:
@@ -289,7 +289,7 @@ items:
   fishing_rod:
     item: "minecraft:fishing_rod"
     group: fish
-    base_price: 12.0      # 3 sticks + 2 string
+    base_price: 9.9       # 3 sticks + 2 string
 
   # Kelp & Sea Life
   kelp:
@@ -303,7 +303,7 @@ items:
   dried_kelp_block:
     item: "minecraft:dried_kelp_block"
     group: sea
-    base_price: 24.0      # 9x dried kelp
+    base_price: 23.5      # 9x dried kelp
   seagrass:
     item: "minecraft:seagrass"
     group: sea
@@ -325,7 +325,7 @@ items:
   prismarine_shard:
     item: "minecraft:prismarine_shard"
     group: prismarine
-    base_price: 15.0
+    base_price: 15.6
   prismarine_crystals:
     item: "minecraft:prismarine_crystals"
     group: prismarine
