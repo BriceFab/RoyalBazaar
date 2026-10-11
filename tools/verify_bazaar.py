@@ -8,11 +8,13 @@
         3. bazaar -> NPC            (buy on bazaar, sell to NPC)
       Each is evaluated at the WORST case: bazaar selling at its ceiling, buying at its floor.
 
-  python3 verify_bazaar.py crafting [--categories DIR] [--recipes FILE]
-      Crafting arbitrage in the categories the plugin ships (src/main/resources/categories). For every
-      vanilla recipe whose output and inputs are all listed, the bazaar must pay no more for the output
-      than the inputs cost to buy there, with every item at its base price and again with every item
-      at its floor. Exits 1 on any violation. CategoryPricesCraftingTest runs the same rule in mvn test.
+  python3 verify_bazaar.py crafting [--categories DIR] [--recipes FILE] [--fuel ITEM] [--fuel-smelts N]
+      Recipe arbitrage in the categories the plugin ships (src/main/resources/categories). For every
+      vanilla crafting, stonecutting or cooking recipe whose output and inputs are all listed, the bazaar
+      must pay no more for the output than the inputs cost to buy there, with every item at its base
+      price and again with every item at its floor. Furnace, smoker and blast furnace recipes also pay
+      for fuel: 1/N of the fuel item's buy price per item (default coal, which smelts 8). A campfire
+      needs no fuel. Exits 1 on any violation. CategoryPricesCraftingTest runs the same rule in mvn test.
 
   python3 verify_bazaar.py extract-recipes DIR [--out FILE]
       Rewrites the recipe table (tools/vanilla_recipes.txt) from an unpacked server jar, where DIR holds
@@ -136,7 +138,13 @@ REMAINDERS = {'honey_bottle': 'glass_bottle', 'dragon_breath': 'glass_bottle',
               'water_bucket': 'bucket', 'milk_bucket': 'bucket', 'lava_bucket': 'bucket',
               'powder_snow_bucket': 'bucket'}
 TABLE_TYPES = {'minecraft:crafting_shaped': 'shaped', 'minecraft:crafting_shapeless': 'shapeless',
-               'minecraft:stonecutting': 'stonecutter'}
+               'minecraft:stonecutting': 'stonecutter', 'minecraft:smelting': 'smelting',
+               'minecraft:blasting': 'blasting', 'minecraft:smoking': 'smoking',
+               'minecraft:campfire_cooking': 'campfire'}
+# Furnace, blast furnace and smoker all get 8 items out of one coal (the last two burn it twice as fast
+# but also cook twice as fast). A campfire burns nothing.
+FUELED_KINDS = {'smelting', 'blasting', 'smoking'}
+DEFAULT_FUEL, DEFAULT_FUEL_SMELTS = 'coal', 8
 
 
 def strip_ns(item_id):
@@ -195,11 +203,12 @@ def extract_recipes(root, out_path):
                      f'{strip_ns(result["id"])} <- {inputs}')
 
     with open(out_path, 'w', encoding='utf-8', newline='\n') as f:
-        f.write('# Vanilla crafting and stonecutting recipes, read by verify_bazaar.py crafting and\n'
+        f.write('# Vanilla crafting, stonecutting and cooking recipes, read by verify_bazaar.py crafting and\n'
                 '# CategoryPricesCraftingTest. Regenerate with: verify_bazaar.py extract-recipes DIR\n'
                 '#   tag <name> <item>...                       an item tag, any one item fits\n'
                 '#   remainder <ingredient> <item>              handed back when the recipe is crafted\n'
-                '#   <id> <kind> <count> <output> <- <n>*<a>|<b>...  n of any one of a, b\n')
+                '#   <id> <kind> <count> <output> <- <n>*<a>|<b>...  n of any one of a, b\n'
+                '#   kind: shaped, shapeless, stonecutter, smelting, blasting, smoking, campfire\n')
         for name in sorted(used_tags):
             f.write(f'tag {name} {" ".join(flatten(name))}\n')
         for ing, back in sorted(REMAINDERS.items()):
@@ -272,8 +281,12 @@ def load_shipped(cat_dir):
     return shipped
 
 
-def crafting_violations(shipped, recipes, remainders):
-    """(state, recipe, coins the bazaar pays for the output, coins the inputs cost) per printer."""
+def crafting_violations(shipped, recipes, remainders, fuel=DEFAULT_FUEL, fuel_smelts=DEFAULT_FUEL_SMELTS):
+    """(state, recipe, coins the bazaar pays for the output, coins the inputs cost) per printer.
+
+    Cooking in a furnace, smoker or blast furnace adds 1/fuel_smelts of the fuel's buy price per item.
+    A fuel players can't buy here counts as free, which only makes the check stricter.
+    """
     def mid(i, state):
         s = shipped[i]
         return s['base'] * (s['floor_pct'] if state == 'floor' else 1.0)
@@ -297,39 +310,53 @@ def crafting_violations(shipped, recipes, remainders):
             # a handed-back item is only worth what the bazaar pays for it
             cost -= sum(n * sell(remainders[alts[0]], state) for n, alts in slots
                         if len(alts) == 1 and remainders.get(alts[0]) in shipped)
+            if r['kind'] in FUELED_KINDS and fuel in shipped and shipped[fuel]['trade_mode'] != 'sell_only':
+                cost += buy(fuel, state) / fuel_smelts
             pays = r['count'] * sell(r['output'], state)
             if pays > cost + 1e-9:
                 out.append((state, r, pays, cost))
     return out
 
 
-def audit_crafting(cat_dir, table):
+def audit_crafting(cat_dir, table, fuel=DEFAULT_FUEL, fuel_smelts=DEFAULT_FUEL_SMELTS):
     shipped = load_shipped(cat_dir)
     recipes, remainders = load_recipe_table(table)
-    checked = sum(1 for r in recipes if r['output'] in shipped
-                  and all(any(a in shipped for a in alts) for _, alts in r['inputs']))
-    bad = crafting_violations(shipped, recipes, remainders)
-    print(f'{len(shipped)} listed vanilla items, {checked} recipes made only of listed items')
+    checked = [r for r in recipes if r['output'] in shipped
+               and all(any(a in shipped for a in alts) for _, alts in r['inputs'])]
+    cooked = sum(1 for r in checked if r['kind'] in FUELED_KINDS or r['kind'] == 'campfire')
+    bad = crafting_violations(shipped, recipes, remainders, fuel, fuel_smelts)
+    print(f'{len(shipped)} listed vanilla items, {len(checked)} recipes made only of listed items '
+          f'({cooked} of them cooking)')
+    fuel_paid = fuel in shipped and shipped[fuel]['trade_mode'] != 'sell_only'
+    if fuel_paid:
+        print(f'fuel: 1 {fuel} per {fuel_smelts:g} items cooked in a furnace, smoker or blast furnace')
+    else:
+        print(f'fuel: {fuel} can\'t be bought here, so cooking is checked as if fuel were free')
     for state, r, pays, cost in sorted(bad, key=lambda b: (b[0], -b[2] / b[3])):
         inputs = ' + '.join(f'{n} {"/".join(a for a in alts if a in shipped)}' for n, alts in r['inputs'])
+        if r['kind'] in FUELED_KINDS and fuel_paid:
+            inputs += f' + 1/{fuel_smelts:g} {fuel}'
         print(f'  PRINTER at {state:5s} {r["count"]} {r["output"]:<26s} pays {pays:9.2f} '
               f'> inputs {cost:9.2f} ({(pays / cost - 1) * 100:+6.1f}%)  [{r["id"]}: {inputs}]')
-    print('PASS: no crafting arbitrage' if not bad else f'FAIL: {len(bad)} crafting printer(s)')
+    print('PASS: no crafting or smelting arbitrage' if not bad else f'FAIL: {len(bad)} recipe printer(s)')
     return 1 if bad else 0
 
 
 def main(argv):
     parser = argparse.ArgumentParser(description='Audit the bazaar for money printers.')
     sub = parser.add_subparsers(dest='cmd')
-    craft = sub.add_parser('crafting', help='crafting arbitrage in the shipped categories')
+    craft = sub.add_parser('crafting', help='crafting and smelting arbitrage in the shipped categories')
     craft.add_argument('--categories', default=SHIPPED_CATEGORIES)
     craft.add_argument('--recipes', default=RECIPE_TABLE)
+    craft.add_argument('--fuel', default=DEFAULT_FUEL, help='fuel item paid for when cooking (default coal)')
+    craft.add_argument('--fuel-smelts', type=float, default=DEFAULT_FUEL_SMELTS,
+                       help='items one fuel item cooks (coal 8, coal_block 80, blaze_rod 12, dried_kelp_block 20)')
     extract = sub.add_parser('extract-recipes', help='rewrite the recipe table from a server jar')
     extract.add_argument('root', help='directory holding data/minecraft/recipe and tags/item')
     extract.add_argument('--out', default=RECIPE_TABLE)
     args = parser.parse_args(argv)
     if args.cmd == 'crafting':
-        return audit_crafting(args.categories, args.recipes)
+        return audit_crafting(args.categories, args.recipes, args.fuel, args.fuel_smelts)
     if args.cmd == 'extract-recipes':
         extract_recipes(args.root, args.out)
         return 0
