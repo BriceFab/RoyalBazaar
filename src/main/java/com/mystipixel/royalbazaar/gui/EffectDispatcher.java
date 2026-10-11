@@ -14,6 +14,7 @@ import org.bukkit.entity.Player;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /** Runs the effect list bound to a clicked slot. Unknown effect ids are ignored so a typo can't break a menu. */
 public final class EffectDispatcher {
@@ -132,16 +133,22 @@ public final class EffectDispatcher {
     }
 
     private void sendFeedback(Player player, TradeResult r) {
-        if (r.ok()) {
-            boolean bought = r.side() == TradeSide.BUY;
-            messages.send(player, bought ? "trade.bought" : "trade.sold",
-                    bought ? "&aBought &f{amount} &afor &e${total}" : "&aSold &f{amount} &afor &e${total}",
-                    java.util.Map.of("amount", String.valueOf(r.filled()),
-                            "total", String.format("%,.2f", r.total())));
-        } else {
-            messages.send(player, "trade.failed", "&c{reason}",
-                    java.util.Map.of("reason", r.message() == null ? "Trade failed." : r.message()));
+        if (!r.ok()) {
+            sendFailure(messages, player, r);
+            return;
         }
+        Map<String, String> values = Map.of("amount", String.valueOf(r.filled()),
+                "total", String.format("%,.2f", r.total()));
+        if (r.side() == TradeSide.BUY) {
+            messages.send(player, "trade.bought", "&aBought &f{amount} &afor &e${total}", values);
+        } else {
+            messages.send(player, "trade.sold", "&aSold &f{amount} &afor &e${total}", values);
+        }
+    }
+
+    static void sendFailure(MessageManager messages, Player player, TradeResult r) {
+        String reason = r.message() != null ? r.message() : messages.get("trade.reasons.generic", "Trade failed.");
+        messages.send(player, "trade.failed", "&c{reason}", Map.of("reason", reason));
     }
 
     // sells the whole inventory everywhere except inside a group, where it narrows to that group;
@@ -155,26 +162,32 @@ public final class EffectDispatcher {
         String what;
         if (groupId != null && categoryId != null && !"all".equalsIgnoreCase(scope)) {
             items = market.itemsInGroup(categoryId, groupId);
-            what = "this group";
+            what = messages.get("sell-all.scope-group", "this group");
         } else {
             items = market.all();
-            what = "your inventory";
+            what = messages.get("sell-all.scope-inventory", "your inventory");
         }
+        sendSellAllSummary(messages, player, what, service.sellAll(player, items));
+        gui.refresh(player);
+    }
 
-        BazaarService.SellAllResult result = service.sellAll(player, items);
+    /** Also used by /bazaar sellall. {@code scope} fills {scope} in sell-all.nothing. */
+    public static void sendSellAllSummary(MessageManager messages, Player player, String scope,
+                                          BazaarService.SellAllResult result) {
         if (result.soldNothing()) {
-            messages.send(player, "sell-all.nothing",
-                    "&eNothing in " + what + " could be sold here.");
+            messages.send(player, "sell-all.nothing", "&eNothing in {scope} could be sold here.",
+                    Map.of("scope", scope));
         } else {
             messages.send(player, "sell-all.done",
-                    "&aSold &f" + result.units() + "&a from &f" + result.distinctItems()
-                            + "&a item type(s) for &6" + String.format("%,.2f", result.proceeds()) + "&a.");
+                    "&aSold &f{units}&a from &f{items}&a item type(s) for &6{proceeds}&a.",
+                    Map.of("units", String.valueOf(result.units()),
+                            "items", String.valueOf(result.distinctItems()),
+                            "proceeds", String.format("%,.2f", result.proceeds())));
         }
         if (result.blocked() > 0) {
-            messages.send(player, "sell-all.blocked",
-                    "&c" + result.blocked() + " item type(s) were blocked and not sold.");
+            messages.send(player, "sell-all.blocked", "&c{blocked} item type(s) were blocked and not sold.",
+                    Map.of("blocked", String.valueOf(result.blocked())));
         }
-        gui.refresh(player);
     }
 
     private String itemOf(Player player) {
@@ -200,12 +213,12 @@ public final class EffectDispatcher {
             try {
                 amount = Long.parseLong(typed.replace(",", "").trim());
             } catch (NumberFormatException bad) {
-                messages.send(player, "buy.bad-amount", "&cThat isn't a number.");
+                messages.send(player, "not-a-number", "&cNot a number.");
                 gui.openBuy(player, itemId);
                 return;
             }
             if (amount <= 0) {
-                messages.send(player, "buy.bad-amount", "&cEnter an amount above zero.");
+                messages.send(player, "amount-positive", "&cAmount must be positive.");
                 gui.openBuy(player, itemId);
                 return;
             }

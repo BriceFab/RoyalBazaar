@@ -134,7 +134,7 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
         this.service = new BazaarService(this, market, database, vault, eco, guard, config, messages);
         this.menus = new MenuManager(this);
         itemNames.reload(new File(getDataFolder(), "lang"), getLogger());
-        this.gui = new GuiManager(menus, market, service, eco, itemNames);
+        this.gui = new GuiManager(menus, market, service, eco, itemNames, messages);
 
         this.textInput = new TextInput(this, messages);
         getServer().getPluginManager().registerEvents(textInput, this);

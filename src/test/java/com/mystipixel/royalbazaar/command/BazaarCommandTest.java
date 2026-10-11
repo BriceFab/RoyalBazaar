@@ -31,6 +31,7 @@ class BazaarCommandTest {
 
     private BazaarCommand command() {
         when(plugin.messages()).thenReturn(messages);
+        when(messages.get(anyString(), anyString())).thenAnswer(i -> i.getArgument(1));
         return new BazaarCommand(plugin, mock(GuiManager.class), market, service);
     }
 

@@ -10,6 +10,7 @@ import com.mystipixel.royalbazaar.hooks.EcoHook;
 import com.mystipixel.royalbazaar.market.MarketItem;
 import com.mystipixel.royalbazaar.market.MarketManager;
 import com.mystipixel.royalbazaar.market.TradeSide;
+import com.mystipixel.royalbazaar.message.MessageManager;
 import com.mystipixel.royalbazaar.service.BazaarService;
 import com.mystipixel.royalbazaar.util.ItemNames;
 import com.mystipixel.royalbazaar.util.Text;
@@ -21,6 +22,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -38,6 +40,7 @@ public final class GuiManager {
     private final BazaarService service;
     private final EcoHook eco;
     private final ItemNames itemNames;
+    private final MessageManager messages;
 
     private final Map<UUID, OpenView> views = new HashMap<>();
 
@@ -45,9 +48,10 @@ public final class GuiManager {
     private final Set<UUID> refreshing = new HashSet<>();
 
     public GuiManager(MenuManager menus, MarketManager market, BazaarService service, EcoHook eco,
-                      ItemNames itemNames) {
+                      ItemNames itemNames, MessageManager messages) {
         this.menus = menus;
         this.itemNames = itemNames;
+        this.messages = messages;
         this.market = market;
         this.service = service;
         this.eco = eco;
@@ -72,7 +76,7 @@ public final class GuiManager {
             openCategory(player, cat.id(), 1);
             return;
         }
-        player.sendMessage(Text.chat("&cThe bazaar has no categories configured."));
+        messages.send(player, "no-categories", "&cThe bazaar has no categories configured.");
     }
 
     /**
@@ -98,7 +102,12 @@ public final class GuiManager {
         view.setPage(Math.max(1, page));
 
         Map<String, String> base = new HashMap<>();
-        base.put("rbazaar_category", "Search: " + query + " (" + hits.size() + ")");
+        // count first, so a query that contains "{count}" is shown as typed
+        Map<String, String> searchValues = new LinkedHashMap<>();
+        searchValues.put("count", String.valueOf(hits.size()));
+        searchValues.put("query", query);
+        base.put("rbazaar_category",
+                messages.format("gui.search-title", "Search: {query} ({count})", searchValues));
         Inventory inv = BazaarMenuHolder.create(tmpl.size(), Text.color(applyMap(tmpl.title(), base)));
         tmpl.applyFiller(inv);
         placeFixedSlots(tmpl, inv, view, base);
@@ -319,23 +328,6 @@ public final class GuiManager {
         }
     }
 
-    // each category sits at the slot its own file declares
-    private void placeCategoryIcons(Inventory inv, OpenView view) {
-        for (CategoryConfig cat : market.categories()) {
-            int index = cat.slot();
-            if (!inBounds(index, inv)) {
-                continue;
-            }
-            Map<String, String> ph = new HashMap<>();
-            ph.put("rbazaar_category", cat.displayName());
-            ItemStack icon = ItemSpec.parse(cat.icon() + " name:\"" + cat.displayName() + "\"")
-                    .build(eco, ph, List.of("&7Click to browse this category."));
-            inv.setItem(index, icon);
-            view.bind(index, List.of(new MenuEffect("open_menu",
-                    Map.of("menu", "bazaar_category", "category", cat.id()))), List.of());
-        }
-    }
-
     private void placeCategoryRail(MenuTemplate tmpl, Inventory inv, OpenView view, String selectedId) {
         MenuTemplate.Rail rail = tmpl.rail();
         if (rail == null) {
@@ -358,7 +350,7 @@ public final class GuiManager {
                 lore.add(applyMap(line, ph));
             }
             if (selected) {
-                lore.add("&aCurrently viewing");
+                lore.add(messages.get("gui.currently-viewing", "&aCurrently viewing"));
             }
             ItemStack icon = ItemSpec.parse(cat.icon() + " name:\"" + cat.displayName() + "\"").build(eco, ph, lore);
             if (selected && rail.glintSelected()) {
