@@ -134,6 +134,87 @@ class TextInputTest {
     }
 
     @Test
+    void quitCancelsAnAnswerAlreadyQueued() {
+        assertQueuedAnswerCancelled(() -> input.onQuit(new PlayerQuitEvent(
+                player, Component.empty(), PlayerQuitEvent.QuitReason.DISCONNECTED)));
+    }
+
+    @Test
+    void deathCancelsAnAnswerAlreadyQueued() {
+        PlayerDeathEvent death = mock(PlayerDeathEvent.class);
+        when(death.getEntity()).thenReturn(player);
+        assertQueuedAnswerCancelled(() -> input.onDeath(death));
+    }
+
+    @Test
+    void anotherInventoryCancelsAnAnswerAlreadyQueued() {
+        InventoryOpenEvent open = mock(InventoryOpenEvent.class);
+        when(open.getPlayer()).thenReturn(player);
+        assertQueuedAnswerCancelled(() -> input.onInventoryOpen(open));
+    }
+
+    // Done is clicked, then the dismissing event fires before the queued answer runs
+    private void assertQueuedAnswerCancelled(Runnable dismiss) {
+        ask();
+        host.done.get(0).accept("64");
+        dismiss.run();
+        assertTrue(answers.isEmpty(), "Nothing is answered inside the event");
+        host.runTicks();
+        assertEquals(NULL_ANSWER, answers, "The queued answer is dropped");
+        assertTrue(host.timeouts.isEmpty());
+        assertFalse(input.isWaiting(player));
+
+        host.done.get(0).accept("late");
+        host.cancel.get(0).run();
+        host.runTicks();
+        assertEquals(NULL_ANSWER, answers, "Answered exactly once");
+    }
+
+    @Test
+    void queuedAnswerFromAnOldPromptDoesNotAnswerTheNewOne() {
+        ask();
+        host.done.get(0).accept("stale");
+        InventoryOpenEvent open = mock(InventoryOpenEvent.class);
+        when(open.getPlayer()).thenReturn(player);
+        input.onInventoryOpen(open);
+        List<String> second = new ArrayList<>();
+        input.request(player, List.of("b"), second::add);
+        host.runTicks();
+        assertEquals(NULL_ANSWER, answers);
+        assertTrue(second.isEmpty(), "The old token does not reach the new prompt");
+        assertTrue(input.isWaiting(player));
+
+        host.done.get(1).accept("fresh");
+        host.runTicks();
+        assertEquals(List.of("fresh"), second);
+        assertEquals(NULL_ANSWER, answers);
+    }
+
+    @Test
+    void cancelledCallbackCanOpenANewPromptAfterAQueuedAnswer() {
+        List<String> first = new ArrayList<>();
+        input.request(player, TITLE, text -> {
+            first.add(text);
+            if (text == null) {
+                ask();
+            }
+        });
+        host.done.get(0).accept("old");
+        InventoryOpenEvent open = mock(InventoryOpenEvent.class);
+        when(open.getPlayer()).thenReturn(player);
+        input.onInventoryOpen(open);
+        host.runTicks();
+        assertEquals(NULL_ANSWER, first);
+        assertTrue(answers.isEmpty(), "The new prompt is not answered by the old dismissal");
+        assertTrue(input.isWaiting(player));
+
+        host.done.get(1).accept("fresh");
+        host.runTicks();
+        assertEquals(List.of("fresh"), answers);
+        assertEquals(NULL_ANSWER, first);
+    }
+
+    @Test
     void newRequestSupersedesTheOldOneAndItsButtonsGoDead() {
         List<String> first = new ArrayList<>();
         List<Boolean> waitingWhenTold = new ArrayList<>();
