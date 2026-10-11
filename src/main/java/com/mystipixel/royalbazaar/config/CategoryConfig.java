@@ -2,6 +2,8 @@ package com.mystipixel.royalbazaar.config;
 
 import com.mystipixel.royalbazaar.hooks.EcoShopHook;
 import com.mystipixel.royalbazaar.market.MarketItem;
+import com.mystipixel.royalbazaar.market.TradeMode;
+import com.mystipixel.royalbazaar.market.TradeSide;
 import org.bukkit.configuration.ConfigurationSection;
 
 import java.math.BigDecimal;
@@ -21,19 +23,21 @@ public final class CategoryConfig {
     /** One item family inside a category; {@code order} sets its position in the group grid. */
     public record Group(String id, String name, String icon, int order, int slot) {}
 
+    // tradeMode stays the raw config text so a bad value is reported against each item it would apply to
     public record Defaults(double spread, double elasticity, double reversionRate,
-                           double floorPct, double ceilingPct) {
+                           double floorPct, double ceilingPct, String tradeMode) {
 
         static Defaults from(ConfigurationSection sec) {
             if (sec == null) {
-                return new Defaults(0.05, 50_000, 0.02, 0.4, 3.0);
+                return new Defaults(0.05, 50_000, 0.02, 0.4, 3.0, "both");
             }
             return new Defaults(
                     sec.getDouble("spread", 0.05),
                     sec.getDouble("elasticity", 50_000),
                     sec.getDouble("reversion_rate", 0.02),
                     sec.getDouble("floor_pct", 0.4),
-                    sec.getDouble("ceiling_pct", 3.0));
+                    sec.getDouble("ceiling_pct", 3.0),
+                    sec.getString("trade_mode", "both"));
         }
     }
 
@@ -123,7 +127,8 @@ public final class CategoryConfig {
      * EcoShop buy value, {@code npc_floor}/{@code npc_ceiling} pin to its sell/buy values, falling back to
      * the {@code *_pct} defaults). With {@code trading.npc-arbitrage-guard} on, items EcoShop also trades
      * are kept inside its bracket. Items with unworkable tuning are skipped with a warning, as are items
-     * EcoShop leaves no safe range for when {@code trading.npc-arbitrage-conflict} is {@code skip}.
+     * EcoShop leaves no safe range for when {@code trading.npc-arbitrage-conflict} is {@code skip}. An
+     * unrecognised {@code trade_mode} skips the item rather than opening both directions.
      */
     public List<MarketItem> buildItems(EcoShopHook shop) {
         List<MarketItem> out = new ArrayList<>();
@@ -138,6 +143,14 @@ public final class CategoryConfig {
             String itemId = is.getString("item");
             if (itemId == null || itemId.isBlank()) {
                 logger.warning("[category " + id + "] item '" + key + "' has no 'item:' lookup; skipping.");
+                continue;
+            }
+
+            String rawMode = is.getString("trade_mode", defaults.tradeMode());
+            TradeMode tradeMode = TradeMode.parse(rawMode);
+            if (tradeMode == null) {
+                logger.warning("[category " + id + "] item '" + key + "' has trade_mode '" + rawMode
+                        + "'; expected both, buy_only or sell_only. Skipping.");
                 continue;
             }
 
@@ -161,7 +174,7 @@ public final class CategoryConfig {
             double elasticity = is.getDouble("elasticity", defaults.elasticity());
             double reversion = is.getDouble("reversion_rate", defaults.reversionRate());
             if (npcArbitrageGuard) {
-                double[] bracketed = bracket(shop, itemId, spread, floor, ceiling, key);
+                double[] bracketed = bracket(shop, itemId, spread, floor, ceiling, tradeMode, key);
                 if (bracketed == null) {
                     continue; // bracket already logged
                 }
@@ -184,7 +197,8 @@ public final class CategoryConfig {
                     elasticity,
                     reversion,
                     floor,
-                    ceiling);
+                    ceiling,
+                    tradeMode);
             item.setPinnedSlot(slotOf(is));
             out.add(item);
         }
@@ -192,14 +206,16 @@ public final class CategoryConfig {
     }
 
     // narrow [floor, ceiling] so mid·(1+spread/2) >= NPC sell and mid·(1-spread/2) <= NPC buy at every mid.
-    // Each EcoShop price bounds only its own side. Returns null when the item should not be listed.
+    // Each EcoShop price bounds only its own side, and only when players can trade that side here.
+    // Returns null when the item should not be listed.
     private double[] bracket(EcoShopHook shop, String itemId, double spread, double floor, double ceiling,
-                             String key) {
+                             TradeMode tradeMode, String key) {
         if (spread < 0 || spread >= 1 || !(floor < ceiling)) {
             return new double[]{floor, ceiling};   // tuningProblem reports it
         }
-        Double npcSell = positiveOrNull(shop.sellValue(itemId));
-        Double npcBuy = positiveOrNull(shop.buyValue(itemId));
+        // buy here, sell to EcoShop needs buying; buy from EcoShop, sell here needs selling
+        Double npcSell = tradeMode.allows(TradeSide.BUY) ? positiveOrNull(shop.sellValue(itemId)) : null;
+        Double npcBuy = tradeMode.allows(TradeSide.SELL) ? positiveOrNull(shop.buyValue(itemId)) : null;
         double[] bounds = npcBounds(spread, floor, ceiling, npcBuy, npcSell);
         if (bounds[0] < bounds[1]) {
             return bounds;

@@ -8,6 +8,8 @@ reloaded: "&aRoyalBazaar reloaded."
 price-usage: "&cUsage: /bazaar price <item>"
 unknown-item: "&cUnknown item: {item}"
 price-line: "&e{item}&7: buy &a${buy} &7sell &e${sell} &7(mid {mid})"
+# Shown instead of a price for a direction an item can't be traded in (trade_mode in its category file).
+price-unavailable: "-"
 
 prompt-amount: "&eType an amount in chat &7(or 'cancel')&e."
 cancelled: "&7Cancelled."
@@ -19,6 +21,16 @@ trade:
   sold: "&aSold &f{amount} &afor &e${total}"
   done: "&aDone: &f{amount} &7for &e${total}"
   failed: "&c{reason}"
+  # {reason} in trade.failed when a trade goes against the item's trade_mode
+  reasons:
+    buy-disabled: "This item can't be bought here, only sold."
+    sell-disabled: "This item can't be sold here, only bought."
+
+# %rbazaar_trade_mode% in the menus, one per trade_mode
+trade-mode:
+  both: "&aBuy and sell"
+  buy-only: "&eBuy only"
+  sell-only: "&eSell only"
 
 # The text-input dialog (search and custom amounts). In each prompt the first line is the
 # dialog title and any further lines are shown under it.

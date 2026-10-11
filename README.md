@@ -169,6 +169,43 @@ items:
 Adding an item is one block. Removing it is deleting the block. The `defaults:` block is what stops
 300 items from repeating the same five tuning lines.
 
+### Buy-only and sell-only items
+
+`trade_mode` sets which way players can trade an item, from the player's side: `both` (the default),
+`buy_only` or `sell_only`. Put it on an item, or in `defaults:` for the whole category:
+
+```yaml
+items:
+  rotten_flesh:
+    item: "minecraft:rotten_flesh"
+    base_price: 0.5
+    trade_mode: sell_only     # players can sell it here, never buy it
+  stone_bricks:
+    item: "minecraft:stone_bricks"
+    base_price: 2.0
+    trade_mode: buy_only      # players can buy it here, never sell it
+```
+
+An item without `trade_mode` trades both ways, so existing category files behave as before. An
+unrecognised value skips the item with a console warning instead of opening both directions.
+
+The trade service refuses the turned-off direction before any money, items, price or history change,
+so every route is covered: the menu buttons, the custom-amount dialogs, fill-inventory, `/bazaar
+sellall` and the Sell All button (which skip buy-only items), and clicks on menus or dialogs opened
+before a `/bazaar reload` that changed the mode. The player gets `trade.reasons.buy-disabled` or
+`trade.reasons.sell-disabled` from `messages.yml`. Prices for the turned-off side show
+`price-unavailable` in menus, `/bazaar price` and PlaceholderAPI, and the product page shows the mode
+(`%rbazaar_trade_mode%`) and draws the turned-off button with its `disabled-item` / `disabled-lore`.
+
+There are no standing orders to worry about when a mode changes: the server is the counterparty and
+every trade fills at once. `/bazaar reload` applies a new mode to the next click and keeps the item's
+price, volume and freeze.
+
+Selling into a sell-only item still lowers its price and reversion still pulls it back up, so a
+sell-only item is a steady money source; a buy-only item is a money sink. With the EcoShop guard on,
+only the routes players can actually take are bracketed: a buy-only item keeps the floor that stops
+"buy here, sell to EcoShop", a sell-only item keeps the ceiling that stops "buy from EcoShop, sell here".
+
 ### The spread is your inflation sink
 
 Buy price is `mid × (1 + spread/2)`, sell price is `mid × (1 − spread/2)`. Every round trip through
@@ -307,6 +344,10 @@ button behaves correctly however the player arrived.
 `%rbazaar_sell_value_64%` `%rbazaar_sell_value_all%` `%rbazaar_held_amount%` `%rbazaar_trend%`
 `%rbazaar_change_24h%` `%rbazaar_volume_24h%` `%rbazaar_spread_pct%`
 `%rbazaar_category%` `%rbazaar_category_id%` `%rbazaar_group%` `%rbazaar_group_name%`
+`%rbazaar_trade_mode%`
+
+A fixed slot can also set `disabled-item:` and `disabled-lore:`. They replace the slot's item and lore
+when every buy or sell action on it is turned off by the item's `trade_mode`.
 
 ### Searching in other languages
 
