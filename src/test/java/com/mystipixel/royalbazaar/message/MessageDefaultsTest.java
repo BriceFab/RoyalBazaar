@@ -44,6 +44,8 @@ class MessageDefaultsTest {
     private static final Path SOURCES = Path.of("src", "main", "java");
     private static final Pattern MESSAGE_CALL =
             Pattern.compile("\\bmessages(?:\\(\\))?\\s*\\.\\s*(get|send|format|component|lines)\\s*\\(");
+    // TextInput reads its button labels through label(key, fallback), which forwards to messages.get
+    private static final Pattern LABEL_CALL = Pattern.compile("\\blabel\\s*\\((?=\\s*\")");
     private static final Pattern MENU_LOAD = Pattern.compile("load\\(\"([a-z_]+\\.yml)\",\\s*\"((?:[^\"\\\\]|\\\\.)*)\"");
 
     private record Call(String where, String key, Object fallback) {
@@ -170,10 +172,25 @@ class MessageDefaultsTest {
         }
         for (Path file : files) {
             String source = Files.readString(file);
+            boolean textInput = file.endsWith("TextInput.java");
+            if (textInput) {
+                Matcher label = LABEL_CALL.matcher(source);
+                while (label.find()) {
+                    String where = file.getFileName() + ":" + lineOf(source, label.start());
+                    List<String> args = arguments(source, label.end());
+                    String key = literal(args.get(0));
+                    String fallback = literal(args.get(1));
+                    assertNotNull(fallback, where + ": fallback for " + key + " must be a literal");
+                    calls.add(new Call(where, key, fallback));
+                }
+            }
             Matcher m = MESSAGE_CALL.matcher(source);
             while (m.find()) {
                 String where = file.getFileName() + ":" + lineOf(source, m.start());
                 List<String> args = arguments(source, m.end());
+                if (textInput && args.equals(List.of("key", "fallback"))) {
+                    continue;                // the label(key, fallback) pass-through, scanned above
+                }
                 int keyIndex = m.group(1).equals("send") ? 1 : 0;
                 assertTrue(args.size() > keyIndex + 1, where + ": message call without a fallback");
                 String key = literal(args.get(keyIndex));
