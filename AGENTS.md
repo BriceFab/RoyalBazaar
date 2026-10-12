@@ -4,13 +4,13 @@ Everything above "This repo" is the same in every Royal plugin repo. Read it bef
 
 ## Git identity
 
-- Author and committer on every commit: `joogiebear <joogiebear@protonmail.com>`.
+- Use the contributor identity configured for this repository. Keep upstream authorship on imported commits; do not impersonate an upstream maintainer for fork commits.
 - No co-author trailers, AI attribution, "generated with" footers, session links or assistant signatures in commits, PR titles or PR descriptions.
 - Set up a fresh clone with:
 
   ```sh
-  git config --local user.name joogiebear
-  git config --local user.email joogiebear@protonmail.com
+  git config --local user.name "Your name"
+  git config --local user.email "your-email@example.com"
   git config --local user.useConfigOnly true
   ```
 
