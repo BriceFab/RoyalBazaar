@@ -151,7 +151,7 @@ public final class TextInput implements Listener {
     private void dismiss(UUID id) {
         Pending p = pending.get(id);
         if (p != null && !closed) {
-            // An answer may already be queued; invalidate it before the next tick can deliver it.
+            // a Done click may already be queued ahead of this; it must not answer a dismissed prompt
             pending.put(id, new Pending(p.player(), p.token(), p.callback(), p.cancelTimeout(), true));
             long token = p.token();
             host.nextTick(() -> finish(id, token, null));

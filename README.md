@@ -363,9 +363,13 @@ English item names, so to let players search in their own language, copy Minecra
 
 ```yaml
 storage:
-  type: SQLITE            # or MYSQL for a network
+  type: SQLITE            # or MYSQL
   sqlite-file: bazaar.db
 ```
+
+MySQL is supported, but each server needs its own database for now. Sharing one database between
+servers (a hub and island servers, say) is planned and not safe yet, because two servers can overwrite
+each other's data.
 
 Tables: `rb_state` (current prices), `rb_history` (snapshots for graphs / 24h change),
 `rb_transactions` (audit log).

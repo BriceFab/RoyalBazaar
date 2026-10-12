@@ -143,7 +143,8 @@ items:
   baked_potato:
     item: "minecraft:baked_potato"
     group: potato
-    base_price: 4.0
+    base_price: 3.1
+    floor_pct: 0.25
     elasticity: 20000
 
   # Beetroot
@@ -305,7 +306,7 @@ items:
   cooked_beef:
     item: "minecraft:cooked_beef"
     group: cow
-    base_price: 7.0
+    base_price: 5.2
 
   # Pork
   porkchop:
@@ -315,7 +316,7 @@ items:
   cooked_porkchop:
     item: "minecraft:cooked_porkchop"
     group: pig
-    base_price: 7.0
+    base_price: 5.2
 
   # Chicken & Feather
   chicken:
@@ -325,7 +326,7 @@ items:
   cooked_chicken:
     item: "minecraft:cooked_chicken"
     group: chicken
-    base_price: 7.0
+    base_price: 5.2
   egg:
     item: "minecraft:egg"
     group: chicken
@@ -343,7 +344,7 @@ items:
   cooked_mutton:
     item: "minecraft:cooked_mutton"
     group: sheep
-    base_price: 7.0
+    base_price: 5.2
   white_wool:
     item: "minecraft:white_wool"
     group: sheep
@@ -357,7 +358,7 @@ items:
   cooked_rabbit:
     item: "minecraft:cooked_rabbit"
     group: rabbit
-    base_price: 7.0
+    base_price: 5.2
   rabbit_foot:
     item: "minecraft:rabbit_foot"
     group: rabbit

@@ -199,7 +199,7 @@ items:
   raw_copper:
     item: "minecraft:raw_copper"
     group: copper
-    base_price: 4.0
+    base_price: 4.2
   copper_ingot:
     item: "minecraft:copper_ingot"
     group: copper
@@ -221,7 +221,7 @@ items:
   raw_iron:
     item: "minecraft:raw_iron"
     group: iron
-    base_price: 10.0
+    base_price: 10.9
   iron_ingot:
     item: "minecraft:iron_ingot"
     group: iron
@@ -238,7 +238,7 @@ items:
   raw_iron_block:
     item: "minecraft:raw_iron_block"
     group: iron
-    base_price: 90.0      # 9x raw
+    base_price: 98.1      # 9x raw
   iron_ore:
     item: "minecraft:iron_ore"
     group: iron
@@ -264,7 +264,7 @@ items:
   raw_gold:
     item: "minecraft:raw_gold"
     group: gold
-    base_price: 17.0
+    base_price: 18.5
   gold_ingot:
     item: "minecraft:gold_ingot"
     group: gold
@@ -407,7 +407,7 @@ items:
   clay_ball:
     item: "minecraft:clay_ball"
     group: earth
-    base_price: 3.0
+    base_price: 3.3
   clay:
     item: "minecraft:clay"
     group: earth
@@ -457,7 +457,7 @@ items:
   glass:
     item: "minecraft:glass"
     group: glass
-    base_price: 3.0       # smelted sand (2.0)
+    base_price: 2.7       # smelted sand (2.0)
   glass_pane:
     item: "minecraft:glass_pane"
     group: glass

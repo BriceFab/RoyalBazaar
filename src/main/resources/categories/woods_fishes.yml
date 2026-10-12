@@ -261,7 +261,7 @@ items:
   cooked_cod:
     item: "minecraft:cooked_cod"
     group: fish
-    base_price: 7.0
+    base_price: 5.2
   salmon:
     item: "minecraft:salmon"
     group: fish
@@ -269,7 +269,7 @@ items:
   cooked_salmon:
     item: "minecraft:cooked_salmon"
     group: fish
-    base_price: 8.0
+    base_price: 6.25
   tropical_fish:
     item: "minecraft:tropical_fish"
     group: fish
@@ -299,11 +299,11 @@ items:
   dried_kelp:
     item: "minecraft:dried_kelp"
     group: sea
-    base_price: 2.5
+    base_price: 2.05
   dried_kelp_block:
     item: "minecraft:dried_kelp_block"
     group: sea
-    base_price: 23.5      # 9x dried kelp
+    base_price: 19.2      # 9x dried kelp
   seagrass:
     item: "minecraft:seagrass"
     group: sea
@@ -315,7 +315,7 @@ items:
   sponge:
     item: "minecraft:sponge"
     group: sea
-    base_price: 60.0
+    base_price: 58.2
   wet_sponge:
     item: "minecraft:wet_sponge"
     group: sea

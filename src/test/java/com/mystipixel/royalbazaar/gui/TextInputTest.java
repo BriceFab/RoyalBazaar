@@ -153,27 +153,51 @@ class TextInputTest {
         assertQueuedAnswerCancelled(() -> input.onInventoryOpen(open));
     }
 
+    // Done is clicked, then the dismissing event fires before the queued answer runs
     private void assertQueuedAnswerCancelled(Runnable dismiss) {
         ask();
         host.done.get(0).accept("64");
         dismiss.run();
-        assertTrue(answers.isEmpty(), "Cancellation still waits until the event has finished");
+        assertTrue(answers.isEmpty(), "Nothing is answered inside the event");
         host.runTicks();
-        assertEquals(NULL_ANSWER, answers, "A queued answer cannot survive dismissal");
+        assertEquals(NULL_ANSWER, answers, "The queued answer is dropped");
         assertTrue(host.timeouts.isEmpty());
         assertFalse(input.isWaiting(player));
+
         host.done.get(0).accept("late");
         host.cancel.get(0).run();
         host.runTicks();
-        assertEquals(NULL_ANSWER, answers, "Completion is delivered once");
+        assertEquals(NULL_ANSWER, answers, "Answered exactly once");
     }
 
     @Test
-    void cancelledAnswerCanStartANewPromptWithoutTheOldDismissalCancellingIt() {
+    void queuedAnswerFromAnOldPromptDoesNotAnswerTheNewOne() {
+        ask();
+        host.done.get(0).accept("stale");
+        InventoryOpenEvent open = mock(InventoryOpenEvent.class);
+        when(open.getPlayer()).thenReturn(player);
+        input.onInventoryOpen(open);
+        List<String> second = new ArrayList<>();
+        input.request(player, List.of("b"), second::add);
+        host.runTicks();
+        assertEquals(NULL_ANSWER, answers);
+        assertTrue(second.isEmpty(), "The old token does not reach the new prompt");
+        assertTrue(input.isWaiting(player));
+
+        host.done.get(1).accept("fresh");
+        host.runTicks();
+        assertEquals(List.of("fresh"), second);
+        assertEquals(NULL_ANSWER, answers);
+    }
+
+    @Test
+    void cancelledCallbackCanOpenANewPromptAfterAQueuedAnswer() {
         List<String> first = new ArrayList<>();
         input.request(player, TITLE, text -> {
             first.add(text);
-            if (text == null) input.request(player, TITLE, answers::add);
+            if (text == null) {
+                ask();
+            }
         });
         host.done.get(0).accept("old");
         InventoryOpenEvent open = mock(InventoryOpenEvent.class);
@@ -181,8 +205,9 @@ class TextInputTest {
         input.onInventoryOpen(open);
         host.runTicks();
         assertEquals(NULL_ANSWER, first);
-        assertTrue(answers.isEmpty());
+        assertTrue(answers.isEmpty(), "The new prompt is not answered by the old dismissal");
         assertTrue(input.isWaiting(player));
+
         host.done.get(1).accept("fresh");
         host.runTicks();
         assertEquals(List.of("fresh"), answers);
@@ -227,7 +252,6 @@ class TextInputTest {
     @Test
     void dismissalQueuedBeforeANewPromptDoesNotAnswerIt() {
         ask();
-        host.done.get(0).accept("old");
         InventoryOpenEvent open = mock(InventoryOpenEvent.class);
         when(open.getPlayer()).thenReturn(player);
         input.onInventoryOpen(open);
@@ -236,10 +260,6 @@ class TextInputTest {
         host.runTicks();
         assertTrue(second.isEmpty());
         assertTrue(input.isWaiting(player));
-        host.done.get(1).accept("fresh");
-        host.runTicks();
-        assertEquals(List.of("fresh"), second);
-        assertEquals(NULL_ANSWER, answers);
     }
 
     @Test
@@ -256,9 +276,7 @@ class TextInputTest {
     @Test
     void shutdownClosesDialogsWithoutCallingBack() {
         ask();
-        host.done.get(0).accept("queued");
         input.shutdown();
-        host.runTicks();
         assertEquals(List.of(player), host.closed);
         assertTrue(host.timeouts.isEmpty());
         assertFalse(input.isWaiting(player));
