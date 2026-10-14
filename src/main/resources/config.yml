@@ -10,8 +10,8 @@ engine:
   tick-interval-seconds: 60
   # How often a price snapshot is written for graphs / 24h change. Seconds.
   history-interval-seconds: 300
-  # How long price history is kept, in days. Older snapshots are deleted after each new one.
-  # 0 = keep everything (the table grows without bound).
+  # How long price history and the trade log are kept, in days. Older rows are deleted after each
+  # new snapshot. 0 = keep everything (the tables grow without bound).
   history-retention-days: 30
   # Smoothing for the trend arrow (0..1). Lower = smoother, slower to flip.
   trend-ema-alpha: 0.2

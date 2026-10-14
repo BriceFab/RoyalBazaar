@@ -462,7 +462,8 @@ public final class BazaarDatabase {
 
     /**
      * Writes a price snapshot of every listed item when the newest one is at least {@code intervalMs} old,
-     * then prunes history older than {@code pruneBefore} (0 keeps everything). Returns whether it wrote one.
+     * then prunes history and the trade log older than {@code pruneBefore} (0 keeps everything). Returns
+     * whether it wrote one.
      */
     public boolean snapshotIfDue(Collection<String> ids, long now, long intervalMs, long pruneBefore)
             throws SQLException {
@@ -495,6 +496,11 @@ public final class BazaarDatabase {
             }
             if (pruneBefore > 0) {
                 try (PreparedStatement ps = tx.connection().prepareStatement("DELETE FROM rb_history WHERE ts < ?")) {
+                    ps.setLong(1, pruneBefore);
+                    ps.executeUpdate();
+                }
+                // the trade log only feeds the 24h volume; idx_rb_tx_ts keeps this a range delete
+                try (PreparedStatement ps = tx.connection().prepareStatement("DELETE FROM rb_transactions WHERE ts < ?")) {
                     ps.setLong(1, pruneBefore);
                     ps.executeUpdate();
                 }

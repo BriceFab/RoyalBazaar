@@ -12,6 +12,10 @@ import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * Item resolution. A bazaar id is an eco lookup key ({@code minecraft:diamond},
  * {@code ecoitem:enchanted_cobblestone}). eco types are only touched behind the {@link #present} guard,
@@ -20,6 +24,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 public final class EcoHook {
 
     private final boolean present;
+    private final Map<String, Optional<Material>> vanillaMaterials = new ConcurrentHashMap<>();
 
     public EcoHook() {
         this.present = Bukkit.getPluginManager().isPluginEnabled("eco");
@@ -109,25 +114,59 @@ public final class EcoHook {
     }
 
     public int countHeld(Player player, String id) {
+        Material vanilla = vanillaMaterial(id);
+        TestableItem custom = vanilla == null ? customItem(id) : null;
+        if (vanilla == null && custom == null) {
+            return 0;
+        }
         int total = 0;
         for (ItemStack stack : player.getInventory().getStorageContents()) {
-            if (matches(id, stack)) {
+            if (stack == null || stack.getType().isAir()) {
+                continue;
+            }
+            // cheap type check first: most slots hold something else
+            if (vanilla != null ? stack.getType() == vanilla && matches(id, stack) : matchesCustom(custom, stack)) {
                 total += stack.getAmount();
             }
         }
         return total;
     }
 
+    // looked up once per count rather than once per slot
+    private TestableItem customItem(String id) {
+        if (!present) {
+            return null;
+        }
+        try {
+            return Items.lookup(id);
+        } catch (Throwable ignored) {
+            return null; // unknown id
+        }
+    }
+
+    private static boolean matchesCustom(TestableItem custom, ItemStack stack) {
+        try {
+            return custom.matches(stack);
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    // Material.matchMaterial upper-cases and runs two regex replaces; ids are few and fixed, so remember them
     private Material vanillaMaterial(String id) {
+        return vanillaMaterials.computeIfAbsent(id, EcoHook::parseVanilla).orElse(null);
+    }
+
+    private static Optional<Material> parseVanilla(String id) {
         String raw = id;
         if (id.contains(":")) {
             String ns = id.substring(0, id.indexOf(':'));
             if (!ns.equalsIgnoreCase("minecraft")) {
-                return null; // custom namespace, resolved via eco
+                return Optional.empty(); // custom namespace, resolved via eco
             }
             raw = id.substring(id.indexOf(':') + 1);
         }
         Material material = Material.matchMaterial(raw);
-        return (material != null && !material.isAir()) ? material : null;
+        return (material != null && !material.isAir()) ? Optional.of(material) : Optional.empty();
     }
 }
