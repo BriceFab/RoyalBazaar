@@ -155,6 +155,10 @@ public final class BazaarService {
         return null;
     }
 
+    public double balance(Player player) {
+        return vault.balance(player);
+    }
+
     public String formatPrice(double amount) {
         return vault.formatPrice(amount);
     }

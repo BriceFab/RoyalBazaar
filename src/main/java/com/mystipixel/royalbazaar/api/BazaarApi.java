@@ -53,9 +53,17 @@ public final class BazaarApi {
      * Bazaar price, 1.25 charges 25% more (the extra goes to nobody). Completes on the main thread.
      */
     public CompletableFuture<Purchase> buy(Player player, String itemId, long amount, double maxCost, double markup) {
+        if (!(maxCost > 0) || !(markup > 0)) {
+            throw new IllegalArgumentException("maxCost and markup must be positive, got " + maxCost + " and " + markup);
+        }
         BazaarService.BuyTerms terms = new BazaarService.BuyTerms(Math.max(1.0, markup), maxCost, true);
         return service.buy(player, itemId, amount, terms)
                 .thenApply(result -> new Purchase(result.ok(), result.filled(), result.total(), result.message()));
+    }
+
+    /** The player's balance in the economy the Bazaar charges, to check an order before buying. */
+    public double balance(Player player) {
+        return service.balance(player);
     }
 
     /** A price as the Bazaar's own menus write it. */
