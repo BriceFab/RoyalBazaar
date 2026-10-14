@@ -409,6 +409,67 @@ class BazaarServiceTest {
     }
 
     @Test
+    void buyAboveTheAgreedCostIsRefusedBeforeAnyMoneyMoves() throws SQLException {
+        MarketItem buyable = readyToBuy(TradeMode.BOTH);
+        double cost = PricingEngine.buyCost(buyable, 10);
+        TradeResult result = await(service.buy(player, item.id(), 10,
+                new BazaarService.BuyTerms(1.0, cost * 0.99, true)));
+        assertEquals(TradeResult.Status.PRICE_MOVED, result.status());
+        verify(vault, never()).withdraw(any(), anyDouble());
+        assertEquals(100, buyable.mid(), 1e-9);
+        assertEquals(0, loggedTrades());
+    }
+
+    @Test
+    void buyAtExactlyTheQuotedCostGoesThrough() {
+        MarketItem buyable = readyToBuy(TradeMode.BOTH);
+        double quote = service.buyQuote(item.id(), 10);
+        assertEquals(PricingEngine.buyCost(buyable, 10), quote);
+        TradeResult result = await(service.buy(player, item.id(), 10, new BazaarService.BuyTerms(1.0, quote, true)));
+        assertTrue(result.ok());
+        verify(vault).withdraw(player, quote);
+    }
+
+    @Test
+    void markupRaisesTheChargeButNotTheMarketMove() throws SQLException {
+        MarketItem buyable = readyToBuy(TradeMode.BOTH);
+        double cost = PricingEngine.buyCost(buyable, 10);
+        double midAfter = PricingEngine.midAfterBuy(buyable, 10);
+        TradeResult result = await(service.buy(player, item.id(), 10,
+                new BazaarService.BuyTerms(1.5, Double.POSITIVE_INFINITY, true)));
+        assertTrue(result.ok());
+        assertEquals(cost * 1.5, result.total(), 1e-9);
+        verify(vault).withdraw(player, cost * 1.5);
+        assertEquals(midAfter, buyable.mid(), 1e-9);
+        assertEquals(midAfter, storedMid(item.id()), 1e-9);
+    }
+
+    @Test
+    void exactBuyThatDoesNotFitIsRefusedWhateverThePolicy() {
+        readyToBuy(TradeMode.BOTH);
+        when(config.inventoryFullPolicy()).thenReturn("partial");
+        TradeResult result = await(service.buy(player, item.id(), 300,
+                new BazaarService.BuyTerms(1.0, Double.POSITIVE_INFINITY, true)));
+        assertEquals(TradeResult.Status.INVENTORY_FULL, result.status());
+        verify(vault, never()).withdraw(any(), anyDouble());
+        assertEquals(256, service.fillAmount(player, item.id()), "the same order fills partly without exact");
+    }
+
+    @Test
+    void quoteIsMinusOneWhenTheBuyWouldBeRefused() {
+        MarketItem buyable = readyToBuy(TradeMode.BOTH);
+        assertEquals(-1, service.buyQuote("minecraft:nothing", 1));
+        assertEquals(-1, service.buyQuote(item.id(), 0));
+        when(config.maxOrder()).thenReturn(64L);
+        assertEquals(-1, service.buyQuote(item.id(), 65));
+        assertTrue(service.buyQuote(item.id(), 64) > 0);
+        Rows.setFrozen(buyable, true);
+        assertEquals(-1, service.buyQuote(item.id(), 1));
+        withMode(TradeMode.SELL_ONLY);
+        assertEquals(-1, service.buyQuote(item.id(), 1));
+    }
+
+    @Test
     void sellOnlyItemStillHonoursFreeze() {
         MarketItem sellable = withMode(TradeMode.SELL_ONLY);
         Rows.setFrozen(sellable, true);

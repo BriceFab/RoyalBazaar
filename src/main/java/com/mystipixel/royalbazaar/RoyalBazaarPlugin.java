@@ -1,5 +1,6 @@
 package com.mystipixel.royalbazaar;
 
+import com.mystipixel.royalbazaar.api.BazaarApi;
 import com.mystipixel.royalbazaar.command.BazaarCommand;
 import com.mystipixel.royalbazaar.config.PluginConfig;
 import com.mystipixel.royalbazaar.data.BazaarDatabase;
@@ -28,6 +29,7 @@ import net.milkbowl.vault.economy.Economy;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.ServiceRegisterEvent;
+import org.bukkit.plugin.ServicePriority;
 import java.io.File;
 import java.util.Locale;
 
@@ -152,6 +154,8 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
         }
 
         scheduleTasks();
+        // registered last, once trading works; Bukkit drops it again when the plugin disables
+        getServer().getServicesManager().register(BazaarApi.class, new BazaarApi(service), this, ServicePriority.Normal);
 
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             this.placeholderExpansion = new BazaarPlaceholderExpansion(market, vault, getPluginMeta().getVersion(), service);
