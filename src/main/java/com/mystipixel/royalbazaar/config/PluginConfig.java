@@ -39,8 +39,22 @@ public final class PluginConfig {
         return Math.max(20L, plugin.getConfig().getLong("engine.history-interval-seconds", 300L) * 20L);
     }
 
-    public long flushIntervalTicks() {
-        return Math.max(20L, plugin.getConfig().getLong("engine.flush-interval-seconds", 30L) * 20L);
+    public long historyIntervalMs() {
+        return historyIntervalTicks() * 50L;
+    }
+
+    public long tickIntervalMs() {
+        return tickIntervalTicks() * 50L;
+    }
+
+    /** How often prices changed by another server are picked up. 0 or less turns the check off. */
+    public long refreshTicks() {
+        return Math.max(0L, plugin.getConfig().getLong("storage.refresh-seconds", 5L) * 20L);
+    }
+
+    /** This server's name in the shared database; blank means a generated one kept in server-id.txt. */
+    public String serverId() {
+        return plugin.getConfig().getString("storage.server-id", "");
     }
 
     /** Days of price history to keep. 0 or less disables pruning (keep everything). */

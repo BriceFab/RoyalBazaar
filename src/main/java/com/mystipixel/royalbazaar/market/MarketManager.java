@@ -139,62 +139,34 @@ public final class MarketManager {
         return out;
     }
 
-    /** Reversion and stat bookkeeping. Main thread. */
+    /** Trend-arrow smoothing; reversion itself runs on the database. Main thread. */
     public void tick() {
         for (MarketItem item : byId.values()) {
-            // frozen items don't revert, but the volume ring still ticks so stale hours drop off
             if (!item.frozen()) {
-                double reverted = PricingEngine.revert(item);
-                if (reverted != item.mid()) {
-                    item.setMid(reverted);
-                }
                 item.updateEma(emaAlpha);
             }
-            item.volume().tick();
         }
     }
 
-    /** Every item flagged dirty since the last flush; caller clears the flags after persisting. */
-    public List<MarketItem> drainDirty() {
-        List<MarketItem> dirty = new ArrayList<>();
+    /** Every item's pricing parameters, for work on the database thread. */
+    public List<Curve> curves() {
+        List<Curve> out = new ArrayList<>(byId.size());
         for (MarketItem item : byId.values()) {
-            if (item.dirty()) {
-                dirty.add(item);
-            }
-        }
-        return dirty;
-    }
-
-    /**
-     * Capture dirty items and clear their flags in one main-thread pass. Don't clear from the writer
-     * thread: a trade between read and clear would lose its write.
-     */
-    public List<MarketState> drainDirtyState() {
-        List<MarketState> out = new ArrayList<>();
-        for (MarketItem item : byId.values()) {
-            if (item.dirty()) {
-                out.add(MarketState.of(item));
-                item.clearDirty();
-            }
+            out.add(item.curve());
         }
         return out;
     }
 
-    /** Detached copies of every item for the history writer. Main thread. */
-    public List<MarketState> allState() {
-        List<MarketState> out = new ArrayList<>(byId.size());
-        for (MarketItem item : byId.values()) {
-            out.add(MarketState.of(item));
-        }
-        return out;
+    public List<String> ids() {
+        return new ArrayList<>(byId.keySet());
     }
 
-    /** Re-flag items whose write failed so it is retried. */
-    public void remarkDirty(Collection<String> ids) {
-        for (String id : ids) {
-            MarketItem item = byId.get(id);
+    /** Takes database rows into the cache; rows for items no longer listed are skipped. */
+    public void apply(Collection<StateRow> rows) {
+        for (StateRow row : rows) {
+            MarketItem item = byId.get(row.id());
             if (item != null) {
-                item.markDirty();
+                item.apply(row);
             }
         }
     }

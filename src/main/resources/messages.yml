@@ -26,7 +26,7 @@ admin-set: "&aSet &f{item}&a mid: &e{old} &7-> &e{new}"
 # used instead of admin-set when the new mid was outside the item's floor/ceiling
 admin-set-clamped: "&aSet &f{item}&a mid: &e{old} &7-> &e{new} &7(clamped to this item's floor/ceiling)"
 admin-reset: "&aReset &f{item}&a to its base price: &e{old} &7-> &e{new}"
-admin-freeze: "&eFroze &f{item}&e: trades refused, price held. Clears on unfreeze or restart."
+admin-freeze: "&eFroze &f{item}&e on every server: trades refused, price held until you unfreeze it."
 admin-unfreeze: "&aUnfroze &f{item}&a: trading and reversion resumed."
 
 trade:
@@ -52,6 +52,14 @@ trade:
     inventory-full: "Inventory full."
     payment-failed: "Payment failed."
     payment-failed-returned: "Payment failed. Your items have been returned."
+    # the database step failed after the money or items were taken; they are handed back
+    failed-refunded: "The trade didn't go through. Your money has been returned."
+    failed-returned: "The trade didn't go through. Your items have been returned."
+    # a second click while the first trade is still being saved
+    busy: "Your last trade is still going through."
+    # another server traded the item between your quote and your trade
+    price-moved: "The price just changed. Check it and try again."
+    closed: "The bazaar is closing. Please try again shortly."
     none-to-sell: "You have none to sell."
     inventory-changed: "Your inventory changed. Please try again."
     generic: "Trade failed."

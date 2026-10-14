@@ -60,15 +60,16 @@ public final class AmountPrompt {
             gui.openProduct(player, itemId);
             return;
         }
-        TradeResult r = buy ? service.buy(player, itemId, amount) : service.sell(player, itemId, amount);
-        if (r.ok()) {
-            messages.send(player, "trade.done", "&aDone: &f{amount} &7for &e${total}",
-                    Map.of("amount", String.valueOf(r.filled()),
-                            "total", String.format("%,.2f", r.total())));
-        } else {
-            EffectDispatcher.sendFailure(messages, player, r);
-        }
-        gui.openProduct(player, itemId);
+        (buy ? service.buy(player, itemId, amount) : service.sell(player, itemId, amount)).thenAccept(r -> {
+            if (r.ok()) {
+                messages.send(player, "trade.done", "&aDone: &f{amount} &7for &e${total}",
+                        Map.of("amount", String.valueOf(r.filled()),
+                                "total", String.format("%,.2f", r.total())));
+            } else {
+                EffectDispatcher.sendFailure(messages, player, r);
+            }
+            gui.openProduct(player, itemId);
+        });
     }
 
     // after a null answer the player may have quit, died, opened another menu or started a newer prompt
