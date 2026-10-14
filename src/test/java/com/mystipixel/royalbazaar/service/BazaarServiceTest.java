@@ -451,6 +451,19 @@ class BazaarServiceTest {
     }
 
     @Test
+    void sellAllAfterAnotherServerMovedThePriceHandsTheItemsBack() throws SQLException {
+        when(vault.deposit(eq(player), anyDouble())).thenReturn(true);
+        database.setMid(item.id(), 60);            // dumped on another server
+        var result = await(service.sellAll(player, List.of(item)));
+        assertTrue(result.soldNothing());
+        assertEquals(1, result.retry());
+        assertEquals(14, heldCustom());
+        assertEquals(60, item.mid(), 1e-9, "the next sell-all quotes the new price");
+        verify(vault, never()).deposit(any(), anyDouble());
+        assertEquals(1, await(service.sellAll(player, List.of(item))).distinctItems());
+    }
+
+    @Test
     void buyerWhoLeftBeforeDeliveryIsRefundedAndTheTradeTakenBack() throws SQLException {
         readyToBuy(TradeMode.BOTH);
         when(player.isOnline()).thenReturn(false);

@@ -196,6 +196,11 @@ public final class EffectDispatcher {
             messages.send(player, "sell-all.blocked", "&c{blocked} item type(s) were blocked and not sold.",
                     Map.of("blocked", String.valueOf(result.blocked())));
         }
+        if (result.retry() > 0) {
+            messages.send(player, "sell-all.retry",
+                    "&e{count} item type(s) were handed back because the price changed or the sale didn't go through. Try again.",
+                    Map.of("count", String.valueOf(result.retry())));
+        }
     }
 
     private String itemOf(Player player) {

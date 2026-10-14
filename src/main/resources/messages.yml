@@ -73,6 +73,8 @@ sell-all:
   nothing: "&eNothing in {scope} could be sold here."
   done: "&aSold &f{units}&a from &f{items}&a item type(s) for &6{proceeds}&a."
   blocked: "&c{blocked} item type(s) were blocked and not sold."
+  # the price moved on another server, or the sale failed; those items were handed back
+  retry: "&e{count} item type(s) were handed back because the price changed or the sale didn't go through. Try again."
   scope-group: "this group"
   scope-inventory: "your inventory"
   players-only: "Only players can sell to the bazaar."

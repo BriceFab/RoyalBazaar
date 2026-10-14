@@ -278,12 +278,16 @@ public final class BazaarService {
                 }, db.mainThread());
     }
 
-    /** What a {@link #sellAll} pass did, for the summary message. */
-    /** {@code refusal} is set when the run could not start at all (another trade in progress, shutting down). */
-    public record SellAllResult(int distinctItems, long units, double proceeds, int blocked, TradeResult refusal) {
+    /**
+     * What a {@link #sellAll} pass did, for the summary message. {@code retry} counts items handed back
+     * because the price moved on another server or the sale didn't go through; {@code refusal} is set when
+     * the run could not start at all (another trade in progress, shutting down).
+     */
+    public record SellAllResult(int distinctItems, long units, double proceeds, int blocked, int retry,
+                                TradeResult refusal) {
 
         public SellAllResult(int distinctItems, long units, double proceeds, int blocked) {
-            this(distinctItems, units, proceeds, blocked, null);
+            this(distinctItems, units, proceeds, blocked, 0, null);
         }
 
         public boolean soldNothing() {
@@ -292,12 +296,16 @@ public final class BazaarService {
 
         SellAllResult plus(TradeResult result) {
             if (result.ok()) {
-                return new SellAllResult(distinctItems + 1, units + result.filled(), proceeds + result.total(), blocked);
+                return new SellAllResult(distinctItems + 1, units + result.filled(), proceeds + result.total(),
+                        blocked, retry, null);
             }
             // vetoed by EconGuard or frozen by an admin
             if (result.status() == TradeResult.Status.REJECTED_BY_GUARD
                     || result.status() == TradeResult.Status.DISABLED) {
-                return new SellAllResult(distinctItems, units, proceeds, blocked + 1);
+                return new SellAllResult(distinctItems, units, proceeds, blocked + 1, retry, null);
+            }
+            if (result.status() == TradeResult.Status.PRICE_MOVED || result.status() == TradeResult.Status.ERROR) {
+                return new SellAllResult(distinctItems, units, proceeds, blocked, retry + 1, null);
             }
             return this;
         }
@@ -311,7 +319,7 @@ public final class BazaarService {
     public CompletableFuture<SellAllResult> sellAll(Player player, Collection<MarketItem> scope) {
         TradeResult refused = refuseStart(player, TradeSide.SELL, null);
         if (refused != null) {
-            return CompletableFuture.completedFuture(new SellAllResult(0, 0, 0, 0, refused));
+            return CompletableFuture.completedFuture(new SellAllResult(0, 0, 0, 0, 0, refused));
         }
         List<String> ids = new ArrayList<>();
         for (MarketItem listed : scope) {
