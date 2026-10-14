@@ -18,6 +18,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -176,6 +177,39 @@ abstract class DatabaseScenarios {
         assertTrue(b.snapshotIfDue(ids, 1_060_000, 60_000, 1_000_001));
         assertEquals(2, count(a, "rb_history"), "the older snapshot is pruned");
         assertEquals(10, b.earliestMidSince(0).get(WHEAT.id()), 1e-9);
+    }
+
+    @Test
+    void historyStatsWrittenByOneServerAreReadByTheOther() throws SQLException {
+        List<String> ids = List.of(WHEAT.id(), LOOSE.id());
+        a.snapshotIfDue(ids, 1_000_000, 60_000, 0);
+        a.setMid(WHEAT.id(), 14);
+        a.snapshotIfDue(ids, 1_060_000, 60_000, 0);
+        a.setMid(WHEAT.id(), 12);
+        a.snapshotIfDue(ids, 1_120_000, 60_000, 0);
+        Map<String, double[]> written = a.writeStats(1_000_000, 1_060_000);
+        assertArrayEquals(new double[]{10, 10, 14, 14}, written.get(WHEAT.id()), 1e-9);
+        assertArrayEquals(written.get(WHEAT.id()), b.stats().get(WHEAT.id()), 1e-9);
+        a.writeStats(1_060_000, 1_120_000);
+        assertArrayEquals(new double[]{14, 12, 14, 12}, b.stats().get(WHEAT.id()), 1e-9, "replaced, not added to");
+        assertEquals(2, b.stats().size());
+    }
+
+    @Test
+    void historyIsIndexedByTimestamp() throws SQLException {
+        assertTrue(hasIndex(a, "rb_history", "idx_rb_history_ts"));
+    }
+
+    static boolean hasIndex(BazaarDatabase database, String table, String index) throws SQLException {
+        try (Connection c = database.dataSource().getConnection();
+             ResultSet rs = c.getMetaData().getIndexInfo(c.getCatalog(), null, table, false, true)) {
+            while (rs.next()) {
+                if (index.equalsIgnoreCase(rs.getString("INDEX_NAME"))) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     @Test

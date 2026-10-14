@@ -40,7 +40,7 @@ public final class BazaarDatabase {
 
     public enum Type { SQLITE, MYSQL }
 
-    static final int SCHEMA_VERSION = 1;
+    static final int SCHEMA_VERSION = 2;
     static final int TRANSACTION_ATTEMPTS = 3;
 
     private static final String SELECT_ROW = "SELECT item_id, mid_price, mid_yesterday, frozen, version, updated_at"
@@ -153,6 +153,18 @@ public final class BazaarDatabase {
                 addColumn(c, "frozen", dialect == Dialect.MYSQL ? "TINYINT NOT NULL DEFAULT 0" : "INTEGER NOT NULL DEFAULT 0");
                 addColumn(c, "version", dialect == Dialect.MYSQL ? "BIGINT NOT NULL DEFAULT 0" : "INTEGER NOT NULL DEFAULT 0");
                 createIndexIfMissing(c, "idx_rb_tx_ts", "rb_transactions", "ts");
+            }
+            if (from < 2) {
+                // covering, so the snapshot prune and the stats queries read only the index
+                createIndexIfMissing(c, "idx_rb_history_ts", "rb_history", "ts, item_id, mid_price");
+                try (Statement st = c.createStatement()) {
+                    st.executeUpdate("CREATE TABLE IF NOT EXISTS rb_stats ("
+                            + "item_id VARCHAR(96) PRIMARY KEY,"
+                            + "week_then DOUBLE PRECISION NOT NULL,"
+                            + "week_low DOUBLE PRECISION NOT NULL,"
+                            + "week_high DOUBLE PRECISION NOT NULL,"
+                            + "day_then DOUBLE PRECISION NOT NULL)");
+                }
             }
         });
         if (before < SCHEMA_VERSION) {
@@ -487,7 +499,7 @@ public final class BazaarDatabase {
     public Map<String, double[]> weekStats(long sinceTs) throws SQLException {
         Map<String, double[]> out = new HashMap<>();
         String range = "SELECT item_id, MIN(mid_price) lo, MAX(mid_price) hi "
-                + "FROM rb_history WHERE ts >= ? GROUP BY item_id";
+                + "FROM rb_history" + byTimestamp() + " WHERE ts >= ? GROUP BY item_id";
         try (Connection c = pool.getConnection(); PreparedStatement ps = c.prepareStatement(range)) {
             ps.setLong(1, sinceTs);
             try (ResultSet rs = ps.executeQuery()) {
@@ -506,12 +518,19 @@ public final class BazaarDatabase {
         return out;
     }
 
+    // for GROUP BY item_id the planner may walk the primary key in item order and read the whole table
+    // (SQLite does without ANALYZE stats); the timestamp index reads only the window
+    private String byTimestamp() {
+        return db.dialect() == Dialect.MYSQL ? " FORCE INDEX (idx_rb_history_ts)" : " INDEXED BY idx_rb_history_ts";
+    }
+
     /** Each item's mid at its earliest snapshot at or after {@code sinceTs}; items without one are absent. */
     public Map<String, Double> earliestMidSince(long sinceTs) throws SQLException {
         Map<String, Double> out = new HashMap<>();
         // PK (item_id, ts) makes the join unambiguous
         String sql = "SELECT h.item_id, h.mid_price FROM rb_history h "
-                + "JOIN (SELECT item_id, MIN(ts) mts FROM rb_history WHERE ts >= ? GROUP BY item_id) x "
+                + "JOIN (SELECT item_id, MIN(ts) mts FROM rb_history" + byTimestamp()
+                + " WHERE ts >= ? GROUP BY item_id) x "
                 + "ON x.item_id = h.item_id AND x.mts = h.ts";
         try (Connection c = pool.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, sinceTs);
@@ -519,6 +538,49 @@ public final class BazaarDatabase {
                 while (rs.next()) {
                     out.put(rs.getString("item_id"), rs.getDouble("mid_price"));
                 }
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Works out every item's 7-day and 24-hour figures from rb_history and stores them for {@link #stats},
+     * so only one server has to read the history. Returns what it stored.
+     */
+    public Map<String, double[]> writeStats(long weekAgo, long dayAgo) throws SQLException {
+        Map<String, double[]> week = weekStats(weekAgo);
+        Map<String, Double> day = earliestMidSince(dayAgo);
+        Map<String, double[]> out = new HashMap<>();
+        week.forEach((id, w) -> out.put(id, new double[]{w[0], w[1], w[2], day.getOrDefault(id, 0.0)}));
+        db.inTransaction(tx -> {
+            try (Statement st = tx.connection().createStatement()) {
+                st.executeUpdate("DELETE FROM rb_stats");
+            }
+            try (PreparedStatement ps = tx.connection().prepareStatement("INSERT INTO rb_stats"
+                    + " (item_id, week_then, week_low, week_high, day_then) VALUES (?,?,?,?,?)")) {
+                for (Map.Entry<String, double[]> row : out.entrySet()) {
+                    ps.setString(1, row.getKey());
+                    for (int i = 0; i < 4; i++) {
+                        ps.setDouble(i + 2, row.getValue()[i]);
+                    }
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            }
+            return null;
+        });
+        return out;
+    }
+
+    /** {@code {midThen, low, high, midDayAgo}} per item as {@link #writeStats} last stored them; 0 when unknown. */
+    public Map<String, double[]> stats() throws SQLException {
+        Map<String, double[]> out = new HashMap<>();
+        String sql = "SELECT item_id, week_then, week_low, week_high, day_then FROM rb_stats";
+        try (Connection c = pool.getConnection(); PreparedStatement ps = c.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                out.put(rs.getString(1),
+                        new double[]{rs.getDouble(2), rs.getDouble(3), rs.getDouble(4), rs.getDouble(5)});
             }
         }
         return out;
