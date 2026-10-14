@@ -180,6 +180,16 @@ abstract class DatabaseScenarios {
     }
 
     @Test
+    void theSnapshotPruneAlsoTrimsTheTradeLog() throws SQLException {
+        a.trade(WHEAT, TradeSide.BUY, 1, 10, PLAYER, 10);
+        List<String> ids = List.of(WHEAT.id(), LOOSE.id());
+        assertTrue(a.snapshotIfDue(ids, 1_000_000, 60_000, 1));
+        assertEquals(1, count(a, "rb_transactions"), "kept while inside retention");
+        assertTrue(a.snapshotIfDue(ids, 1_060_000, 60_000, System.currentTimeMillis() + 1));
+        assertEquals(0, count(a, "rb_transactions"));
+    }
+
+    @Test
     void historyStatsWrittenByOneServerAreReadByTheOther() throws SQLException {
         List<String> ids = List.of(WHEAT.id(), LOOSE.id());
         a.snapshotIfDue(ids, 1_000_000, 60_000, 0);
