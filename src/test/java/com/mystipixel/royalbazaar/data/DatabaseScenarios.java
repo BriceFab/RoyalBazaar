@@ -158,6 +158,16 @@ abstract class DatabaseScenarios {
     }
 
     @Test
+    void pricesAtBaseAreNotRewrittenEveryStep() throws SQLException {
+        assertTrue(a.revert(List.of(WHEAT, LOOSE)).isEmpty(), "nothing to revert at the starting price");
+        a.setMid(WHEAT.id(), 10.0005);           // a hair above base
+        List<StateRow> written = a.revert(List.of(WHEAT, LOOSE));
+        assertEquals(1, written.size());
+        assertEquals(10, written.getFirst().mid(), "lands on base instead of creeping toward it");
+        assertTrue(a.revert(List.of(WHEAT, LOOSE)).isEmpty());
+    }
+
+    @Test
     void aSnapshotIsWrittenOncePerIntervalWhicheverServerAsks() throws SQLException {
         List<String> ids = List.of(WHEAT.id(), LOOSE.id());
         assertTrue(a.snapshotIfDue(ids, 1_000_000, 60_000, 0));

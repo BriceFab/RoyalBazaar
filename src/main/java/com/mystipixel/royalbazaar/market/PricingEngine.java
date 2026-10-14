@@ -6,6 +6,9 @@ package com.mystipixel.royalbazaar.market;
  */
 public final class PricingEngine {
 
+    // log distance from base under which reversion lands on base, about 0.01%
+    static final double SNAP_TO_BASE = 1e-4;
+
     private PricingEngine() {
     }
 
@@ -66,6 +69,11 @@ public final class PricingEngine {
         }
         double logMid = Math.log(mid);
         double logBase = Math.log(c.basePrice());
+        // within 0.01% of base, land on it: the curve never quite gets there, and every step is a
+        // database write that each server then reads back
+        if (Math.abs(logBase - logMid) < SNAP_TO_BASE) {
+            return c.clamp(c.basePrice());
+        }
         double next = Math.exp(logMid + (logBase - logMid) * c.reversionRate());
         return c.clamp(next);
     }
