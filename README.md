@@ -370,7 +370,8 @@ storage:
 ```
 
 Tables: `rb_state` (current prices and freezes), `rb_history` (snapshots for graphs / 24h change),
-`rb_transactions` (audit log), `rb_lease` (which server runs the market clock).
+`rb_stats` (7-day range and 24h baseline worked out from the snapshots), `rb_transactions` (audit log),
+`rb_lease` (which server runs the market clock).
 
 ### Several servers, one market
 
@@ -385,8 +386,10 @@ one freeze, one history. A hub and island servers all trade against the same mar
   see the new price. Smaller moves still trade at the quoted price.
 - **Other servers' trades show up within `refresh-seconds`.** Each server checks which rows changed
   and reads only those.
-- **One server runs the market clock.** Price reversion and history snapshots run on whichever server
-  holds the lease; if it stops, another takes over within three ticks.
+- **One server runs the market clock.** Price reversion, history snapshots and the 7-day and 24h
+  figures run on whichever server holds the lease; if it stops, another takes over within three ticks.
+  The other servers re-read the stored figures every `history-interval-seconds`, so their figures can
+  be up to two intervals old.
 - **Freezes are shared.** `/bazaar admin freeze` stops trading of that item on every server.
 - **The economy must be shared too.** The bazaar moves Vault money on the server where the trade
   happens. If each server has its own balances, a player can buy cheap here and spend the money

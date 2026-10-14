@@ -43,4 +43,25 @@ class SqliteDatabaseTest extends DatabaseScenarios {
             upgraded.close();
         }
     }
+
+    @Test
+    void aVersionOneDatabaseGetsTheHistoryIndexAndStatsTable() throws Exception {
+        a.close();
+        b.close();
+        String url = "jdbc:sqlite:" + dataFolder.resolve("shared.db").toAbsolutePath();
+        try (Connection c = DriverManager.getConnection(url); Statement st = c.createStatement()) {
+            st.executeUpdate("DROP INDEX idx_rb_history_ts");
+            st.executeUpdate("DROP TABLE rb_stats");
+            st.executeUpdate("UPDATE rb_schema_version SET version = 1");
+        }
+        a = open();
+        b = open();
+        assertTrue(hasIndex(a, "rb_history", "idx_rb_history_ts"));
+        assertTrue(a.stats().isEmpty());
+        try (Connection c = DriverManager.getConnection(url); Statement st = c.createStatement();
+             java.sql.ResultSet rs = st.executeQuery("SELECT version FROM rb_schema_version")) {
+            assertTrue(rs.next());
+            assertEquals(BazaarDatabase.SCHEMA_VERSION, rs.getInt(1));
+        }
+    }
 }

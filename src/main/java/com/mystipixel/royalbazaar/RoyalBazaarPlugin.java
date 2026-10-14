@@ -135,7 +135,8 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
         this.db = new DbExecutor(getName(), mainQueue, getLogger());
         this.prices = new PriceRefresher(market, database, db);
         this.engine = new MarketEngine(database, engineSettings(), getLogger(),
-                rows -> mainQueue.execute(() -> prices.acceptAll(rows)));
+                rows -> mainQueue.execute(() -> prices.acceptAll(rows)),
+                stats -> mainQueue.execute(() -> applyStats(stats)));
         this.service = new BazaarService(market, database, db, prices, vault, eco, guard, config, messages, getLogger());
         this.menus = new MenuManager(this);
         itemNames.reload(new File(getDataFolder(), "lang"), getLogger());
@@ -174,28 +175,21 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
                 config.historyRetentionDays());
     }
 
-    // 7-day stats, the 24h baseline and 24h volume: queried on the database thread, applied on the main thread
+    // 7-day stats and the 24h baseline as the engine-lease holder last stored them, and 24h volume: queried on
+    // the database thread, applied on the main thread
     private void refreshStats() {
-        long now = System.currentTimeMillis();
-        long weekAgo = now - 7L * 24L * 60L * 60L * 1000L;
-        long dayAgo = now - 24L * 60L * 60L * 1000L;
-        db.submit("read history stats", () -> {
-            Map<String, double[]> stats = database.weekStats(weekAgo);
-            Map<String, Double> day = database.earliestMidSince(dayAgo);
-            return Map.entry(stats, day);
-        }).thenAcceptAsync(result -> {
-            for (MarketItem item : market.all()) {
-                double[] row = result.getKey().get(item.id());
-                if (row != null) {
-                    item.setWeekStats(row[0], row[1], row[2]);
-                }
-                Double baseline = result.getValue().get(item.id());
-                if (baseline != null) {
-                    item.setMidYesterday(baseline);
-                }
-            }
-        }, mainQueue);
+        db.submit("read history stats", () -> database.stats()).thenAcceptAsync(this::applyStats, mainQueue);
         prices.refreshVolume();
+    }
+
+    private void applyStats(Map<String, double[]> stats) {
+        for (MarketItem item : market.all()) {
+            double[] row = stats.get(item.id());
+            if (row != null) {
+                item.setWeekStats(row[0], row[1], row[2]);
+                item.setMidYesterday(row[3]);
+            }
+        }
     }
 
     private void tryLateEnable() {
