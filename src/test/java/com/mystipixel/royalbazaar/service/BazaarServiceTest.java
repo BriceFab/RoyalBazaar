@@ -469,6 +469,7 @@ class BazaarServiceTest {
         TradeResult second = await(service.buy(player, item.id(), 10));
         assertEquals(TradeResult.Status.BUSY, second.status());
         assertTrue(await(first).ok());
+        storage.set(new ItemStack[4]);              // room again after the delivery
         assertTrue(await(service.buy(player, item.id(), 10)).ok(), "the slot frees once the first finishes");
     }
 
