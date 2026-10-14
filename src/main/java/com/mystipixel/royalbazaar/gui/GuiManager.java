@@ -46,6 +46,10 @@ public final class GuiManager {
 
     // players being re-rendered by refresh(), so it doesn't replay the menu's open sound
     private final Set<UUID> refreshing = new HashSet<>();
+    // Menus re-render after every trade. Keyed by the source text, so a reload that renames a category
+    // or item simply misses; main thread only.
+    private final Map<String, ItemSpec> railIcons = new HashMap<>();
+    private final Map<String, String> normalizedNames = new HashMap<>();
 
     public GuiManager(MenuManager menus, MarketManager market, BazaarService service, EcoHook eco,
                       ItemNames itemNames, MessageManager messages) {
@@ -88,7 +92,7 @@ public final class GuiManager {
         List<MarketItem> hits = new ArrayList<>();
         if (!needle.isEmpty()) {
             for (MarketItem item : market.all()) {
-                if (ItemNames.normalize(item.displayName()).contains(needle)
+                if (normalizedNames.computeIfAbsent(item.displayName(), ItemNames::normalize).contains(needle)
                         || item.id().toLowerCase(Locale.ROOT).contains(needle)
                         || itemNames.translatedNameContains(item.id(), needle)) {
                     hits.add(item);
@@ -352,7 +356,8 @@ public final class GuiManager {
             if (selected) {
                 lore.add(messages.get("gui.currently-viewing", "&aCurrently viewing"));
             }
-            ItemStack icon = ItemSpec.parse(cat.icon() + " name:\"" + cat.displayName() + "\"").build(eco, ph, lore);
+            ItemStack icon = railIcons.computeIfAbsent(cat.icon() + " name:\"" + cat.displayName() + "\"", ItemSpec::parse)
+                    .build(eco, ph, lore);
             if (selected && rail.glintSelected()) {
                 ItemMeta meta = icon.getItemMeta();
                 if (meta != null) {
