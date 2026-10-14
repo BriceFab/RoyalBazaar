@@ -420,17 +420,15 @@ public final class BazaarDatabase {
             List<StateRow> written = new ArrayList<>();
             try (PreparedStatement ps = tx.connection().prepareStatement("UPDATE rb_state SET mid_price = ?,"
                     + " updated_at = ?, version = version + 1 WHERE item_id = ? AND version = ? AND frozen = 0")) {
+                // one at a time, not batched: a batch can report SUCCESS_NO_INFO (rewriteBatchedStatements),
+                // which can't tell a row a trade changed in the meantime from one this step wrote
                 for (StateRow row : planned) {
                     ps.setDouble(1, row.mid());
                     ps.setLong(2, now);
                     ps.setString(3, row.id());
                     ps.setLong(4, row.version() - 1);
-                    ps.addBatch();
-                }
-                int[] counts = ps.executeBatch();
-                for (int i = 0; i < counts.length; i++) {
-                    if (counts[i] > 0 || counts[i] == Statement.SUCCESS_NO_INFO) {
-                        written.add(planned.get(i));
+                    if (ps.executeUpdate() > 0) {
+                        written.add(row);
                     }
                 }
             }
@@ -444,12 +442,19 @@ public final class BazaarDatabase {
      */
     public boolean snapshotIfDue(Collection<String> ids, long now, long intervalMs, long pruneBefore)
             throws SQLException {
+        if (ids.isEmpty()) {
+            return false;
+        }
+        // every snapshot covers every item, so one item's newest is the snapshot's; this reads the key
+        // instead of scanning the whole table
         try (Connection c = pool.getConnection();
-             Statement st = c.createStatement();
-             ResultSet rs = st.executeQuery("SELECT MAX(ts) FROM rb_history")) {
-            long newest = rs.next() ? rs.getLong(1) : 0;
-            if (newest > 0 && now - newest < intervalMs) {
-                return false;
+             PreparedStatement ps = c.prepareStatement("SELECT MAX(ts) FROM rb_history WHERE item_id = ?")) {
+            ps.setString(1, ids.iterator().next());
+            try (ResultSet rs = ps.executeQuery()) {
+                long newest = rs.next() ? rs.getLong(1) : 0;
+                if (newest > 0 && now - newest < intervalMs) {
+                    return false;
+                }
             }
         }
         List<StateRow> current = rows(ids);

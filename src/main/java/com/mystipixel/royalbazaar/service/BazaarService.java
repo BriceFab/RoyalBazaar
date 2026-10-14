@@ -128,7 +128,23 @@ public final class BazaarService {
             busy.exit(id);
             throw e;
         }
-        return trade.whenComplete((result, failure) -> busy.exit(id));
+        return trade.handle((result, failure) -> {
+            busy.exit(id);
+            if (failure == null) {
+                return result;
+            }
+            // money or items may already have moved: log it for a by-hand check and tell the player
+            logger.log(Level.SEVERE, "Bazaar " + side + " of " + itemId + " by " + player.getName() + " (" + id
+                    + ") failed part way; check their balance and inventory.", failure);
+            return TradeResult.fail(TradeResult.Status.ERROR, side, itemId,
+                    messages.get("trade.reasons.generic", "Trade failed."));
+        });
+    }
+
+    // the player's current handle: one who left and rejoined during the database round trip has a new one,
+    // and the old one's inventory is never saved. Null when they are offline.
+    private static Player live(Player player) {
+        return player.getServer().getPlayer(player.getUniqueId());
     }
 
     // null when the player may start a trade, which then holds their busy slot
@@ -232,7 +248,8 @@ public final class BazaarService {
                     messages.get("trade.reasons.failed-refunded", "The trade didn't go through. Your money has been returned.")));
         }
         prices.accept(outcome.row());
-        if (!player.isOnline()) {
+        Player buyer = live(player);
+        if (buyer == null) {
             // an offline player's inventory isn't saved again, so take the trade back instead of delivering
             return undo(curve, TradeSide.BUY, qty, outcome.logId()).thenApply(ignored -> {
                 refund(player, charge, itemId);
@@ -240,8 +257,8 @@ public final class BazaarService {
                         messages.get("trade.reasons.failed-refunded", "The trade didn't go through. Your money has been returned."));
             });
         }
-        giveItems(player, itemId, maxStack, (int) qty);
-        recordLocally(player, itemId, TradeSide.BUY, qty, charge);
+        giveItems(buyer, itemId, maxStack, (int) qty);
+        recordLocally(buyer, itemId, TradeSide.BUY, qty, charge);
         return CompletableFuture.completedFuture(TradeResult.ok(TradeSide.BUY, itemId, qty, charge));
     }
 
@@ -337,7 +354,16 @@ public final class BazaarService {
             });
         }
         UUID owner = player.getUniqueId();
-        return run.whenComplete((result, failure) -> busy.exit(owner));
+        return run.handle((result, failure) -> {
+            busy.exit(owner);
+            if (failure == null) {
+                return result;
+            }
+            logger.log(Level.SEVERE, "Bazaar sell-all by " + player.getName() + " (" + owner
+                    + ") failed part way; check their balance and inventory.", failure);
+            return new SellAllResult(0, 0, 0, 0, 0, TradeResult.fail(TradeResult.Status.ERROR, TradeSide.SELL, null,
+                    messages.get("trade.reasons.generic", "Trade failed.")));
+        });
     }
 
     private CompletableFuture<TradeResult> startSell(Player player, String itemId, long amount) {
@@ -414,11 +440,12 @@ public final class BazaarService {
         return CompletableFuture.completedFuture(TradeResult.ok(TradeSide.SELL, itemId, qty, proceeds));
     }
 
-    private void giveBack(Player player, List<ItemStack> taken, String itemId) {
-        if (!player.isOnline()) {
+    private void giveBack(Player seller, List<ItemStack> taken, String itemId) {
+        Player player = live(seller);
+        if (player == null) {
             int count = taken.stream().mapToInt(ItemStack::getAmount).sum();
-            logger.severe("Could not return " + count + " " + itemId + " to " + player.getName() + " ("
-                    + player.getUniqueId() + "), who left while a bazaar sale was refused. Give them back by hand.");
+            logger.severe("Could not return " + count + " " + itemId + " to " + seller.getName() + " ("
+                    + seller.getUniqueId() + "), who left while a bazaar sale was refused. Give them back by hand.");
             return;
         }
         for (ItemStack stack : taken) {

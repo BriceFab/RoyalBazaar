@@ -28,6 +28,8 @@ admin-set-clamped: "&aSet &f{item}&a mid: &e{old} &7-> &e{new} &7(clamped to thi
 admin-reset: "&aReset &f{item}&a to its base price: &e{old} &7-> &e{new}"
 admin-freeze: "&eFroze &f{item}&e on every server: trades refused, price held until you unfreeze it."
 admin-unfreeze: "&aUnfroze &f{item}&a: trading and reversion resumed."
+# admin command on an item a reload just listed, before its price row is written
+admin-missing: "&c{item} has no stored price yet. Try again in a moment."
 
 trade:
   bought: "&aBought &f{amount} &afor &e${total}"

@@ -2,6 +2,7 @@ package com.mystipixel.royalbazaar.service;
 
 import com.mystipixel.royalcommon.storage.DbExecutor;
 import com.mystipixel.royalcommon.storage.MainThread;
+import org.bukkit.plugin.IllegalPluginAccessException;
 import org.bukkit.plugin.Plugin;
 
 import java.time.Duration;
@@ -32,7 +33,12 @@ public final class MainQueue implements MainThread {
     public static MainQueue bukkit(Plugin plugin) {
         return new MainQueue(task -> {
             if (plugin.isEnabled()) {
-                plugin.getServer().getScheduler().runTask(plugin, task);
+                try {
+                    plugin.getServer().getScheduler().runTask(plugin, task);
+                } catch (IllegalPluginAccessException disabling) {
+                    // the plugin was disabled between the check and the call; the task stays queued
+                    // and finish() runs it
+                }
             }
         });
     }

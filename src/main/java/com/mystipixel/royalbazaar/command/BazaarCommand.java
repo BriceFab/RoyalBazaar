@@ -7,6 +7,7 @@ import com.mystipixel.royalbazaar.gui.GuiManager;
 import com.mystipixel.royalbazaar.market.MarketItem;
 import com.mystipixel.royalbazaar.market.MarketManager;
 import com.mystipixel.royalbazaar.market.PricingEngine;
+import com.mystipixel.royalbazaar.market.StateRow;
 import com.mystipixel.royalbazaar.market.TradeSide;
 import com.mystipixel.royalbazaar.service.BazaarService;
 import org.bukkit.command.Command;
@@ -116,6 +117,16 @@ public final class BazaarCommand implements CommandExecutor, TabCompleter {
                 EffectDispatcher.sendSellAllSummary(plugin.messages(), player, what, result));
     }
 
+    // the item was listed by a reload whose database row isn't written yet
+    private boolean missing(CommandSender sender, MarketItem item, StateRow row) {
+        if (row != null) {
+            return false;
+        }
+        plugin.messages().send(sender, "admin-missing", "&c{item} has no stored price yet. Try again in a moment.",
+                Map.of("item", item.id()));
+        return true;
+    }
+
     // every change is written to the database and reaches other servers on their next refresh
     private void admin(CommandSender sender, String[] args) {
         if (!sender.hasPermission("royalbazaar.admin")) {
@@ -154,6 +165,9 @@ public final class BazaarCommand implements CommandExecutor, TabCompleter {
                 double clamped = PricingEngine.clamp(mid, item.floor(), item.ceiling());
                 double old = item.mid();
                 service.setMid(item.id(), clamped).thenAccept(row -> {
+                    if (missing(sender, item, row)) {
+                        return;
+                    }
                     Map<String, String> values = Map.of("item", item.id(), "old", fmt(old), "new", fmt(clamped));
                     if (clamped != mid) {
                         plugin.messages().send(sender, "admin-set-clamped",
@@ -167,19 +181,31 @@ public final class BazaarCommand implements CommandExecutor, TabCompleter {
             case "reset" -> {
                 double old = item.mid();
                 double base = item.curve().startingMid();
-                service.setMid(item.id(), base).thenAccept(row -> plugin.messages().send(sender, "admin-reset",
-                        "&aReset &f{item}&a to its base price: &e{old} &7-> &e{new}",
-                        Map.of("item", item.id(), "old", fmt(old), "new", fmt(base))));
+                service.setMid(item.id(), base).thenAccept(row -> {
+                    if (!missing(sender, item, row)) {
+                        plugin.messages().send(sender, "admin-reset",
+                                "&aReset &f{item}&a to its base price: &e{old} &7-> &e{new}",
+                                Map.of("item", item.id(), "old", fmt(old), "new", fmt(base)));
+                    }
+                });
             }
             case "freeze" -> {
-                service.setFrozen(item.id(), true).thenAccept(row -> plugin.messages().send(sender, "admin-freeze",
-                        "&eFroze &f{item}&e on every server: trades refused, price held until you unfreeze it.",
-                        Map.of("item", item.id())));
+                service.setFrozen(item.id(), true).thenAccept(row -> {
+                    if (!missing(sender, item, row)) {
+                        plugin.messages().send(sender, "admin-freeze",
+                                "&eFroze &f{item}&e on every server: trades refused, price held until you unfreeze it.",
+                                Map.of("item", item.id()));
+                    }
+                });
             }
             case "unfreeze" -> {
-                service.setFrozen(item.id(), false).thenAccept(row -> plugin.messages().send(sender, "admin-unfreeze",
-                        "&aUnfroze &f{item}&a: trading and reversion resumed.",
-                        Map.of("item", item.id())));
+                service.setFrozen(item.id(), false).thenAccept(row -> {
+                    if (!missing(sender, item, row)) {
+                        plugin.messages().send(sender, "admin-unfreeze",
+                                "&aUnfroze &f{item}&a: trading and reversion resumed.",
+                                Map.of("item", item.id()));
+                    }
+                });
             }
             default -> plugin.messages().send(sender, "admin-usage",
                     "&cUsage: /bazaar admin <set|freeze|unfreeze|reset> <item> [mid]");

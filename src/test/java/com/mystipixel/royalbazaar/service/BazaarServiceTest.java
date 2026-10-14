@@ -6,6 +6,7 @@ import com.mystipixel.royalbazaar.hooks.*;
 import com.mystipixel.royalbazaar.market.*;
 import com.mystipixel.royalbazaar.message.MessageManager;
 import com.mystipixel.royalcommon.storage.DbExecutor;
+import org.bukkit.Server;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -28,7 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
@@ -55,6 +55,7 @@ class BazaarServiceTest {
     private final MarketItem item = new MarketItem("ecoitem:test", "test", null, "Custom item",
             100, 0.05, 1000, 0.01, 1, 1000, TradeMode.BOTH);
     private final MainQueue main = new MainQueue(task -> { });
+    private final Server server = mock(Server.class);
 
     @TempDir
     Path dir;
@@ -75,8 +76,10 @@ class BazaarServiceTest {
         when(messages.get(anyString(), anyString())).thenAnswer(i -> i.getArgument(1));
         when(market.get(item.id())).thenReturn(item);
         when(player.getInventory()).thenReturn(inventory);
-        when(player.getUniqueId()).thenReturn(UUID.randomUUID());
-        when(player.isOnline()).thenReturn(true);
+        UUID playerId = UUID.randomUUID();
+        when(player.getUniqueId()).thenReturn(playerId);
+        when(player.getServer()).thenReturn(server);
+        when(server.getPlayer(playerId)).thenReturn(player);
         // Storage arrays are copied, but their stacks are shared, just as a shallow snapshot can be.
         when(inventory.getStorageContents()).thenAnswer(i -> storage.get().clone());
         doAnswer(i -> { storage.set(i.getArgument(0)); return null; })
@@ -253,9 +256,8 @@ class BazaarServiceTest {
         // An exception may occur after a provider moved money. Do not return items automatically
         // and turn an unknown outcome into a duplicate; this path still needs manual reconciliation.
         when(vault.deposit(eq(player), anyDouble())).thenThrow(new IllegalStateException("unknown outcome"));
-        CompletionException thrown = assertThrows(CompletionException.class,
-                () -> await(service.sell(player, item.id(), 8)));
-        assertInstanceOf(IllegalStateException.class, thrown.getCause());
+        TradeResult result = await(service.sell(player, item.id(), 8));
+        assertEquals(TradeResult.Status.ERROR, result.status(), "logged and reported, not thrown at the menu");
         verify(vault).deposit(eq(player), anyDouble());
         verify(inventory, never()).addItem(any(ItemStack[].class));
         assertEquals(6, heldCustom());
@@ -466,13 +468,27 @@ class BazaarServiceTest {
     @Test
     void buyerWhoLeftBeforeDeliveryIsRefundedAndTheTradeTakenBack() throws SQLException {
         readyToBuy(TradeMode.BOTH);
-        when(player.isOnline()).thenReturn(false);
+        when(server.getPlayer(player.getUniqueId())).thenReturn(null);
         TradeResult result = await(service.buy(player, item.id(), 10));
         assertFalse(result.ok());
         verify(vault).deposit(eq(player), anyDouble());
         verify(inventory, never()).addItem(any(ItemStack[].class));
         assertEquals(100, storedMid(item.id()), 1e-9);
         assertEquals(0, loggedTrades());
+    }
+
+    @Test
+    void buyerWhoRejoinedDuringTheTradeGetsTheItemsOnTheirNewHandle() {
+        readyToBuy(TradeMode.BOTH);
+        Player rejoined = mock(Player.class);
+        PlayerInventory fresh = mock(PlayerInventory.class);
+        when(rejoined.getInventory()).thenReturn(fresh);
+        when(fresh.addItem(any(ItemStack[].class))).thenReturn(new HashMap<>());
+        CompletableFuture<TradeResult> trade = service.buy(player, item.id(), 10);
+        when(server.getPlayer(player.getUniqueId())).thenReturn(rejoined);
+        assertTrue(await(trade).ok());
+        verify(fresh).addItem(any(ItemStack[].class));
+        verify(inventory, never()).addItem(any(ItemStack[].class));
     }
 
     @Test
