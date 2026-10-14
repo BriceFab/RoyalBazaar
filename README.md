@@ -388,7 +388,8 @@ one freeze, one history. A hub and island servers all trade against the same mar
   and reads only those.
 - **One server runs the market clock.** Price reversion, history snapshots and the 7-day and 24h
   figures run on whichever server holds the lease; if it stops, another takes over within three ticks.
-  The other servers read the stored figures every `history-interval-seconds`.
+  The other servers re-read the stored figures every `history-interval-seconds`, so their figures can
+  be up to two intervals old.
 - **Freezes are shared.** `/bazaar admin freeze` stops trading of that item on every server.
 - **The economy must be shared too.** The bazaar moves Vault money on the server where the trade
   happens. If each server has its own balances, a player can buy cheap here and spend the money

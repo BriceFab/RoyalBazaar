@@ -150,13 +150,13 @@ public final class BazaarDatabase {
         int before = new SchemaVersion(db, "rb").ensure(SCHEMA_VERSION, (c, dialect, from, to) -> {
             if (from < 1) {
                 createTables(c, dialect);
-                addColumn(c, "frozen", dialect == Dialect.MYSQL ? "TINYINT NOT NULL DEFAULT 0" : "INTEGER NOT NULL DEFAULT 0");
-                addColumn(c, "version", dialect == Dialect.MYSQL ? "BIGINT NOT NULL DEFAULT 0" : "INTEGER NOT NULL DEFAULT 0");
-                createIndexIfMissing(c, "idx_rb_tx_ts", "rb_transactions", "ts");
+                addColumn(c, dialect, "frozen", dialect == Dialect.MYSQL ? "TINYINT NOT NULL DEFAULT 0" : "INTEGER NOT NULL DEFAULT 0");
+                addColumn(c, dialect, "version", dialect == Dialect.MYSQL ? "BIGINT NOT NULL DEFAULT 0" : "INTEGER NOT NULL DEFAULT 0");
+                createIndexIfMissing(c, dialect, "idx_rb_tx_ts", "rb_transactions", "ts");
             }
             if (from < 2) {
                 // covering, so the snapshot prune and the stats queries read only the index
-                createIndexIfMissing(c, "idx_rb_history_ts", "rb_history", "ts, item_id, mid_price");
+                createIndexIfMissing(c, dialect, "idx_rb_history_ts", "rb_history", "ts, item_id, mid_price");
                 try (Statement st = c.createStatement()) {
                     st.executeUpdate("CREATE TABLE IF NOT EXISTS rb_stats ("
                             + "item_id VARCHAR(96) PRIMARY KEY,"
@@ -196,35 +196,47 @@ public final class BazaarDatabase {
                     + "unit_mid DOUBLE PRECISION NOT NULL,"
                     + "total DOUBLE PRECISION NOT NULL)");
         }
-        createIndexIfMissing(c, "idx_rb_tx_player", "rb_transactions", "player, ts");
-        createIndexIfMissing(c, "idx_rb_tx_item", "rb_transactions", "item_id, ts");
+        createIndexIfMissing(c, dialect, "idx_rb_tx_player", "rb_transactions", "player, ts");
+        createIndexIfMissing(c, dialect, "idx_rb_tx_item", "rb_transactions", "item_id, ts");
     }
 
-    private void addColumn(Connection c, String column, String definition) throws SQLException {
-        try (ResultSet columns = c.getMetaData().getColumns(c.getCatalog(), null, "rb_state", null)) {
-            while (columns.next()) {
-                if (column.equalsIgnoreCase(columns.getString("COLUMN_NAME"))) {
-                    return;
-                }
-            }
+    private void addColumn(Connection c, Dialect dialect, String column, String definition) throws SQLException {
+        String sql = dialect == Dialect.MYSQL
+                ? "SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE()"
+                        + " AND table_name = 'rb_state' AND column_name = ?"
+                : "SELECT 1 FROM pragma_table_info('rb_state') WHERE name = ? COLLATE NOCASE";
+        if (exists(c, sql, column)) {
+            return;
         }
         try (Statement st = c.createStatement()) {
             st.executeUpdate("ALTER TABLE rb_state ADD COLUMN " + column + " " + definition);
         }
     }
 
-    // MySQL has no CREATE INDEX IF NOT EXISTS, so ask the catalog first
-    private static void createIndexIfMissing(Connection c, String name, String table, String columns)
+    // MySQL has no CREATE INDEX IF NOT EXISTS, so look first. Only in the current database: with
+    // databaseTerm=SCHEMA the JDBC metadata lookup spans every database on the server
+    private static void createIndexIfMissing(Connection c, Dialect dialect, String name, String table, String columns)
             throws SQLException {
-        try (ResultSet rs = c.getMetaData().getIndexInfo(c.getCatalog(), null, table, false, true)) {
-            while (rs.next()) {
-                if (name.equalsIgnoreCase(rs.getString("INDEX_NAME"))) {
-                    return;
-                }
-            }
+        String sql = dialect == Dialect.MYSQL
+                ? "SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE()"
+                        + " AND index_name = ? AND table_name = ?"
+                : "SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ? COLLATE NOCASE AND tbl_name = ?";
+        if (exists(c, sql, name, table)) {
+            return;
         }
         try (Statement s = c.createStatement()) {
             s.executeUpdate("CREATE INDEX " + name + " ON " + table + " (" + columns + ")");
+        }
+    }
+
+    private static boolean exists(Connection c, String sql, String... values) throws SQLException {
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            for (int i = 0; i < values.length; i++) {
+                ps.setString(i + 1, values[i]);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
         }
     }
 
