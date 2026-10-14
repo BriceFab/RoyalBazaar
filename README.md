@@ -365,24 +365,42 @@ English item names, so to let players search in their own language, copy Minecra
 storage:
   type: SQLITE            # or MYSQL
   sqlite-file: bazaar.db
+  refresh-seconds: 5      # MySQL: how often to pick up prices other servers changed
+  server-id: ""           # MySQL: a name for this server, made up and saved if left empty
 ```
 
-MySQL is supported, but each server needs its own database for now. Sharing one database between
-servers (a hub and island servers, say) is planned and not safe yet, because two servers can overwrite
-each other's data.
+Tables: `rb_state` (current prices and freezes), `rb_history` (snapshots for graphs / 24h change),
+`rb_transactions` (audit log), `rb_lease` (which server runs the market clock).
 
-Tables: `rb_state` (current prices), `rb_history` (snapshots for graphs / 24h change),
-`rb_transactions` (audit log).
+### Several servers, one market
 
-**Prices are authoritative in memory**, flushed write-behind on a timer and on shutdown — a trade
-never touches disk on the hot path. Trades run on the main thread, so the price mutation, balance
-move and inventory change are effectively atomic: no partial trades, no race between two buyers.
+Point every server at the same MySQL/MariaDB database and they share one bazaar: one price per item,
+one freeze, one history. A hub and island servers all trade against the same market.
+
+- **The database holds the price.** Every trade locks the item's row, prices the trade from it and
+  writes the new price in one transaction, so two servers trading the same item at the same moment
+  never overwrite each other.
+- **You pay the price you were shown.** If another server moved the price by more than half the
+  spread since your menu last updated, the trade is refused, your money or items come back, and you
+  see the new price. Smaller moves still trade at the quoted price.
+- **Other servers' trades show up within `refresh-seconds`.** Each server checks which rows changed
+  and reads only those.
+- **One server runs the market clock.** Price reversion and history snapshots run on whichever server
+  holds the lease; if it stops, another takes over within three ticks.
+- **Freezes are shared.** `/bazaar admin freeze` stops trading of that item on every server.
+- **The economy must be shared too.** The bazaar moves Vault money on the server where the trade
+  happens. If each server has its own balances, a player can buy cheap here and spend the money
+  there; use a network-wide economy such as RoyalBank on the same database server.
+
+A trade now takes a round trip to the database before it completes: money (or items) leave first,
+the database decides, then items (or money) are delivered. If the database refuses or fails, the
+first step is reversed. One trade per player runs at a time, so a double click can't spend the same
+quote twice.
 
 ```yaml
 engine:
   tick-interval-seconds: 60      # mean reversion + stat roll
   history-interval-seconds: 300  # price snapshot for graphs
-  flush-interval-seconds: 30     # write-behind flush
 ```
 
 ---
@@ -421,8 +439,8 @@ Java 21, Maven. Versioning is `year.week.revision` (e.g. `2026.28.0`), matching 
 - **Broken item tuning is refused.** An item with non-positive `elasticity`, a `spread` outside
   [0, 1), a `reversion_rate` outside [0, 1] or a floor at or above its ceiling is skipped with a
   warning, as is a second listing of the same item (`wheat` and `minecraft:wheat` count as one).
-- **`/bazaar reload` keeps the live market.** Prices, freezes, 24h volume and unsaved changes carry
-  over; only newly listed items are read from storage.
+- **`/bazaar reload` keeps the live market.** Prices, freezes and 24h volume carry over, and every
+  price is read from storage again.
 - **`base_price: auto` needs EcoShop.** If EcoShop doesn't list the item, the item is skipped with a
   warning — it does not silently get a made-up price.
 - The plugin **waits** for a Vault economy provider instead of disabling when one isn't registered at
@@ -430,6 +448,11 @@ Java 21, Maven. Versioning is `year.week.revision` (e.g. `2026.28.0`), matching 
   register later — disabling would kill the plugin purely because of plugin load order.
 
 ### Upgrading
+
+The database is upgraded in place on first start: existing prices are kept, and `rb_state` gains
+`frozen` and `version` columns. `engine.flush-interval-seconds` is no longer used (a trade is written
+when it happens) and can be removed from `config.yml`. Freezes set before this version lived only in
+memory, so re-apply any you still want.
 
 `gui/bazaar_main.yml` (the old category hub) has been **removed**. `/bazaar` now opens a category and
 the rail navigates between them. If you customised that file it is no longer read and can be deleted;

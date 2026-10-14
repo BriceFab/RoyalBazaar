@@ -14,6 +14,10 @@ public record TradeResult(Status status, TradeSide side, String itemId, long fil
         INSUFFICIENT_ITEMS,
         INVENTORY_FULL,
         REJECTED_BY_GUARD,
+        // another trade of this player's is still on its way through the database
+        BUSY,
+        // the price moved more than half the spread between the quote and the trade (another server traded)
+        PRICE_MOVED,
         ERROR
     }
 

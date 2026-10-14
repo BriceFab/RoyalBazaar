@@ -3,55 +3,80 @@ package com.mystipixel.royalbazaar.service;
 import com.mystipixel.royalbazaar.config.CategoryConfig;
 import com.mystipixel.royalbazaar.config.PluginConfig;
 import com.mystipixel.royalbazaar.data.BazaarDatabase;
+import com.mystipixel.royalbazaar.data.BazaarDatabase.TradeOutcome;
 import com.mystipixel.royalbazaar.hooks.EconGuardHook;
 import com.mystipixel.royalbazaar.hooks.EcoHook;
 import com.mystipixel.royalbazaar.hooks.VaultHook;
+import com.mystipixel.royalbazaar.market.Curve;
 import com.mystipixel.royalbazaar.market.MarketItem;
 import com.mystipixel.royalbazaar.market.MarketManager;
 import com.mystipixel.royalbazaar.market.PricingEngine;
+import com.mystipixel.royalbazaar.market.StateRow;
 import com.mystipixel.royalbazaar.market.TradeMode;
 import com.mystipixel.royalbazaar.market.TradeResult;
 import com.mystipixel.royalbazaar.market.TradeSide;
 import com.mystipixel.royalbazaar.message.MessageManager;
+import com.mystipixel.royalcommon.storage.BusyGuard;
+import com.mystipixel.royalcommon.storage.DbExecutor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * The buy/sell flow. Main thread only. Order: resolve, quote, EconGuard veto, funds/items check,
- * reserve sell items, move money, deliver buy items, apply market impact, record. Not atomic across
- * Vault: a rejected sale payment restores the reserved items, but a provider crash has an unknown outcome.
+ * The buy/sell flow. Starts on the main thread and completes there a tick or two later. Order: resolve,
+ * quote, EconGuard veto, funds/items check, take the money (buy) or the items (sell), apply the market
+ * impact in one database transaction, then deliver the items (buy) or the money (sell). When a later step
+ * fails, the earlier ones are reversed: a refused buy is refunded, a refused sale gets its items back, and
+ * a sale whose payment fails is taken back out of the market.
  */
 public final class BazaarService {
 
-    private final JavaPlugin plugin;
     private final MarketManager market;
-    private final BazaarDatabase db;
+    private final BazaarDatabase database;
+    private final DbExecutor db;
+    private final PriceRefresher prices;
     private final VaultHook vault;
     private final EcoHook eco;
     private final EconGuardHook guard;
     private final PluginConfig config;
     private final MessageManager messages;
+    private final Logger logger;
+    // one trade (or sell-all run) per player at a time, so a double click can't spend the same quote twice
+    private final BusyGuard<UUID> busy = new BusyGuard<>();
+    private volatile boolean closed;
 
-    public BazaarService(JavaPlugin plugin, MarketManager market, BazaarDatabase db, VaultHook vault,
-                         EcoHook eco, EconGuardHook guard, PluginConfig config, MessageManager messages) {
-        this.plugin = plugin;
+    public BazaarService(MarketManager market, BazaarDatabase database, DbExecutor db, PriceRefresher prices,
+                         VaultHook vault, EcoHook eco, EconGuardHook guard, PluginConfig config,
+                         MessageManager messages, Logger logger) {
         this.market = market;
+        this.database = database;
         this.db = db;
+        this.prices = prices;
         this.vault = vault;
         this.eco = eco;
         this.guard = guard;
         this.config = config;
         this.messages = messages;
+        this.logger = logger;
     }
 
     public PluginConfig config() {
         return config;
+    }
+
+    /** Refuses new trades; trades already started still finish. For onDisable. */
+    public void close() {
+        closed = true;
     }
 
     /**
@@ -79,27 +104,83 @@ public final class BazaarService {
         return messages.get("price-unavailable", "-");
     }
 
-    public TradeResult buy(Player player, String itemId, long amount) {
+    /** Completes on the main thread. */
+    public CompletableFuture<TradeResult> buy(Player player, String itemId, long amount) {
+        return guarded(player, TradeSide.BUY, itemId, () -> startBuy(player, itemId, amount));
+    }
+
+    /** Completes on the main thread. */
+    public CompletableFuture<TradeResult> sell(Player player, String itemId, long amount) {
+        return guarded(player, TradeSide.SELL, itemId, () -> startSell(player, itemId, amount));
+    }
+
+    private CompletableFuture<TradeResult> guarded(Player player, TradeSide side, String itemId,
+                                                   Supplier<CompletableFuture<TradeResult>> start) {
+        TradeResult refused = refuseStart(player, side, itemId);
+        if (refused != null) {
+            return CompletableFuture.completedFuture(refused);
+        }
+        UUID id = player.getUniqueId();
+        CompletableFuture<TradeResult> trade;
+        try {
+            trade = start.get();
+        } catch (RuntimeException e) {
+            busy.exit(id);
+            throw e;
+        }
+        return trade.handle((result, failure) -> {
+            busy.exit(id);
+            if (failure == null) {
+                return result;
+            }
+            // money or items may already have moved: log it for a by-hand check and tell the player
+            logger.log(Level.SEVERE, "Bazaar " + side + " of " + itemId + " by " + player.getName() + " (" + id
+                    + ") failed part way; check their balance and inventory.", failure);
+            return TradeResult.fail(TradeResult.Status.ERROR, side, itemId,
+                    messages.get("trade.reasons.generic", "Trade failed."));
+        });
+    }
+
+    // the player's current handle: one who left and rejoined during the database round trip has a new one,
+    // and the old one's inventory is never saved. Null when they are offline.
+    private static Player live(Player player) {
+        return player.getServer().getPlayer(player.getUniqueId());
+    }
+
+    // null when the player may start a trade, which then holds their busy slot
+    private TradeResult refuseStart(Player player, TradeSide side, String itemId) {
+        if (closed) {
+            return TradeResult.fail(TradeResult.Status.ERROR, side, itemId,
+                    messages.get("trade.reasons.closed", "The bazaar is closing. Please try again shortly."));
+        }
+        if (!busy.tryEnter(player.getUniqueId())) {
+            return TradeResult.fail(TradeResult.Status.BUSY, side, itemId,
+                    messages.get("trade.reasons.busy", "Your last trade is still going through."));
+        }
+        return null;
+    }
+
+    private CompletableFuture<TradeResult> startBuy(Player player, String itemId, long amount) {
         MarketItem item = market.get(itemId);
         if (item == null) {
-            return TradeResult.fail(TradeResult.Status.UNKNOWN_ITEM, TradeSide.BUY, itemId,
+            return failed(TradeResult.Status.UNKNOWN_ITEM, TradeSide.BUY, itemId,
                     messages.get("trade.reasons.unknown-item", "Unknown item."));
         }
         TradeResult refused = tradeModeRefusal(item, TradeSide.BUY);
         if (refused != null) {
-            return refused;
+            return CompletableFuture.completedFuture(refused);
         }
         if (amount <= 0) {
-            return TradeResult.fail(TradeResult.Status.ERROR, TradeSide.BUY, itemId,
+            return failed(TradeResult.Status.ERROR, TradeSide.BUY, itemId,
                     messages.get("trade.reasons.invalid-amount", "Invalid amount."));
         }
         if (item.frozen()) {
-            return TradeResult.fail(TradeResult.Status.DISABLED, TradeSide.BUY, itemId,
+            return failed(TradeResult.Status.DISABLED, TradeSide.BUY, itemId,
                     messages.get("trade.reasons.frozen", "This item is temporarily frozen."));
         }
         long maxOrder = config.maxOrder();
         if (maxOrder > 0 && amount > maxOrder) {
-            return TradeResult.fail(TradeResult.Status.ERROR, TradeSide.BUY, itemId,
+            return failed(TradeResult.Status.ERROR, TradeSide.BUY, itemId,
                     messages.format("trade.reasons.max-order", "You can buy at most {max} at once.",
                             Map.of("max", String.valueOf(maxOrder))));
         }
@@ -107,139 +188,305 @@ public final class BazaarService {
         amount = Math.min(amount, Integer.MAX_VALUE);
         ItemStack prototype = eco.resolve(itemId, 1);
         if (prototype == null) {
-            return TradeResult.fail(TradeResult.Status.DISABLED, TradeSide.BUY, itemId,
+            return failed(TradeResult.Status.DISABLED, TradeSide.BUY, itemId,
                     messages.get("trade.reasons.unavailable", "This item is currently unavailable."));
         }
 
         double cost = PricingEngine.buyCost(item, amount);
         if (!guard.allow(player, TradeSide.BUY, itemId, amount, cost)) {
-            return TradeResult.fail(TradeResult.Status.REJECTED_BY_GUARD, TradeSide.BUY, itemId,
+            return failed(TradeResult.Status.REJECTED_BY_GUARD, TradeSide.BUY, itemId,
                     messages.get("trade.reasons.blocked", "Trade blocked."));
         }
         if (!vault.has(player, cost)) {
-            return TradeResult.fail(TradeResult.Status.INSUFFICIENT_FUNDS, TradeSide.BUY, itemId,
+            return failed(TradeResult.Status.INSUFFICIENT_FUNDS, TradeSide.BUY, itemId,
                     messages.get("trade.reasons.not-enough-money", "Not enough money."));
         }
 
-        int fits = spaceFor(player, itemId, prototype.getMaxStackSize(), (int) amount);
+        int maxStack = prototype.getMaxStackSize();
+        int fits = spaceFor(player, itemId, maxStack, (int) amount);
         long fill = amount;
         if (fits < amount) {
             switch (config.inventoryFullPolicy()) {
                 case "partial" -> fill = fits;
-                case "drop" -> { /* give all; overflow dropped below */ }
+                case "drop" -> { /* give all; overflow dropped on delivery */ }
                 default -> {
-                    return TradeResult.fail(TradeResult.Status.INVENTORY_FULL, TradeSide.BUY, itemId,
+                    return failed(TradeResult.Status.INVENTORY_FULL, TradeSide.BUY, itemId,
                             messages.get("trade.reasons.not-enough-space", "Not enough inventory space."));
                 }
             }
         }
         if (fill <= 0) {
-            return TradeResult.fail(TradeResult.Status.INVENTORY_FULL, TradeSide.BUY, itemId,
+            return failed(TradeResult.Status.INVENTORY_FULL, TradeSide.BUY, itemId,
                     messages.get("trade.reasons.inventory-full", "Inventory full."));
         }
 
-        double finalCost = fill == amount ? cost : PricingEngine.buyCost(item, fill);
-        if (!vault.withdraw(player, finalCost)) {
-            return TradeResult.fail(TradeResult.Status.INSUFFICIENT_FUNDS, TradeSide.BUY, itemId,
+        double charge = fill == amount ? cost : PricingEngine.buyCost(item, fill);
+        if (!vault.withdraw(player, charge)) {
+            return failed(TradeResult.Status.INSUFFICIENT_FUNDS, TradeSide.BUY, itemId,
                     messages.get("trade.reasons.payment-failed", "Payment failed."));
         }
 
-        giveItems(player, itemId, prototype.getMaxStackSize(), (int) fill);
-        item.setMid(PricingEngine.midAfterBuy(item, fill));
-        item.volume().recordBuy(fill);
-        record(player, itemId, TradeSide.BUY, fill, item.mid(), finalCost);
-        return TradeResult.ok(TradeSide.BUY, itemId, fill, finalCost);
+        Curve curve = item.curve();
+        double quoted = item.mid();
+        long qty = fill;
+        UUID buyer = player.getUniqueId();
+        return db.submit("buy " + itemId, () -> database.trade(curve, TradeSide.BUY, qty, quoted, buyer, charge))
+                .handleAsync((outcome, failure) -> outcome, db.mainThread())
+                .thenCompose(outcome -> finishBuy(player, curve, maxStack, qty, charge, outcome));
     }
 
-    /** What a {@link #sellAll} pass did, for the summary message. */
-    public record SellAllResult(int distinctItems, long units, double proceeds, int blocked) {
+    // main thread; outcome is null when the transaction failed
+    private CompletableFuture<TradeResult> finishBuy(Player player, Curve curve, int maxStack, long qty,
+                                                     double charge, TradeOutcome outcome) {
+        String itemId = curve.id();
+        if (outcome == null || !outcome.ok()) {
+            refund(player, charge, itemId);
+            if (outcome != null) {
+                prices.accept(outcome.row());
+            }
+            return CompletableFuture.completedFuture(refusal(TradeSide.BUY, itemId, outcome,
+                    messages.get("trade.reasons.failed-refunded", "The trade didn't go through. Your money has been returned.")));
+        }
+        prices.accept(outcome.row());
+        Player buyer = live(player);
+        if (buyer == null) {
+            // an offline player's inventory isn't saved again, so take the trade back instead of delivering
+            return undo(curve, TradeSide.BUY, qty, outcome.logId()).thenApply(ignored -> {
+                refund(player, charge, itemId);
+                return TradeResult.fail(TradeResult.Status.ERROR, TradeSide.BUY, itemId,
+                        messages.get("trade.reasons.failed-refunded", "The trade didn't go through. Your money has been returned."));
+            });
+        }
+        giveItems(buyer, itemId, maxStack, (int) qty);
+        recordLocally(buyer, itemId, TradeSide.BUY, qty, charge);
+        return CompletableFuture.completedFuture(TradeResult.ok(TradeSide.BUY, itemId, qty, charge));
+    }
+
+    private void refund(Player player, double amount, String itemId) {
+        if (!vault.deposit(player, amount)) {
+            logger.severe("Could not refund " + amount + " to " + player.getName() + " (" + player.getUniqueId()
+                    + ") for a bazaar buy of " + itemId + " that did not go through. Pay it back by hand.");
+        }
+    }
+
+    private TradeResult refusal(TradeSide side, String itemId, TradeOutcome outcome, String otherwise) {
+        if (outcome != null && outcome.status() == TradeOutcome.Status.FROZEN) {
+            return TradeResult.fail(TradeResult.Status.DISABLED, side, itemId,
+                    messages.get("trade.reasons.frozen", "This item is temporarily frozen."));
+        }
+        if (outcome != null && outcome.status() == TradeOutcome.Status.PRICE_MOVED) {
+            return TradeResult.fail(TradeResult.Status.PRICE_MOVED, side, itemId,
+                    messages.get("trade.reasons.price-moved", "The price just changed. Check it and try again."));
+        }
+        return TradeResult.fail(TradeResult.Status.ERROR, side, itemId, otherwise);
+    }
+
+    // completes on the main thread once the price is back, whether or not the undo itself worked
+    private CompletableFuture<Void> undo(Curve curve, TradeSide side, long qty, long logId) {
+        return db.submit("undo " + side + " " + curve.id(), () -> database.undo(curve, side, qty, logId))
+                .handleAsync((row, failure) -> {
+                    if (failure != null) {
+                        logger.log(Level.SEVERE, "Could not take back a " + side + " of " + qty + " " + curve.id()
+                                + "; its price stays moved by that trade.", failure);
+                    } else {
+                        prices.accept(row);
+                    }
+                    return null;
+                }, db.mainThread());
+    }
+
+    /**
+     * What a {@link #sellAll} pass did, for the summary message. {@code retry} counts items handed back
+     * because the price moved on another server or the sale didn't go through; {@code refusal} is set when
+     * the run could not start at all (another trade in progress, shutting down).
+     */
+    public record SellAllResult(int distinctItems, long units, double proceeds, int blocked, int retry,
+                                TradeResult refusal) {
+
+        public SellAllResult(int distinctItems, long units, double proceeds, int blocked) {
+            this(distinctItems, units, proceeds, blocked, 0, null);
+        }
+
         public boolean soldNothing() {
             return distinctItems == 0;
+        }
+
+        SellAllResult plus(TradeResult result) {
+            if (result.ok()) {
+                return new SellAllResult(distinctItems + 1, units + result.filled(), proceeds + result.total(),
+                        blocked, retry, null);
+            }
+            // vetoed by EconGuard or frozen by an admin
+            if (result.status() == TradeResult.Status.REJECTED_BY_GUARD
+                    || result.status() == TradeResult.Status.DISABLED) {
+                return new SellAllResult(distinctItems, units, proceeds, blocked + 1, retry, null);
+            }
+            if (result.status() == TradeResult.Status.PRICE_MOVED || result.status() == TradeResult.Status.ERROR) {
+                return new SellAllResult(distinctItems, units, proceeds, blocked, retry + 1, null);
+            }
+            return this;
         }
     }
 
     /**
-     * Sell everything in the inventory that {@code scope} covers, each through {@link #sell}. Blocked
-     * or frozen items are counted and skipped rather than aborting the run; buy-only items are skipped
-     * without counting.
+     * Sell everything in the inventory that {@code scope} covers, one item after another. Blocked or
+     * frozen items are counted and skipped rather than aborting the run; buy-only items are skipped
+     * without counting. Completes on the main thread.
      */
-    public SellAllResult sellAll(Player player, Collection<MarketItem> scope) {
-        int distinct = 0;
-        long units = 0;
-        double proceeds = 0;
-        int blocked = 0;
-        for (MarketItem listed : scope) {
-            // looked up again: the caller's collection can predate a reload that changed the mode
-            MarketItem item = market.get(listed.id());
-            if (item == null || !item.tradeMode().allows(TradeSide.SELL)) {
-                continue;
-            }
-            if (eco.countHeld(player, item.id()) <= 0) {
-                continue;
-            }
-            TradeResult result = sell(player, item.id(), Long.MAX_VALUE);
-            if (result.ok()) {
-                distinct++;
-                units += result.filled();
-                proceeds += result.total();
-            } else if (result.status() == TradeResult.Status.REJECTED_BY_GUARD
-                    || result.status() == TradeResult.Status.DISABLED) {
-                blocked++;   // vetoed by EconGuard or frozen by an admin
-            }
+    public CompletableFuture<SellAllResult> sellAll(Player player, Collection<MarketItem> scope) {
+        TradeResult refused = refuseStart(player, TradeSide.SELL, null);
+        if (refused != null) {
+            return CompletableFuture.completedFuture(new SellAllResult(0, 0, 0, 0, 0, refused));
         }
-        return new SellAllResult(distinct, units, proceeds, blocked);
+        List<String> ids = new ArrayList<>();
+        for (MarketItem listed : scope) {
+            ids.add(listed.id());
+        }
+        CompletableFuture<SellAllResult> run = CompletableFuture.completedFuture(new SellAllResult(0, 0, 0, 0));
+        for (String id : ids) {
+            run = run.thenCompose(sofar -> {
+                // looked up again: the caller's collection can predate a reload that changed the mode
+                MarketItem item = market.get(id);
+                if (item == null || !item.tradeMode().allows(TradeSide.SELL) || eco.countHeld(player, id) <= 0) {
+                    return CompletableFuture.completedFuture(sofar);
+                }
+                return startSell(player, id, Long.MAX_VALUE).thenApply(sofar::plus);
+            });
+        }
+        UUID owner = player.getUniqueId();
+        return run.handle((result, failure) -> {
+            busy.exit(owner);
+            if (failure == null) {
+                return result;
+            }
+            logger.log(Level.SEVERE, "Bazaar sell-all by " + player.getName() + " (" + owner
+                    + ") failed part way; check their balance and inventory.", failure);
+            return new SellAllResult(0, 0, 0, 0, 0, TradeResult.fail(TradeResult.Status.ERROR, TradeSide.SELL, null,
+                    messages.get("trade.reasons.generic", "Trade failed.")));
+        });
     }
 
-    public TradeResult sell(Player player, String itemId, long amount) {
+    private CompletableFuture<TradeResult> startSell(Player player, String itemId, long amount) {
         MarketItem item = market.get(itemId);
         if (item == null) {
-            return TradeResult.fail(TradeResult.Status.UNKNOWN_ITEM, TradeSide.SELL, itemId,
+            return failed(TradeResult.Status.UNKNOWN_ITEM, TradeSide.SELL, itemId,
                     messages.get("trade.reasons.unknown-item", "Unknown item."));
         }
         TradeResult refused = tradeModeRefusal(item, TradeSide.SELL);
         if (refused != null) {
-            return refused;
+            return CompletableFuture.completedFuture(refused);
         }
         if (item.frozen()) {
-            return TradeResult.fail(TradeResult.Status.DISABLED, TradeSide.SELL, itemId,
+            return failed(TradeResult.Status.DISABLED, TradeSide.SELL, itemId,
                     messages.get("trade.reasons.frozen", "This item is temporarily frozen."));
         }
         if (amount <= 0) {
-            return TradeResult.fail(TradeResult.Status.ERROR, TradeSide.SELL, itemId,
+            return failed(TradeResult.Status.ERROR, TradeSide.SELL, itemId,
                     messages.get("trade.reasons.invalid-amount", "Invalid amount."));
         }
         int held = eco.countHeld(player, itemId);
         if (held <= 0) {
-            return TradeResult.fail(TradeResult.Status.INSUFFICIENT_ITEMS, TradeSide.SELL, itemId,
+            return failed(TradeResult.Status.INSUFFICIENT_ITEMS, TradeSide.SELL, itemId,
                     messages.get("trade.reasons.none-to-sell", "You have none to sell."));
         }
         long fill = Math.min(amount, held); // amount == Long.MAX_VALUE for "sell all"
         double proceeds = PricingEngine.sellProceeds(item, fill);
 
         if (!guard.allow(player, TradeSide.SELL, itemId, fill, proceeds)) {
-            return TradeResult.fail(TradeResult.Status.REJECTED_BY_GUARD, TradeSide.SELL, itemId,
+            return failed(TradeResult.Status.REJECTED_BY_GUARD, TradeSide.SELL, itemId,
                     messages.get("trade.reasons.blocked", "Trade blocked."));
         }
 
-        // plan on cloned stacks and restore the originals on rejection; never rebuild them from the id,
+        // plan on cloned stacks and hand back what was taken on refusal; never rebuild stacks from the id,
         // a custom stack may carry unique metadata
-        ItemStack[] before = player.getInventory().getStorageContents();
-        ItemStack[] reserved = reserveItems(before, itemId, (int) fill);
+        List<ItemStack> taken = new ArrayList<>();
+        ItemStack[] reserved = reserveItems(player.getInventory().getStorageContents(), itemId, (int) fill, taken);
         if (reserved == null) {
-            return TradeResult.fail(TradeResult.Status.INSUFFICIENT_ITEMS, TradeSide.SELL, itemId,
+            return failed(TradeResult.Status.INSUFFICIENT_ITEMS, TradeSide.SELL, itemId,
                     messages.get("trade.reasons.inventory-changed", "Your inventory changed. Please try again."));
         }
         player.getInventory().setStorageContents(reserved);
-        if (!vault.deposit(player, proceeds)) {
-            player.getInventory().setStorageContents(before);
-            return TradeResult.fail(TradeResult.Status.ERROR, TradeSide.SELL, itemId,
-                    messages.get("trade.reasons.payment-failed-returned",
-                            "Payment failed. Your items have been returned."));
+
+        Curve curve = item.curve();
+        double quoted = item.mid();
+        UUID seller = player.getUniqueId();
+        return db.submit("sell " + itemId, () -> database.trade(curve, TradeSide.SELL, fill, quoted, seller, proceeds))
+                .handleAsync((outcome, failure) -> outcome, db.mainThread())
+                .thenCompose(outcome -> finishSell(player, curve, fill, proceeds, taken, outcome));
+    }
+
+    // main thread; outcome is null when the transaction failed
+    private CompletableFuture<TradeResult> finishSell(Player player, Curve curve, long qty, double proceeds,
+                                                      List<ItemStack> taken, TradeOutcome outcome) {
+        String itemId = curve.id();
+        if (outcome == null || !outcome.ok()) {
+            giveBack(player, taken, itemId);
+            if (outcome != null) {
+                prices.accept(outcome.row());
+            }
+            return CompletableFuture.completedFuture(refusal(TradeSide.SELL, itemId, outcome,
+                    messages.get("trade.reasons.failed-returned", "The trade didn't go through. Your items have been returned.")));
         }
-        item.setMid(PricingEngine.midAfterSell(item, fill));
-        item.volume().recordSell(fill);
-        record(player, itemId, TradeSide.SELL, fill, item.mid(), proceeds);
-        return TradeResult.ok(TradeSide.SELL, itemId, fill, proceeds);
+        prices.accept(outcome.row());
+        if (!vault.deposit(player, proceeds)) {
+            return undo(curve, TradeSide.SELL, qty, outcome.logId()).thenApply(ignored -> {
+                giveBack(player, taken, itemId);
+                return TradeResult.fail(TradeResult.Status.ERROR, TradeSide.SELL, itemId,
+                        messages.get("trade.reasons.payment-failed-returned",
+                                "Payment failed. Your items have been returned."));
+            });
+        }
+        recordLocally(player, itemId, TradeSide.SELL, qty, proceeds);
+        return CompletableFuture.completedFuture(TradeResult.ok(TradeSide.SELL, itemId, qty, proceeds));
+    }
+
+    private void giveBack(Player seller, List<ItemStack> taken, String itemId) {
+        Player player = live(seller);
+        if (player == null) {
+            int count = taken.stream().mapToInt(ItemStack::getAmount).sum();
+            logger.severe("Could not return " + count + " " + itemId + " to " + seller.getName() + " ("
+                    + seller.getUniqueId() + "), who left while a bazaar sale was refused. Give them back by hand.");
+            return;
+        }
+        for (ItemStack stack : taken) {
+            for (ItemStack drop : player.getInventory().addItem(stack).values()) {
+                player.getWorld().dropItemNaturally(player.getLocation(), drop);
+            }
+        }
+    }
+
+    private void recordLocally(Player player, String itemId, TradeSide side, long qty, double total) {
+        MarketItem item = market.get(itemId);
+        if (item != null) {
+            if (side == TradeSide.BUY) {
+                item.volume().recordBuy(qty);
+            } else {
+                item.volume().recordSell(qty);
+            }
+        }
+        guard.observe(player, side, itemId, qty, total);
+    }
+
+    /** Admin set or reset; {@code mid} must already be clamped. Completes on the main thread with the new row. */
+    public CompletableFuture<StateRow> setMid(String itemId, double mid) {
+        return db.submit("set price " + itemId, () -> database.setMid(itemId, mid))
+                .thenApplyAsync(this::accepted, db.mainThread());
+    }
+
+    /** Freezes or unfreezes an item on every server. Completes on the main thread with the new row. */
+    public CompletableFuture<StateRow> setFrozen(String itemId, boolean frozen) {
+        return db.submit((frozen ? "freeze " : "unfreeze ") + itemId, () -> database.setFrozen(itemId, frozen))
+                .thenApplyAsync(this::accepted, db.mainThread());
+    }
+
+    private StateRow accepted(StateRow row) {
+        prices.accept(row);
+        return row;
+    }
+
+    private static CompletableFuture<TradeResult> failed(TradeResult.Status status, TradeSide side, String itemId,
+                                                         String message) {
+        return CompletableFuture.completedFuture(TradeResult.fail(status, side, itemId, message));
     }
 
     /**
@@ -305,8 +552,8 @@ public final class BazaarService {
         }
     }
 
-    // works on clones, never live stacks; null means the quote is stale
-    private ItemStack[] reserveItems(ItemStack[] original, String itemId, int amount) {
+    // works on clones, never live stacks; null means the quote is stale. taken gets a copy of each part removed
+    private ItemStack[] reserveItems(ItemStack[] original, String itemId, int amount, List<ItemStack> taken) {
         int remaining = amount;
         ItemStack[] contents = new ItemStack[original.length];
         for (int i = 0; i < original.length; i++) {
@@ -318,6 +565,9 @@ public final class BazaarService {
                 continue;
             }
             int take = Math.min(remaining, stack.getAmount());
+            ItemStack part = stack.clone();
+            part.setAmount(take);
+            taken.add(part);
             stack.setAmount(stack.getAmount() - take);
             remaining -= take;
             if (stack.getAmount() <= 0) {
@@ -325,13 +575,6 @@ public final class BazaarService {
             }
         }
         return remaining == 0 ? contents : null;
-    }
-
-    private void record(Player player, String itemId, TradeSide side, long qty, double unitMid, double total) {
-        guard.observe(player, side, itemId, qty, total);
-        long ts = System.currentTimeMillis();
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin,
-                () -> db.logTransaction(player.getUniqueId(), itemId, side, qty, unitMid, total, ts));
     }
 
     // falls back to the category name so a breadcrumb never renders an empty gap

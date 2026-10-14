@@ -35,6 +35,11 @@ public final class ConfigValidator {
             warn("trading.npc-arbitrage-conflict is '" + conflict + "'; expected keep or skip. Using keep.");
         }
 
+        if (plugin.getConfig().isSet("engine.flush-interval-seconds")) {
+            warn("engine.flush-interval-seconds is no longer used: every trade is saved as it happens. "
+                    + "You can delete the line.");
+        }
+
         if (config.loadCategories().isEmpty()) {
             warn("no categories/*.yml loaded; the bazaar will have nothing to trade.");
         }
