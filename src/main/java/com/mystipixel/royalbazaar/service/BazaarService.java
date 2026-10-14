@@ -104,9 +104,59 @@ public final class BazaarService {
         return messages.get("price-unavailable", "-");
     }
 
+    /**
+     * Extra conditions on a buy. {@code markup} multiplies the price (the extra goes to nobody);
+     * {@code maxCost} refuses the buy as a moved price when the charge would be higher; {@code exact} refuses
+     * rather than fill part of the order or drop items when the inventory can't hold them all.
+     */
+    public record BuyTerms(double markup, double maxCost, boolean exact) {
+
+        public static final BuyTerms PLAIN = new BuyTerms(1.0, Double.POSITIVE_INFINITY, false);
+    }
+
     /** Completes on the main thread. */
     public CompletableFuture<TradeResult> buy(Player player, String itemId, long amount) {
-        return guarded(player, TradeSide.BUY, itemId, () -> startBuy(player, itemId, amount));
+        return buy(player, itemId, amount, BuyTerms.PLAIN);
+    }
+
+    /** Completes on the main thread. */
+    public CompletableFuture<TradeResult> buy(Player player, String itemId, long amount, BuyTerms terms) {
+        return guarded(player, TradeSide.BUY, itemId, () -> startBuy(player, itemId, amount, terms));
+    }
+
+    /**
+     * What buying {@code amount} of {@code itemId} costs right now, before any markup, or -1 when a buy
+     * would be refused before money moves: unlisted, buy turned off, frozen, unresolvable or over the
+     * order limit. Funds and inventory space aren't checked.
+     */
+    public double buyQuote(String itemId, long amount) {
+        MarketItem item = itemId == null ? null : market.get(itemId);
+        if (item == null || amount <= 0 || amount > Integer.MAX_VALUE || !item.tradeMode().allows(TradeSide.BUY)
+                || item.frozen() || eco.resolve(itemId, 1) == null) {
+            return -1;
+        }
+        long maxOrder = config.maxOrder();
+        if (maxOrder > 0 && amount > maxOrder) {
+            return -1;
+        }
+        return PricingEngine.buyCost(item, amount);
+    }
+
+    /** The listed item {@code stack} is one of, or null. Scans every listing, so don't call it per tick. */
+    public String listingOf(ItemStack stack) {
+        if (stack == null || stack.getType().isAir()) {
+            return null;
+        }
+        for (MarketItem item : market.all()) {
+            if (eco.matches(item.id(), stack)) {
+                return item.id();
+            }
+        }
+        return null;
+    }
+
+    public String formatPrice(double amount) {
+        return vault.formatPrice(amount);
     }
 
     /** Completes on the main thread. */
@@ -160,7 +210,7 @@ public final class BazaarService {
         return null;
     }
 
-    private CompletableFuture<TradeResult> startBuy(Player player, String itemId, long amount) {
+    private CompletableFuture<TradeResult> startBuy(Player player, String itemId, long amount, BuyTerms terms) {
         MarketItem item = market.get(itemId);
         if (item == null) {
             return failed(TradeResult.Status.UNKNOWN_ITEM, TradeSide.BUY, itemId,
@@ -192,7 +242,12 @@ public final class BazaarService {
                     messages.get("trade.reasons.unavailable", "This item is currently unavailable."));
         }
 
-        double cost = PricingEngine.buyCost(item, amount);
+        double cost = PricingEngine.buyCost(item, amount) * terms.markup();
+        // relative slack so a caller passing back the exact figure it quoted isn't refused over rounding
+        if (cost > terms.maxCost() * (1 + 1e-9)) {
+            return failed(TradeResult.Status.PRICE_MOVED, TradeSide.BUY, itemId,
+                    messages.get("trade.reasons.price-moved", "The price just changed. Check it and try again."));
+        }
         if (!guard.allow(player, TradeSide.BUY, itemId, amount, cost)) {
             return failed(TradeResult.Status.REJECTED_BY_GUARD, TradeSide.BUY, itemId,
                     messages.get("trade.reasons.blocked", "Trade blocked."));
@@ -205,6 +260,10 @@ public final class BazaarService {
         int maxStack = prototype.getMaxStackSize();
         int fits = spaceFor(player, itemId, maxStack, (int) amount);
         long fill = amount;
+        if (fits < amount && terms.exact()) {
+            return failed(TradeResult.Status.INVENTORY_FULL, TradeSide.BUY, itemId,
+                    messages.get("trade.reasons.not-enough-space", "Not enough inventory space."));
+        }
         if (fits < amount) {
             switch (config.inventoryFullPolicy()) {
                 case "partial" -> fill = fits;
@@ -220,7 +279,7 @@ public final class BazaarService {
                     messages.get("trade.reasons.inventory-full", "Inventory full."));
         }
 
-        double charge = fill == amount ? cost : PricingEngine.buyCost(item, fill);
+        double charge = fill == amount ? cost : PricingEngine.buyCost(item, fill) * terms.markup();
         if (!vault.withdraw(player, charge)) {
             return failed(TradeResult.Status.INSUFFICIENT_FUNDS, TradeSide.BUY, itemId,
                     messages.get("trade.reasons.payment-failed", "Payment failed."));
