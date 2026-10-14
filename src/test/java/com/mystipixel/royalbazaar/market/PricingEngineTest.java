@@ -68,12 +68,12 @@ class PricingEngineTest {
     @Test
     void reversionPullsTowardBase() {
         MarketItem high = item();
-        high.setMid(400);
+        Rows.setMid(high, 400);
         double revertedHigh = PricingEngine.revert(high);
         assertTrue(revertedHigh < 400 && revertedHigh > BASE, "an inflated price drifts back down toward base");
 
         MarketItem low = item();
-        low.setMid(40);
+        Rows.setMid(low, 40);
         double revertedLow = PricingEngine.revert(low);
         assertTrue(revertedLow > 40 && revertedLow < BASE, "a depressed price drifts back up toward base");
     }

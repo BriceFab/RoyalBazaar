@@ -27,6 +27,7 @@ import org.mockito.MockedStatic;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -99,7 +100,8 @@ class TradeModeGuiTest {
 
     @Test
     void allowedDirectionStillTrades() {
-        when(service.sell(player, ID, Long.MAX_VALUE)).thenReturn(TradeResult.ok(TradeSide.SELL, ID, 3, 9));
+        when(service.sell(player, ID, Long.MAX_VALUE)).thenReturn(
+                CompletableFuture.completedFuture(TradeResult.ok(TradeSide.SELL, ID, 3, 9)));
         dispatcher().run(player, List.of(new MenuEffect("rbazaar_sell", Map.of("item", ID, "amount", "all"))));
         verify(service).tradeModeRefusal(ID, TradeSide.SELL);
         verify(service).sell(player, ID, Long.MAX_VALUE);
@@ -120,8 +122,8 @@ class TradeModeGuiTest {
                 .when(input).request(eq(player), anyList(), any());
         when(messages.lines(anyString(), anyList())).thenAnswer(inv -> inv.getArgument(1));
         new AmountPrompt(service, gui, messages, input).begin(player, ID, true);
-        when(service.buy(player, ID, 64)).thenReturn(
-                TradeResult.fail(TradeResult.Status.DISABLED, TradeSide.BUY, ID, "turned off"));
+        when(service.buy(player, ID, 64)).thenReturn(CompletableFuture.completedFuture(
+                TradeResult.fail(TradeResult.Status.DISABLED, TradeSide.BUY, ID, "turned off")));
         callback.get().accept("64");
         verify(messages).send(player, "trade.failed", "&c{reason}", Map.of("reason", "turned off"));
         verify(gui).openProduct(player, ID);
