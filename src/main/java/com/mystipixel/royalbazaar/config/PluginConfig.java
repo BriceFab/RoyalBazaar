@@ -10,8 +10,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.logging.Level;
 
 /** Wraps {@code config.yml} and the {@code categories/} folder, writing the defaults on first run. */
@@ -90,6 +92,15 @@ public final class PluginConfig {
     /** Largest quantity one buy may request. 0 or less means no limit. */
     public long maxOrder() {
         return plugin.getConfig().getLong("trading.max-order", 2304L);
+    }
+
+    /** Data namespaces ignored when deciding whether a sold stack is the plain vanilla item. */
+    public Set<String> ignoredDataNamespaces() {
+        Set<String> namespaces = new HashSet<>();
+        for (String namespace : plugin.getConfig().getStringList("trading.ignored-data-namespaces")) {
+            namespaces.add(namespace.trim().toLowerCase(Locale.ROOT));
+        }
+        return namespaces;
     }
 
     /** What to do when a buy can't fully fit in the player's inventory: refund | drop | partial. */

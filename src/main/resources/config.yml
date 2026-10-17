@@ -34,6 +34,10 @@ trading:
   #   keep - list it with its configured floor and ceiling, unguarded
   #   skip - don't list it until the EcoShop entry or the floor/ceiling is fixed
   npc-arbitrage-conflict: keep
+  # Item data namespaces that do not make a stack special. A vanilla listing only buys the plain
+  # item, and any plugin data normally disqualifies a stack. List the namespaces of plugins that only
+  # annotate items (an anti-dupe ownership mark, for example "antidupepro"), so tagged stacks still sell.
+  ignored-data-namespaces: []
 
 storage:
   # SQLITE (default, one server) or MYSQL. Several servers can share one MySQL database: every trade

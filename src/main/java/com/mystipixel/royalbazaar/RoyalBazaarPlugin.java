@@ -83,6 +83,7 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
         this.vault = new VaultHook();
 
         this.eco = new EcoHook();
+        eco.setIgnoredDataNamespaces(config.ignoredDataNamespaces());
         MenuTemplate.EcoHookHolder.set(eco);
         if (eco.isPresent()) {
             getLogger().info("eco detected: custom item ids (ecoitem:...) enabled.");
@@ -281,6 +282,7 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
     public void reloadEverything() {
         config.reload();
         messages.reload();
+        eco.setIgnoredDataNamespaces(config.ignoredDataNamespaces());
         this.ecoShop = new EcoShopHook(getDataFolder().getParentFile(), getLogger());
         // surviving items keep their cached state until their rows are read again just below
         market.load(config.loadCategories(), config.emaAlpha(), ecoShop);

@@ -4,6 +4,7 @@ import com.willfp.eco.core.items.Items;
 import com.willfp.eco.core.items.TestableItem;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ArmorMeta;
@@ -14,6 +15,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -25,6 +27,7 @@ public final class EcoHook {
 
     private final boolean present;
     private final Map<String, Optional<Material>> vanillaMaterials = new ConcurrentHashMap<>();
+    private volatile Set<String> ignoredDataNamespaces = Set.of();
 
     public EcoHook() {
         this.present = Bukkit.getPluginManager().isPluginEnabled("eco");
@@ -32,6 +35,11 @@ public final class EcoHook {
 
     public boolean isPresent() {
         return present;
+    }
+
+    /** Data namespaces that never make a stack non-plain (trading.ignored-data-namespaces). */
+    public void setIgnoredDataNamespaces(Set<String> namespaces) {
+        this.ignoredDataNamespaces = Set.copyOf(namespaces);
     }
 
     /** A fresh display stack for the id, or null if unknown. */
@@ -64,7 +72,7 @@ public final class EcoHook {
         }
         Material vanilla = vanillaMaterial(id);
         if (vanilla != null) {
-            if (stack.getType() != vanilla || !isPlain(stack)) {
+            if (stack.getType() != vanilla || !isPlain(stack, ignoredDataNamespaces)) {
                 return false;
             }
             // A custom eco item can sit on the same material (e.g. enchanted_wheat on WHEAT);
@@ -92,13 +100,14 @@ public final class EcoHook {
 
     // a vanilla listing prices the plain item, so sell must never take an enchanted, damaged,
     // renamed or plugin-tagged stack at that price
-    static boolean isPlain(ItemStack stack) {
+    static boolean isPlain(ItemStack stack, Set<String> ignoredDataNamespaces) {
         if (!stack.hasItemMeta()) {
             return true;
         }
         ItemMeta meta = stack.getItemMeta();
         if (meta.hasDisplayName() || meta.hasItemName() || meta.hasLore() || meta.hasEnchants()
-                || meta.hasCustomModelData() || !meta.getPersistentDataContainer().isEmpty()) {
+                || meta.hasCustomModelData()
+                || hasForeignData(meta.getPersistentDataContainer().getKeys(), ignoredDataNamespaces)) {
             return false;
         }
         if (meta instanceof Damageable damageable && damageable.hasDamage()) {
@@ -111,6 +120,16 @@ public final class EcoHook {
             return false;
         }
         return !(meta instanceof BlockStateMeta blockState && blockState.hasBlockState());
+    }
+
+    // Tags that only annotate a stack (an anti-dupe ownership mark) leave the item what it is.
+    static boolean hasForeignData(Set<NamespacedKey> keys, Set<String> ignoredDataNamespaces) {
+        for (NamespacedKey key : keys) {
+            if (!ignoredDataNamespaces.contains(key.getNamespace())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public int countHeld(Player player, String id) {
