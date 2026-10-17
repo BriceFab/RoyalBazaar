@@ -1,5 +1,6 @@
 package com.mystipixel.royalbazaar;
 
+import com.mystipixel.royalbazaar.api.BazaarApi;
 import com.mystipixel.royalbazaar.command.BazaarCommand;
 import com.mystipixel.royalbazaar.config.PluginConfig;
 import com.mystipixel.royalbazaar.data.BazaarDatabase;
@@ -16,14 +17,19 @@ import com.mystipixel.royalbazaar.hooks.EcoHook;
 import com.mystipixel.royalbazaar.hooks.EcoShopHook;
 import com.mystipixel.royalbazaar.hooks.VaultHook;
 import com.mystipixel.royalbazaar.market.MarketItem;
-import com.mystipixel.royalbazaar.market.MarketState;
 import com.mystipixel.royalbazaar.market.MarketManager;
 import com.mystipixel.royalbazaar.service.BazaarService;
+import com.mystipixel.royalbazaar.service.MainQueue;
+import com.mystipixel.royalbazaar.service.MarketEngine;
+import com.mystipixel.royalbazaar.service.PriceRefresher;
 import com.mystipixel.royalbazaar.util.ItemNames;
+import com.mystipixel.royalcommon.storage.DbExecutor;
+import com.mystipixel.royalcommon.storage.ServerId;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.ServiceRegisterEvent;
+import org.bukkit.plugin.ServicePriority;
 import java.io.File;
 import java.util.Locale;
 
@@ -35,13 +41,8 @@ import org.bukkit.scheduler.BukkitTask;
 import com.mystipixel.royalbazaar.gui.BazaarMenuHolder;
 import org.bukkit.entity.Player;
 
-import java.util.List;
+import java.time.Duration;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 public final class RoyalBazaarPlugin extends JavaPlugin {
@@ -64,14 +65,15 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
     private TextInput textInput;
 
     private BukkitTask tickTask;
-    private BukkitTask flushTask;
     private BukkitTask historyTask;
     private BazaarPlaceholderExpansion placeholderExpansion;
     private boolean fullyEnabled;
 
-    // one thread, in submission order, so an older flush can't land after a newer one and
-    // shutdown can wait for writes in flight
-    private ExecutorService dbWriter;
+    private MainQueue mainQueue;
+    private DbExecutor db;
+    private PriceRefresher prices;
+    private MarketEngine engine;
+    private String serverId;
 
     @Override
     public void onEnable() {
@@ -98,14 +100,12 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
         market.load(config.loadCategories(), config.emaAlpha(), ecoShop);
 
         this.database = new BazaarDatabase(getDataFolder(), config.storageSection(), getLogger());
-        this.dbWriter = Executors.newSingleThreadExecutor(r -> {
-            Thread t = new Thread(r, "RoyalBazaar-DB");
-            t.setDaemon(true);
-            return t;
-        });
         try {
+            this.serverId = ServerId.resolve(config.serverId(), getDataFolder().toPath());
             database.init();
-            restoreState(null);
+            // before anyone can trade, so the first quotes come from the database; blocking is fine at startup
+            database.seed(market.curves());
+            market.apply(database.rows(market.ids()));
         } catch (Exception e) {
             getLogger().log(Level.SEVERE, "Failed to initialise storage, disabling RoyalBazaar.", e);
             getServer().getPluginManager().disablePlugin(this);
@@ -131,7 +131,13 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
         }
         fullyEnabled = true;
 
-        this.service = new BazaarService(this, market, database, vault, eco, guard, config, messages);
+        this.mainQueue = MainQueue.bukkit(this);
+        this.db = new DbExecutor(getName(), mainQueue, getLogger());
+        this.prices = new PriceRefresher(market, database, db);
+        this.engine = new MarketEngine(database, engineSettings(), getLogger(),
+                rows -> mainQueue.execute(() -> prices.acceptAll(rows)),
+                stats -> mainQueue.execute(() -> applyStats(stats)));
+        this.service = new BazaarService(market, database, db, prices, vault, eco, guard, config, messages, getLogger());
         this.menus = new MenuManager(this);
         itemNames.reload(new File(getDataFolder(), "lang"), getLogger());
         this.gui = new GuiManager(menus, market, service, eco, itemNames, messages);
@@ -149,6 +155,8 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
         }
 
         scheduleTasks();
+        // registered last, once trading works; Bukkit drops it again when the plugin disables
+        getServer().getServicesManager().register(BazaarApi.class, new BazaarApi(service), this, ServicePriority.Normal);
 
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             this.placeholderExpansion = new BazaarPlaceholderExpansion(market, vault, getPluginMeta().getVersion(), service);
@@ -156,50 +164,31 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
             getLogger().info("Registered PlaceholderAPI expansion.");
         }
 
-        refreshWeekStats();
+        refreshStats();
         setupMetrics();
-        getLogger().info("RoyalBazaar enabled.");
+        getLogger().info("RoyalBazaar enabled" + (database.type() == BazaarDatabase.Type.MYSQL
+                ? " as server '" + serverId + "'." : "."));
     }
 
-    // 7-day stats and the 24h baseline: queried off-thread, applied on the main thread
-    private void refreshWeekStats() {
-        long now = System.currentTimeMillis();
-        long weekAgo = now - 7L * 24L * 60L * 60L * 1000L;
-        long dayAgo = now - 24L * 60L * 60L * 1000L;
-        submitDb(() -> {
-            try {
-                Map<String, double[]> stats = database.weekStats(weekAgo);
-                Map<String, Double> day = database.earliestMidSince(dayAgo);
-                runSync(() -> {
-                    for (MarketItem item : market.all()) {
-                        double[] row = stats.get(item.id());
-                        if (row != null) {
-                            item.setWeekStats(row[0], row[1], row[2]);
-                        }
-                        Double baseline = day.get(item.id());
-                        if (baseline != null) {
-                            item.setMidYesterday(baseline);
-                        }
-                    }
-                });
-            } catch (Exception e) {
-                getLogger().log(Level.WARNING, "History stats refresh failed", e);
+    private MarketEngine.Settings engineSettings() {
+        return new MarketEngine.Settings(market.curves(), config.tickIntervalMs(), config.historyIntervalMs(),
+                config.historyRetentionDays());
+    }
+
+    // 7-day stats and the 24h baseline as the engine-lease holder last stored them, and 24h volume: queried on
+    // the database thread, applied on the main thread
+    private void refreshStats() {
+        db.submit("read history stats", () -> database.stats()).thenAcceptAsync(this::applyStats, mainQueue);
+        prices.refreshVolume();
+    }
+
+    private void applyStats(Map<String, double[]> stats) {
+        for (MarketItem item : market.all()) {
+            double[] row = stats.get(item.id());
+            if (row != null) {
+                item.setWeekStats(row[0], row[1], row[2]);
+                item.setMidYesterday(row[3]);
             }
-        });
-    }
-
-    // dropped quietly once shutdown has begun
-    private void submitDb(Runnable task) {
-        try {
-            dbWriter.execute(task);
-        } catch (RejectedExecutionException ignored) {
-            // disabling: the final synchronous flush covers state
-        }
-    }
-
-    private void runSync(Runnable task) {
-        if (isEnabled()) {
-            getServer().getScheduler().runTask(this, task);
         }
     }
 
@@ -240,37 +229,21 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
         if (placeholderExpansion != null) {
             placeholderExpansion.unregister();
         }
-        if (dbWriter != null) {
-            dbWriter.shutdown();
-            try {
-                if (!dbWriter.awaitTermination(10, TimeUnit.SECONDS)) {
-                    getLogger().warning("Database writes still running after 10s; continuing shutdown.");
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+        if (service != null) {
+            service.close();
         }
-        if (database != null && market != null) {
-            try {
-                database.flushState(market.allState()); // final synchronous flush, after queued writes
-            } catch (Exception e) {
-                getLogger().log(Level.WARNING, "Failed final state flush", e);
-            }
+        if (prices != null) {
+            prices.stop();
+        }
+        if (engine != null) {
+            engine.stop();
+        }
+        // trades already started finish: refunds, payouts and their database steps
+        if (db != null) {
+            mainQueue.finish(db, Duration.ofSeconds(10));
+        }
+        if (database != null) {
             database.close();
-        }
-    }
-
-    // only: limit to these ids, null means all
-    private void restoreState(Set<String> only) throws Exception {
-        Map<String, double[]> saved = database.loadState();
-        for (MarketItem item : market.all()) {
-            if (only != null && !only.contains(item.id())) {
-                continue;
-            }
-            double[] row = saved.get(item.id());
-            if (row != null) {
-                item.loadState(row[0], row[1], (long) row[2]);
-            }
         }
     }
 
@@ -279,55 +252,21 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
         long tick = config.tickIntervalTicks();
         this.tickTask = getServer().getScheduler().runTaskTimer(this, () -> market.tick(), tick, tick);
 
-        // sync on purpose: market state is main-thread only, so capture here and write an immutable copy off-thread
-        long flush = config.flushIntervalTicks();
-        this.flushTask = getServer().getScheduler().runTaskTimer(this, this::flushDirty, flush, flush);
-
         long history = config.historyIntervalTicks();
-        this.historyTask = getServer().getScheduler().runTaskTimer(this, this::snapshot, history, history);
-    }
+        this.historyTask = getServer().getScheduler().runTaskTimer(this, this::refreshStats, history, history);
 
-    private void flushDirty() {
-        List<MarketState> dirty = market.drainDirtyState();
-        if (dirty.isEmpty()) {
-            return;
+        engine.update(engineSettings());
+        engine.start(this, db, serverId);
+        prices.stop();
+        long refresh = config.refreshTicks();
+        if (database.type() == BazaarDatabase.Type.MYSQL && refresh > 0) {
+            prices.start(this, refresh);
         }
-        submitDb(() -> {
-            try {
-                database.flushState(dirty);
-            } catch (Exception e) {
-                getLogger().log(Level.WARNING, "Write-behind flush failed, re-queueing for the next flush", e);
-                // flags were already cleared
-                List<String> ids = dirty.stream().map(MarketState::id).toList();
-                runSync(() -> market.remarkDirty(ids));
-            }
-        });
-    }
-
-    private void snapshot() {
-        List<MarketState> items = market.allState();
-        long ts = System.currentTimeMillis();
-        int retentionDays = config.historyRetentionDays();
-        submitDb(() -> {
-            try {
-                database.snapshot(items, ts);
-                if (retentionDays > 0) {
-                    database.pruneHistory(ts - (long) retentionDays * 24L * 60L * 60L * 1000L);
-                }
-            } catch (Exception e) {
-                getLogger().log(Level.WARNING, "History snapshot failed", e);
-            }
-            // queues behind this task on the writer thread
-            refreshWeekStats();
-        });
     }
 
     private void cancelTasks() {
         if (tickTask != null) {
             tickTask.cancel();
-        }
-        if (flushTask != null) {
-            flushTask.cancel();
         }
         if (historyTask != null) {
             historyTask.cancel();
@@ -343,19 +282,13 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
         config.reload();
         messages.reload();
         this.ecoShop = new EcoShopHook(getDataFolder().getParentFile(), getLogger());
-        // surviving items keep their live state; only new ones are seeded from the (lagging) database
-        Set<String> added = market.load(config.loadCategories(), config.emaAlpha(), ecoShop);
-        if (!added.isEmpty()) {
-            try {
-                restoreState(added);
-            } catch (Exception e) {
-                getLogger().log(Level.WARNING, "State restore during reload failed", e);
-            }
-        }
+        // surviving items keep their cached state until their rows are read again just below
+        market.load(config.loadCategories(), config.emaAlpha(), ecoShop);
+        prices.reloadAll();
         menus.reload();
         itemNames.reload(new File(getDataFolder(), "lang"), getLogger());
         scheduleTasks();
-        refreshWeekStats();
+        refreshStats();
     }
     // opt out globally in plugins/bStats/config.yml
     private void setupMetrics() {

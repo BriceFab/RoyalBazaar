@@ -17,6 +17,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -58,7 +59,8 @@ class BazaarCommandTest {
         List<MarketItem> all = List.of(new MarketItem("minecraft:stone_bricks", "test", null, "",
                 10, 0.05, 1000, 0.02, 1, 100, TradeMode.BUY_ONLY));
         when(market.all()).thenReturn(all);
-        when(service.sellAll(eq(player), any())).thenReturn(new BazaarService.SellAllResult(0, 0, 0, 0));
+        when(service.sellAll(eq(player), any())).thenReturn(
+                CompletableFuture.completedFuture(new BazaarService.SellAllResult(0, 0, 0, 0)));
         command().onCommand(player, null, "bazaar", new String[]{"sellall"});
         verify(service).sellAll(eq(player), argThat((Collection<MarketItem> scope) -> scope == all));
         verify(service, never()).sell(any(), anyString(), anyLong());

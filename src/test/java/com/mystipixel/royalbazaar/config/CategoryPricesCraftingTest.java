@@ -2,6 +2,7 @@ package com.mystipixel.royalbazaar.config;
 
 import com.mystipixel.royalbazaar.market.MarketItem;
 import com.mystipixel.royalbazaar.market.PricingEngine;
+import com.mystipixel.royalbazaar.market.StateRow;
 import com.mystipixel.royalbazaar.market.TradeMode;
 import com.mystipixel.royalbazaar.market.TradeSide;
 import org.bukkit.configuration.ConfigurationSection;
@@ -198,7 +199,7 @@ class CategoryPricesCraftingTest {
         double floor = base * floorPct;
         MarketItem atBase = new MarketItem(where, "test", null, "", base, spread, 50000, 0.02, floor, base * 3, mode);
         MarketItem atFloor = new MarketItem(where, "test", null, "", base, spread, 50000, 0.02, floor, base * 3, mode);
-        atFloor.loadState(floor, floor, 0);
+        atFloor.apply(new StateRow(where, floor, floor, false, 0, 0));
         return new Listed(where, new MarketItem[]{atBase, atFloor});
     }
 

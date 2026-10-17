@@ -7,6 +7,7 @@ import com.mystipixel.royalbazaar.gui.GuiManager;
 import com.mystipixel.royalbazaar.market.MarketItem;
 import com.mystipixel.royalbazaar.market.MarketManager;
 import com.mystipixel.royalbazaar.market.PricingEngine;
+import com.mystipixel.royalbazaar.market.StateRow;
 import com.mystipixel.royalbazaar.market.TradeSide;
 import com.mystipixel.royalbazaar.service.BazaarService;
 import org.bukkit.command.Command;
@@ -112,10 +113,21 @@ public final class BazaarCommand implements CommandExecutor, TabCompleter {
             scope = market.all();
             what = plugin.messages().get("sell-all.scope-inventory", "your inventory");
         }
-        EffectDispatcher.sendSellAllSummary(plugin.messages(), player, what, service.sellAll(player, scope));
+        service.sellAll(player, scope).thenAccept(result ->
+                EffectDispatcher.sendSellAllSummary(plugin.messages(), player, what, result));
     }
 
-    // set/reset persist through the normal flush; freeze is in-memory only and clears on restart
+    // the item was listed by a reload whose database row isn't written yet
+    private boolean missing(CommandSender sender, MarketItem item, StateRow row) {
+        if (row != null) {
+            return false;
+        }
+        plugin.messages().send(sender, "admin-missing", "&c{item} has no stored price yet. Try again in a moment.",
+                Map.of("item", item.id()));
+        return true;
+    }
+
+    // every change is written to the database and reaches other servers on their next refresh
     private void admin(CommandSender sender, String[] args) {
         if (!sender.hasPermission("royalbazaar.admin")) {
             plugin.messages().send(sender, "no-permission", "&cNo permission.");
@@ -152,34 +164,48 @@ public final class BazaarCommand implements CommandExecutor, TabCompleter {
                 }
                 double clamped = PricingEngine.clamp(mid, item.floor(), item.ceiling());
                 double old = item.mid();
-                item.setMid(clamped);
-                Map<String, String> values = Map.of("item", item.id(), "old", fmt(old), "new", fmt(clamped));
-                if (clamped != mid) {
-                    plugin.messages().send(sender, "admin-set-clamped",
-                            "&aSet &f{item}&a mid: &e{old} &7-> &e{new} &7(clamped to this item's floor/ceiling)",
-                            values);
-                } else {
-                    plugin.messages().send(sender, "admin-set", "&aSet &f{item}&a mid: &e{old} &7-> &e{new}", values);
-                }
+                service.setMid(item.id(), clamped).thenAccept(row -> {
+                    if (missing(sender, item, row)) {
+                        return;
+                    }
+                    Map<String, String> values = Map.of("item", item.id(), "old", fmt(old), "new", fmt(clamped));
+                    if (clamped != mid) {
+                        plugin.messages().send(sender, "admin-set-clamped",
+                                "&aSet &f{item}&a mid: &e{old} &7-> &e{new} &7(clamped to this item's floor/ceiling)",
+                                values);
+                    } else {
+                        plugin.messages().send(sender, "admin-set", "&aSet &f{item}&a mid: &e{old} &7-> &e{new}", values);
+                    }
+                });
             }
             case "reset" -> {
                 double old = item.mid();
-                item.setMid(PricingEngine.clamp(item.basePrice(), item.floor(), item.ceiling()));
-                plugin.messages().send(sender, "admin-reset",
-                        "&aReset &f{item}&a to its base price: &e{old} &7-> &e{new}",
-                        Map.of("item", item.id(), "old", fmt(old), "new", fmt(item.mid())));
+                double base = item.curve().startingMid();
+                service.setMid(item.id(), base).thenAccept(row -> {
+                    if (!missing(sender, item, row)) {
+                        plugin.messages().send(sender, "admin-reset",
+                                "&aReset &f{item}&a to its base price: &e{old} &7-> &e{new}",
+                                Map.of("item", item.id(), "old", fmt(old), "new", fmt(base)));
+                    }
+                });
             }
             case "freeze" -> {
-                item.setFrozen(true);
-                plugin.messages().send(sender, "admin-freeze",
-                        "&eFroze &f{item}&e: trades refused, price held. Clears on unfreeze or restart.",
-                        Map.of("item", item.id()));
+                service.setFrozen(item.id(), true).thenAccept(row -> {
+                    if (!missing(sender, item, row)) {
+                        plugin.messages().send(sender, "admin-freeze",
+                                "&eFroze &f{item}&e on every server: trades refused, price held until you unfreeze it.",
+                                Map.of("item", item.id()));
+                    }
+                });
             }
             case "unfreeze" -> {
-                item.setFrozen(false);
-                plugin.messages().send(sender, "admin-unfreeze",
-                        "&aUnfroze &f{item}&a: trading and reversion resumed.",
-                        Map.of("item", item.id()));
+                service.setFrozen(item.id(), false).thenAccept(row -> {
+                    if (!missing(sender, item, row)) {
+                        plugin.messages().send(sender, "admin-unfreeze",
+                                "&aUnfroze &f{item}&a: trading and reversion resumed.",
+                                Map.of("item", item.id()));
+                    }
+                });
             }
             default -> plugin.messages().send(sender, "admin-usage",
                     "&cUsage: /bazaar admin <set|freeze|unfreeze|reset> <item> [mid]");

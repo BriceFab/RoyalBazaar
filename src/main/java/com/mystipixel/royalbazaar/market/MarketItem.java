@@ -2,7 +2,8 @@ package com.mystipixel.royalbazaar.market;
 
 /**
  * One tradeable commodity. Pricing parameters are immutable and come from {@code categories/*.yml};
- * the live state ({@code mid}, volume, stats) is main-thread only. Quotes are {@code mid} plus or
+ * the live state ({@code mid}, volume, stats) is main-thread only and is a cache of the item's
+ * {@code rb_state} row, which every server sharing the database writes. Quotes are {@code mid} plus or
  * minus half the spread.
  */
 public final class MarketItem {
@@ -18,14 +19,16 @@ public final class MarketItem {
     private final double floor;         // absolute = basePrice * floor_pct
     private final double ceiling;       // absolute = basePrice * ceiling_pct
     private final TradeMode tradeMode;
+    private final Curve curve;
 
     private double mid;
     private double midYesterday;
     private double emaShort;            // short EMA of mid, for the trend arrow
     private long updatedAt;
-    private boolean dirty;
+    // rb_state.version of the row this cache last took; older rows are ignored
+    private long version = -1;
 
-    // admin freeze: no trades, no reversion. In-memory only on purpose, so a forgotten freeze ends on restart.
+    // admin freeze: no trades, no reversion. Stored in rb_state, so every server sees it.
     private boolean frozen;
 
     // cache of rb_history, never persisted; 0 means no snapshot old enough yet
@@ -53,30 +56,43 @@ public final class MarketItem {
         this.floor = floor;
         this.ceiling = ceiling;
         this.tradeMode = tradeMode;
+        this.curve = new Curve(id, basePrice, spread, elasticity, reversionRate, floor, ceiling);
         // clamped: floor/ceiling can sit above or below base (EcoShop bracketing, custom *_pct)
         this.mid = PricingEngine.clamp(basePrice, floor, ceiling);
         this.midYesterday = this.mid;
         this.emaShort = this.mid;
     }
 
-    public void loadState(double mid, double midYesterday, long updatedAt) {
-        this.mid = PricingEngine.clamp(mid, floor, ceiling);
-        this.midYesterday = midYesterday <= 0 ? this.mid : midYesterday;
-        this.emaShort = this.mid;
-        this.updatedAt = updatedAt;
-        this.dirty = false;
+    /**
+     * Takes a row read from the database. Returns false and keeps the cache when the row is older than
+     * what this item already has, e.g. a poll that read the row before this server's own trade landed.
+     */
+    public boolean apply(StateRow row) {
+        if (row.version() < version) {
+            return false;
+        }
+        boolean first = version < 0;
+        // clamped again here: another server's category files may allow a wider range
+        this.mid = curve.clamp(row.mid());
+        if (first) {
+            this.emaShort = this.mid;
+            if (row.midYesterday() > 0) {
+                this.midYesterday = row.midYesterday();
+            }
+        }
+        this.frozen = row.frozen();
+        this.updatedAt = row.updatedAt();
+        this.version = row.version();
+        return true;
     }
 
-    /**
-     * Take over the live state of the item this one replaces on reload (not from the database, which
-     * lags the last flush and has no freeze). The mid is re-clamped since the bounds may have moved.
-     */
+    /** Take over the cached state of the item this one replaces on reload, until its row is read again. */
     public void carryOver(MarketItem old) {
         this.mid = PricingEngine.clamp(old.mid, floor, ceiling);
         this.midYesterday = old.midYesterday;
         this.emaShort = old.emaShort;
         this.updatedAt = old.updatedAt;
-        this.dirty = old.dirty || this.mid != old.mid;
+        this.version = old.version;
         this.frozen = old.frozen;
         this.midWeekAgo = old.midWeekAgo;
         this.weekLow = old.weekLow;
@@ -99,18 +115,18 @@ public final class MarketItem {
     public double floor() { return floor; }
     public double ceiling() { return ceiling; }
     public TradeMode tradeMode() { return tradeMode; }
+    public Curve curve() { return curve; }
 
     public double mid() { return mid; }
     public double midYesterday() { return midYesterday; }
     public double emaShort() { return emaShort; }
     public long updatedAt() { return updatedAt; }
-    public boolean dirty() { return dirty; }
+    public long version() { return version; }
     public VolumeWindow volume() { return volume; }
     public double midWeekAgo() { return midWeekAgo; }
     public double weekLow() { return weekLow; }
     public double weekHigh() { return weekHigh; }
     public boolean frozen() { return frozen; }
-    public void setFrozen(boolean frozen) { this.frozen = frozen; }
 
     public void setWeekStats(double midWeekAgo, double weekLow, double weekHigh) {
         this.midWeekAgo = midWeekAgo;
@@ -118,25 +134,14 @@ public final class MarketItem {
         this.weekHigh = weekHigh;
     }
 
-    /** {@code newMid} must already be clamped. */
-    public void setMid(double newMid) {
-        this.mid = newMid;
-        this.updatedAt = System.currentTimeMillis();
-        this.dirty = true;
-    }
-
     public void updateEma(double alpha) {
         this.emaShort = alpha * mid + (1 - alpha) * emaShort;
     }
 
-    // not marked dirty: the baseline is derived from rb_history
+    // the baseline is derived from rb_history, never written back
     public void setMidYesterday(double midYesterday) {
         if (midYesterday > 0) {
             this.midYesterday = midYesterday;
         }
     }
-
-    public void clearDirty() { this.dirty = false; }
-
-    public void markDirty() { this.dirty = true; }
 }

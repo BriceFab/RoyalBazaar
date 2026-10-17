@@ -1,62 +1,38 @@
 package com.mystipixel.royalbazaar.market;
 
-/** Rolling 24-hour volume: 24 hourly buckets in a ring. Main-thread only. */
+/**
+ * Units bought and sold in the last 24 hours across every server: the totals from {@code rb_transactions}
+ * at the last refresh, plus this server's own trades since then. Main-thread only.
+ */
 public final class VolumeWindow {
 
-    private static final int HOURS = 24;
-    private static final long HOUR_MS = 3_600_000L;
-
-    private final long[] bought = new long[HOURS];
-    private final long[] sold = new long[HOURS];
-    private long currentHour = -1; // epoch-hour index of bought[head]
-    private int head = 0;
-
-    private void advanceTo(long epochHour) {
-        if (currentHour < 0) {
-            currentHour = epochHour;
-            return;
-        }
-        long steps = epochHour - currentHour;
-        if (steps <= 0) {
-            return;
-        }
-        for (long s = 0; s < Math.min(steps, HOURS); s++) {
-            head = (head + 1) % HOURS;
-            bought[head] = 0;
-            sold[head] = 0;
-        }
-        currentHour = epochHour;
-    }
+    private long baseBought;
+    private long baseSold;
+    private long recentBought;
+    private long recentSold;
 
     public void recordBuy(long qty) {
-        advanceTo(System.currentTimeMillis() / HOUR_MS);
-        bought[head] += qty;
+        recentBought += qty;
     }
 
     public void recordSell(long qty) {
-        advanceTo(System.currentTimeMillis() / HOUR_MS);
-        sold[head] += qty;
+        recentSold += qty;
     }
 
-    /** Advance the ring without recording; call on the tick so stale hours drop off. */
-    public void tick() {
-        advanceTo(System.currentTimeMillis() / HOUR_MS);
+    /** New database totals; this server's trades are in them, so the local counts start again. */
+    public void reset(long bought, long sold) {
+        baseBought = bought;
+        baseSold = sold;
+        recentBought = 0;
+        recentSold = 0;
     }
 
     public long bought24h() {
-        long t = 0;
-        for (long b : bought) {
-            t += b;
-        }
-        return t;
+        return baseBought + recentBought;
     }
 
     public long sold24h() {
-        long t = 0;
-        for (long s : sold) {
-            t += s;
-        }
-        return t;
+        return baseSold + recentSold;
     }
 
     public long net24h() {

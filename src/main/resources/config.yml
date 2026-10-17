@@ -6,13 +6,12 @@ default-category: ""
 
 engine:
   # How often prices drift back toward their base (mean reversion) and stats roll. Seconds.
+  # With several servers on one database, one of them does this for all.
   tick-interval-seconds: 60
   # How often a price snapshot is written for graphs / 24h change. Seconds.
   history-interval-seconds: 300
-  # How often dirty prices are flushed to disk (write-behind). Seconds.
-  flush-interval-seconds: 30
-  # How long price history is kept, in days. Older snapshots are deleted after each new one.
-  # 0 = keep everything (the table grows without bound).
+  # How long price history and the trade log are kept, in days. Older rows are deleted after each
+  # new snapshot. 0 = keep everything (the tables grow without bound).
   history-retention-days: 30
   # Smoothing for the trend arrow (0..1). Lower = smoother, slower to flip.
   trend-ema-alpha: 0.2
@@ -37,10 +36,16 @@ trading:
   npc-arbitrage-conflict: keep
 
 storage:
-  # SQLITE (default) or MYSQL. Each server needs its own database for now: sharing one between
-  # servers is planned but not safe yet, because servers can overwrite each other's data.
+  # SQLITE (default, one server) or MYSQL. Several servers can share one MySQL database: every trade
+  # locks the item's price row, so prices stay the same on all of them. The categories/ files should
+  # match on every server.
   type: SQLITE
   sqlite-file: bazaar.db
+  # MYSQL only: how often (seconds) this server picks up prices changed on another server.
+  refresh-seconds: 5
+  # This server's name in the shared database. Leave empty to generate one (kept in server-id.txt).
+  # Set it when you copy a server folder to make another server, so the two don't share a name.
+  server-id: ""
   mysql:
     host: localhost
     port: 3306

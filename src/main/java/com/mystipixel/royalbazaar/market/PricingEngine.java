@@ -6,6 +6,9 @@ package com.mystipixel.royalbazaar.market;
  */
 public final class PricingEngine {
 
+    // log distance from base under which reversion lands on base, about 0.01%
+    static final double SNAP_TO_BASE = 1e-4;
+
     private PricingEngine() {
     }
 
@@ -19,35 +22,60 @@ public final class PricingEngine {
 
     /** Total cost to buy {@code q} units at the current mid, including the buy-side spread. */
     public static double buyCost(MarketItem i, long q) {
-        double e = i.elasticity();
-        double raw = e * i.mid() * Math.expm1(q / e);          // E·mid·(e^(q/E) − 1)
-        return raw * (1.0 + i.spread() / 2.0);
+        return buyCost(i.curve(), i.mid(), q);
+    }
+
+    public static double buyCost(Curve c, double mid, long q) {
+        double e = c.elasticity();
+        double raw = e * mid * Math.expm1(q / e);          // E·mid·(e^(q/E) − 1)
+        return raw * (1.0 + c.spread() / 2.0);
     }
 
     /** Total proceeds from selling {@code q} units at the current mid, less the sell-side spread. */
     public static double sellProceeds(MarketItem i, long q) {
-        double e = i.elasticity();
-        double raw = e * i.mid() * -Math.expm1(-q / e);        // E·mid·(1 − e^(−q/E))
-        return raw * (1.0 - i.spread() / 2.0);
+        return sellProceeds(i.curve(), i.mid(), q);
+    }
+
+    public static double sellProceeds(Curve c, double mid, long q) {
+        double e = c.elasticity();
+        double raw = e * mid * -Math.expm1(-q / e);        // E·mid·(1 − e^(−q/E))
+        return raw * (1.0 - c.spread() / 2.0);
     }
 
     public static double midAfterBuy(MarketItem i, long q) {
-        return clamp(i.mid() * Math.exp(q / i.elasticity()), i.floor(), i.ceiling());
+        return midAfterBuy(i.curve(), i.mid(), q);
+    }
+
+    public static double midAfterBuy(Curve c, double mid, long q) {
+        return c.clamp(mid * Math.exp(q / c.elasticity()));
     }
 
     public static double midAfterSell(MarketItem i, long q) {
-        return clamp(i.mid() * Math.exp(-q / i.elasticity()), i.floor(), i.ceiling());
+        return midAfterSell(i.curve(), i.mid(), q);
+    }
+
+    public static double midAfterSell(Curve c, double mid, long q) {
+        return c.clamp(mid * Math.exp(-q / c.elasticity()));
     }
 
     /** Pull mid a fraction {@code reversionRate} of the way back toward base, in log-space. */
     public static double revert(MarketItem i) {
-        if (i.mid() <= 0 || i.basePrice() <= 0) {
-            return i.basePrice();
+        return revert(i.curve(), i.mid());
+    }
+
+    public static double revert(Curve c, double mid) {
+        if (mid <= 0 || c.basePrice() <= 0) {
+            return c.basePrice();
         }
-        double logMid = Math.log(i.mid());
-        double logBase = Math.log(i.basePrice());
-        double next = Math.exp(logMid + (logBase - logMid) * i.reversionRate());
-        return clamp(next, i.floor(), i.ceiling());
+        double logMid = Math.log(mid);
+        double logBase = Math.log(c.basePrice());
+        // within 0.01% of base, land on it: the curve never quite gets there, and every step is a
+        // database write that each server then reads back
+        if (Math.abs(logBase - logMid) < SNAP_TO_BASE) {
+            return c.clamp(c.basePrice());
+        }
+        double next = Math.exp(logMid + (logBase - logMid) * c.reversionRate());
+        return c.clamp(next);
     }
 
     public static double clamp(double v, double lo, double hi) {

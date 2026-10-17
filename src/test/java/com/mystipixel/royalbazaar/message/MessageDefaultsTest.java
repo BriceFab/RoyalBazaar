@@ -11,8 +11,9 @@ import com.mystipixel.royalbazaar.market.MarketManager;
 import com.mystipixel.royalbazaar.market.TradeMode;
 import com.mystipixel.royalbazaar.market.TradeSide;
 import com.mystipixel.royalbazaar.service.BazaarService;
+import com.mystipixel.royalbazaar.service.PriceRefresher;
+import com.mystipixel.royalcommon.storage.DbExecutor;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -26,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -135,8 +137,9 @@ class MessageDefaultsTest {
         MarketManager market = mock(MarketManager.class);
         VaultHook vault = mock(VaultHook.class);
         when(vault.formatPrice(anyDouble())).thenReturn("1.00");
-        BazaarService service = new BazaarService(mock(JavaPlugin.class), market, mock(BazaarDatabase.class),
-                vault, mock(EcoHook.class), mock(EconGuardHook.class), mock(PluginConfig.class), messages);
+        BazaarService service = new BazaarService(market, mock(BazaarDatabase.class), mock(DbExecutor.class),
+                mock(PriceRefresher.class), vault, mock(EcoHook.class), mock(EconGuardHook.class),
+                mock(PluginConfig.class), messages, Logger.getLogger("test"));
         CategoryConfig category = mock(CategoryConfig.class);
         when(category.id()).thenReturn("test");
         when(category.displayName()).thenReturn("Test");

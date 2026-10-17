@@ -55,8 +55,8 @@ class MarketManagerTest {
         assertEquals(Set.of("minecraft:wheat", "minecraft:carrot"), first);
 
         MarketItem wheat = market.get("minecraft:wheat");
-        wheat.setMid(12.5);               // a trade not yet flushed
-        wheat.setFrozen(true);            // an admin freeze
+        Rows.setMid(wheat, 12.5);         // a trade
+        Rows.setFrozen(wheat, true);      // an admin freeze
         wheat.volume().recordBuy(40);
 
         String withPotato = FARMING + """
@@ -71,7 +71,6 @@ class MarketManagerTest {
         assertNotSame(wheat, reloaded);
         assertEquals(12.5, reloaded.mid());
         assertTrue(reloaded.frozen(), "a reload must not silently lift a freeze");
-        assertTrue(reloaded.dirty(), "the unflushed price must still be written");
         assertEquals(40, reloaded.volume().bought24h());
     }
 
@@ -79,14 +78,12 @@ class MarketManagerTest {
     void reloadReclampsACarriedPriceIntoANarrowerRange(@TempDir Path tmp) throws Exception {
         MarketManager market = new MarketManager(LOG);
         market.load(List.of(category("farming", FARMING, true)), 0.2, noShop(tmp));
-        market.get("minecraft:wheat").setMid(25);
-        market.drainDirtyState();          // flushed
+        Rows.setMid(market.get("minecraft:wheat"), 25);
 
         String capped = FARMING.replace("base_price: 10", "base_price: 10\n    ceiling_pct: 2.0");
         market.load(List.of(category("farming", capped, true)), 0.2, noShop(tmp));
         MarketItem wheat = market.get("minecraft:wheat");
         assertEquals(20, wheat.mid(), 1e-9);
-        assertTrue(wheat.dirty(), "the clamped price differs from the stored one");
     }
 
     @Test
@@ -163,9 +160,9 @@ class MarketManagerTest {
         MarketManager guarded = new MarketManager(LOG);
         guarded.load(List.of(category("mining", yaml, true)), 0.2, shop);
         MarketItem iron = guarded.get("minecraft:iron_ingot");
-        iron.setMid(PricingEngine.midAfterSell(iron, 10_000_000));    // dump to the floor
+        Rows.setMid(iron, PricingEngine.midAfterSell(iron, 10_000_000));    // dump to the floor
         assertTrue(PricingEngine.buyPrice(iron) >= 60 - 1e-9, "buying here must never beat selling to the NPC");
-        iron.setMid(PricingEngine.midAfterBuy(iron, 10_000_000));     // pump to the ceiling
+        Rows.setMid(iron, PricingEngine.midAfterBuy(iron, 10_000_000));     // pump to the ceiling
         assertTrue(PricingEngine.sellPrice(iron) <= 100 + 1e-9, "selling here must never beat buying from the NPC");
 
         MarketManager open = new MarketManager(LOG);
@@ -201,11 +198,11 @@ class MarketManagerTest {
         // total order prices stay safe even when the integral runs beyond the mid caps
         for (long qty : new long[]{1, 64, 10_000, 1_000_000}) {
             if (hasSell) {
-                item.setMid(item.floor());
+                Rows.setMid(item, item.floor());
                 assertTrue(PricingEngine.buyCost(item, qty) >= 60 * qty - 1e-7);
             }
             if (hasBuy) {
-                item.setMid(item.ceiling());
+                Rows.setMid(item, item.ceiling());
                 assertTrue(PricingEngine.sellProceeds(item, qty) <= 100 * qty + 1e-7);
             }
         }
@@ -277,8 +274,8 @@ class MarketManagerTest {
         MarketManager market = new MarketManager(LOG);
         market.load(List.of(category("farming", FARMING, true)), 0.2, noShop(tmp));
         MarketItem old = market.get("minecraft:wheat");
-        old.setMid(12);
-        old.setFrozen(true);
+        Rows.setMid(old, 12);
+        Rows.setFrozen(old, true);
         old.volume().recordSell(8);
         String changed = FARMING.replace("base_price: 10", "base_price: 10\n    trade_mode: \"" + raw + "\"");
         assertTrue(market.load(List.of(category("farming", changed, true)), 0.2, noShop(tmp)).isEmpty());

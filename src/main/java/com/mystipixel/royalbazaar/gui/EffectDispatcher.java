@@ -106,9 +106,10 @@ public final class EffectDispatcher {
         } else {
             amount = e.argLong("amount", 1);
         }
-        TradeResult result = buy ? service.buy(player, item, amount) : service.sell(player, item, amount);
-        sendFeedback(player, result);
-        gui.refresh(player);
+        (buy ? service.buy(player, item, amount) : service.sell(player, item, amount)).thenAccept(result -> {
+            sendFeedback(player, result);
+            gui.refresh(player);
+        });
     }
 
     private void openMenu(Player player, String menu, String category, String group) {
@@ -168,13 +169,19 @@ public final class EffectDispatcher {
             items = market.all();
             what = messages.get("sell-all.scope-inventory", "your inventory");
         }
-        sendSellAllSummary(messages, player, what, service.sellAll(player, items));
-        gui.refresh(player);
+        service.sellAll(player, items).thenAccept(result -> {
+            sendSellAllSummary(messages, player, what, result);
+            gui.refresh(player);
+        });
     }
 
     /** Also used by /bazaar sellall. {@code scope} fills {scope} in sell-all.nothing. */
     public static void sendSellAllSummary(MessageManager messages, Player player, String scope,
                                           BazaarService.SellAllResult result) {
+        if (result.refusal() != null) {
+            sendFailure(messages, player, result.refusal());
+            return;
+        }
         if (result.soldNothing()) {
             messages.send(player, "sell-all.nothing", "&eNothing in {scope} could be sold here.",
                     Map.of("scope", scope));
@@ -188,6 +195,11 @@ public final class EffectDispatcher {
         if (result.blocked() > 0) {
             messages.send(player, "sell-all.blocked", "&c{blocked} item type(s) were blocked and not sold.",
                     Map.of("blocked", String.valueOf(result.blocked())));
+        }
+        if (result.retry() > 0) {
+            messages.send(player, "sell-all.retry",
+                    "&e{count} item type(s) were handed back because the price changed or the sale didn't go through. Try again.",
+                    Map.of("count", String.valueOf(result.retry())));
         }
     }
 
@@ -224,8 +236,10 @@ public final class EffectDispatcher {
                 gui.openBuy(player, itemId);
                 return;
             }
-            sendFeedback(player, service.buy(player, itemId, amount));
-            gui.openBuy(player, itemId);
+            service.buy(player, itemId, amount).thenAccept(result -> {
+                sendFeedback(player, result);
+                gui.openBuy(player, itemId);
+            });
         });
     }
 
