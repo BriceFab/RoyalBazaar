@@ -2,6 +2,10 @@
 # Leave empty to open the first configured category.
 default-category: ""
 
+# Extra names for /bazaar, e.g. [shop]. They run the same command with its tab completion and permissions.
+# A name another plugin already uses is skipped with a warning. Restart to apply.
+command-aliases: []
+
 # Items are configured in categories/*.yml, menus in gui/*.yml (EcoMenus-style layouts).
 
 engine:

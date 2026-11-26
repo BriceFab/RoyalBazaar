@@ -39,6 +39,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import com.mystipixel.royalbazaar.gui.BazaarMenuHolder;
+import com.mystipixel.royalbazaar.util.CommandAlias;
+
 import org.bukkit.entity.Player;
 
 import java.time.Duration;
@@ -153,6 +155,7 @@ public final class RoyalBazaarPlugin extends JavaPlugin {
         if (getCommand("bazaar") != null) {
             getCommand("bazaar").setExecutor(command);
             getCommand("bazaar").setTabCompleter(command);
+            CommandAlias.registerAll(this, getCommand("bazaar"), getConfig().getStringList("command-aliases"));
         }
 
         scheduleTasks();
