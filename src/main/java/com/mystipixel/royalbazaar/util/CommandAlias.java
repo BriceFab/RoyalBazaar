@@ -1,6 +1,7 @@
 package com.mystipixel.royalbazaar.util;
 
 import org.bukkit.command.Command;
+import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.Plugin;
@@ -33,18 +34,25 @@ public final class CommandAlias extends Command {
         return target.tabComplete(sender, alias, args);
     }
 
-    /** Registers each label for {@code target}; a label another command already owns is skipped with a warning. */
+    /**
+     * Registers each label for {@code target}. A label another command already owns is skipped, and another
+     * command's alias is replaced (Bukkit's rule for primary labels); both are logged as warnings.
+     */
     public static void registerAll(Plugin plugin, PluginCommand target, List<String> labels) {
         String prefix = plugin.getName().toLowerCase(Locale.ROOT);
+        CommandMap map = plugin.getServer().getCommandMap();
         for (String raw : labels) {
             String label = raw.toLowerCase(Locale.ROOT).trim();
             if (label.isEmpty() || label.contains(" ") || label.contains(":")) {
                 plugin.getLogger().warning("Ignoring command alias '" + raw + "': use one word without ':'.");
                 continue;
             }
-            if (!plugin.getServer().getCommandMap().register(label, prefix, new CommandAlias(label, target))) {
+            Command previous = map.getCommand(label);
+            if (!map.register(label, prefix, new CommandAlias(label, target))) {
                 plugin.getLogger().warning("Command alias /" + label + " is taken by another command; only /"
                         + prefix + ":" + label + " opens this one.");
+            } else if (previous != null) {
+                plugin.getLogger().warning("Command alias /" + label + " replaces the alias of /" + previous.getName() + ".");
             }
         }
     }

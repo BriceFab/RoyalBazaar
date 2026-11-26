@@ -55,4 +55,15 @@ class CommandAliasTest {
         verify(logger, times(2)).warning(warnings.capture());
         assertTrue(warnings.getAllValues().get(0).contains("/taken"));
     }
+
+    @Test void replacingAnotherCommandsAliasIsReported() {
+        Command other = mock(Command.class);
+        when(other.getName()).thenReturn("other");
+        when(map.getCommand("shop")).thenReturn(other);
+        when(map.register(anyString(), anyString(), any())).thenReturn(true);
+        CommandAlias.registerAll(plugin, target, List.of("shop"));
+        ArgumentCaptor<String> warning = ArgumentCaptor.forClass(String.class);
+        verify(logger).warning(warning.capture());
+        assertTrue(warning.getValue().contains("/other"));
+    }
 }
