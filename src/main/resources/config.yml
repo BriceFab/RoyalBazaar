@@ -3,8 +3,8 @@
 default-category: ""
 
 # Extra names for /bazaar, e.g. [shop]. They run the same command with its tab completion and permissions.
-# A name another plugin's command already uses is skipped; one Paper lets a command take over
-# (another plugin's alias) is replaced. Both log a warning. Restart to apply.
+# For a name already in use, Paper decides whether the existing command is kept (the name is
+# skipped) or replaced; both log a warning. Restart to apply.
 command-aliases: []
 
 # Items are configured in categories/*.yml, menus in gui/*.yml (EcoMenus-style layouts).

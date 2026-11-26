@@ -35,8 +35,8 @@ public final class CommandAlias extends Command {
     }
 
     /**
-     * Registers each label for {@code target}. A label another command already owns is skipped; a mapping
-     * Paper lets a primary label take over (another command's alias) is replaced. Both log a warning.
+     * Registers each label for {@code target}. When the label is already mapped, Paper decides whether the
+     * existing mapping is kept (the label is skipped) or replaced; both log a warning.
      */
     public static void registerAll(Plugin plugin, PluginCommand target, List<String> labels) {
         String prefix = plugin.getName().toLowerCase(Locale.ROOT);
