@@ -35,8 +35,8 @@ public final class CommandAlias extends Command {
     }
 
     /**
-     * Registers each label for {@code target}. A label another command already owns is skipped, and another
-     * command's alias is replaced (Bukkit's rule for primary labels); both are logged as warnings.
+     * Registers each label for {@code target}. A label another command already owns is skipped; a mapping
+     * Paper lets a primary label take over (another command's alias) is replaced. Both log a warning.
      */
     public static void registerAll(Plugin plugin, PluginCommand target, List<String> labels) {
         String prefix = plugin.getName().toLowerCase(Locale.ROOT);
@@ -52,7 +52,7 @@ public final class CommandAlias extends Command {
                 plugin.getLogger().warning("Command alias /" + label + " is taken by another command; only /"
                         + prefix + ":" + label + " opens this one.");
             } else if (previous != null) {
-                plugin.getLogger().warning("Command alias /" + label + " replaces the alias of /" + previous.getName() + ".");
+                plugin.getLogger().warning("Command alias /" + label + " replaces the mapping of /" + previous.getName() + ".");
             }
         }
     }
